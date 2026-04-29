@@ -78,14 +78,25 @@ export default function NovaClinicaForm() {
     const supabase = createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
-    const tenant_id =
-      user?.user_metadata?.tenant_id ?? user?.app_metadata?.tenant_id ?? null;
-
-    if (!tenant_id) {
-      setError("Não foi possível identificar o tenant do usuário. Faça login novamente.");
+    if (!user) {
+      setError("Usuário não autenticado. Faça login novamente.");
       setLoading(false);
       return;
     }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.tenant_id) {
+      setError(`Não foi possível identificar o tenant: ${userError?.message ?? "tenant_id não encontrado"}`);
+      setLoading(false);
+      return;
+    }
+
+    const tenant_id = userData.tenant_id;
 
     const { error: dbError } = await supabase.from("clinics").insert({
       tenant_id,
