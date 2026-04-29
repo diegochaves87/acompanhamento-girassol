@@ -4,18 +4,32 @@ import ImportarExcelButton, { BaixarModeloButton } from "./ImportarExcelButton";
 
 type Paciente = {
   id: string;
-  nome: string;
-  email: string | null;
-  telefone: string | null;
-  criado_em: string;
+  full_name: string;
+  birth_date: string | null;
+  diagnosis: string[] | null;
 };
 
 async function getPacientes(): Promise<Paciente[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("pacientes")
-    .select("id, nome, email, telefone, criado_em")
-    .order("nome");
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("tenant_id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!userData?.tenant_id) return [];
+
+  const { data, error } = await supabase
+    .from("patients")
+    .select("id, full_name, birth_date, diagnosis")
+    .eq("tenant_id", userData.tenant_id)
+    .order("full_name");
+
+  if (error) console.error("[getPacientes]", error.message);
   return data ?? [];
 }
 
@@ -107,11 +121,13 @@ export default async function PacientesPage({ searchParams }: Props) {
                       className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
                       style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
                     >
-                      {p.nome.charAt(0).toUpperCase()}
+                      {p.full_name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-800 truncate">{p.nome}</p>
-                      <p className="text-sm text-gray-400 truncate">{p.email ?? p.telefone ?? "Sem contato cadastrado"}</p>
+                      <p className="font-medium text-gray-800 truncate">{p.full_name}</p>
+                      <p className="text-sm text-gray-400 truncate">
+                        {p.diagnosis?.join(", ") ?? "Sem diagnóstico cadastrado"}
+                      </p>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
