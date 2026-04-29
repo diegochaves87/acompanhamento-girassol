@@ -5,7 +5,7 @@ type Clinica = {
   id: string;
   name: string;
   city: string | null;
-  phone: string | null;
+  state: string | null;
   contract_type: string | null;
 };
 
@@ -19,7 +19,7 @@ async function getClinicas(): Promise<Clinica[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("clinics")
-    .select("id, name, city, phone, contract_type")
+    .select("id, name, city, state, contract_type")
     .order("name");
   return data ?? [];
 }
@@ -94,7 +94,10 @@ export default async function ClinicasPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-800 truncate">{c.name}</p>
                       <p className="text-sm text-gray-400 truncate">
-                        {[c.city, c.contract_type ? CONTRACT_LABEL[c.contract_type] : null]
+                        {[
+                          c.city && c.state ? `${c.city} · ${c.state}` : c.city ?? c.state,
+                          c.contract_type ? CONTRACT_LABEL[c.contract_type] : null,
+                        ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>

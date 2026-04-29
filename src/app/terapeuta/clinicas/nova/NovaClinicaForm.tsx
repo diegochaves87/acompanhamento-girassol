@@ -5,9 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const CONTRACT_OPTIONS = [
-  { value: "autonomo_por_sessao", label: "Autônomo por sessão" },
+  { value: "autonomo_por_sessao", label: "Autônomo" },
   { value: "pj", label: "PJ" },
   { value: "clt", label: "CLT" },
+];
+
+const ESTADOS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS",
+  "MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC",
+  "SP","SE","TO",
 ];
 
 export default function NovaClinicaForm() {
@@ -17,18 +23,51 @@ export default function NovaClinicaForm() {
 
   const [form, setForm] = useState({
     name: "",
+    razao_social: "",
+    cnpj: "",
     address: "",
     city: "",
+    state: "",
     phone: "",
+    email: "",
     contract_type: "autonomo_por_sessao",
-    default_session_value_brl: "",
+    default_value_brl: "",
     payment_day: "",
-    accepted_insurances: "",
     notes: "",
   });
 
+  const [convenios, setConvenios] = useState<string[]>([]);
+  const [convenioInput, setConvenioInput] = useState("");
+
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function formatCnpj(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 14);
+    return digits
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
+
+  function addConvenio() {
+    const val = convenioInput.trim();
+    if (val && !convenios.includes(val)) {
+      setConvenios((prev) => [...prev, val]);
+    }
+    setConvenioInput("");
+  }
+
+  function handleConvenioKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addConvenio();
+    }
+    if (e.key === "Backspace" && convenioInput === "" && convenios.length > 0) {
+      setConvenios((prev) => prev.slice(0, -1));
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -40,17 +79,17 @@ export default function NovaClinicaForm() {
 
     const { error: dbError } = await supabase.from("clinics").insert({
       name: form.name,
+      cnpj: form.cnpj.replace(/\D/g, "") || null,
       address: form.address || null,
       city: form.city || null,
+      state: form.state || null,
       phone: form.phone || null,
+      email: form.email || null,
       contract_type: form.contract_type,
-      default_session_value_brl: form.default_session_value_brl
-        ? parseFloat(form.default_session_value_brl.replace(",", "."))
+      default_value_brl: form.default_value_brl
+        ? parseFloat(form.default_value_brl.replace(",", "."))
         : null,
       payment_day: form.payment_day ? parseInt(form.payment_day, 10) : null,
-      accepted_insurances: form.accepted_insurances
-        ? form.accepted_insurances.split(",").map((s) => s.trim()).filter(Boolean)
-        : [],
       notes: form.notes || null,
     });
 
@@ -72,24 +111,58 @@ export default function NovaClinicaForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
 
-      {/* Informações */}
+      {/* Identificação */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-base font-semibold mb-5" style={{ color: "#1a4a3a" }}>
-          Informações da clínica
+          Identificação
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="sm:col-span-2">
-            <label className={labelClass}>Nome *</label>
+            <label className={labelClass}>
+              Nome fantasia *{" "}
+              <span className="text-gray-400 font-normal text-xs">(aparece nas listas do sistema)</span>
+            </label>
             <input
               type="text"
               required
-              placeholder="Nome da clínica"
+              placeholder="Nome usado no sistema"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               className={inputClass}
             />
           </div>
 
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Razão social</label>
+            <input
+              type="text"
+              placeholder="Razão social completa"
+              value={form.razao_social}
+              onChange={(e) => set("razao_social", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>CNPJ</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="00.000.000/0000-00"
+              value={form.cnpj}
+              onChange={(e) => set("cnpj", formatCnpj(e.target.value))}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Localização */}
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-base font-semibold mb-5" style={{ color: "#1a4a3a" }}>
+          Localização e contato
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div className="sm:col-span-2">
             <label className={labelClass}>Endereço</label>
             <input
@@ -113,12 +186,37 @@ export default function NovaClinicaForm() {
           </div>
 
           <div>
+            <label className={labelClass}>Estado</label>
+            <select
+              value={form.state}
+              onChange={(e) => set("state", e.target.value)}
+              className={selectClass}
+            >
+              <option value="">Selecione</option>
+              {ESTADOS.map((uf) => (
+                <option key={uf} value={uf}>{uf}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className={labelClass}>Telefone</label>
             <input
               type="tel"
               placeholder="(00) 0000-0000"
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>E-mail</label>
+            <input
+              type="email"
+              placeholder="contato@clinica.com.br"
+              value={form.email}
+              onChange={(e) => set("email", e.target.value)}
               className={inputClass}
             />
           </div>
@@ -158,8 +256,8 @@ export default function NovaClinicaForm() {
               type="text"
               inputMode="decimal"
               placeholder="0,00"
-              value={form.default_session_value_brl}
-              onChange={(e) => set("default_session_value_brl", e.target.value)}
+              value={form.default_value_brl}
+              onChange={(e) => set("default_value_brl", e.target.value)}
               className={inputClass}
             />
           </div>
@@ -173,9 +271,7 @@ export default function NovaClinicaForm() {
             >
               <option value="">Selecione o dia</option>
               {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                <option key={d} value={d}>
-                  Dia {d}
-                </option>
+                <option key={d} value={d}>Dia {d}</option>
               ))}
             </select>
           </div>
@@ -188,16 +284,42 @@ export default function NovaClinicaForm() {
           Convênios aceitos
         </h2>
         <label className={labelClass}>
-          Convênios{" "}
-          <span className="text-gray-400 font-normal">(separe por vírgula)</span>
+          Digite e pressione{" "}
+          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-600 font-mono">Enter</kbd>
+          {" "}ou{" "}
+          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-600 font-mono">,</kbd>
+          {" "}para adicionar
         </label>
-        <input
-          type="text"
-          placeholder="Ex: Unimed, Bradesco Saúde, Amil"
-          value={form.accepted_insurances}
-          onChange={(e) => set("accepted_insurances", e.target.value)}
-          className={inputClass}
-        />
+        <div
+          className="flex flex-wrap gap-2 px-3 py-2.5 rounded-xl border border-gray-200 min-h-[46px] cursor-text transition focus-within:border-[#1a4a3a] focus-within:ring-2 focus-within:ring-[#1a4a3a]/10"
+          onClick={(e) => (e.currentTarget.querySelector("input") as HTMLInputElement)?.focus()}
+        >
+          {convenios.map((c) => (
+            <span
+              key={c}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium"
+              style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
+            >
+              {c}
+              <button
+                type="button"
+                onClick={() => setConvenios((prev) => prev.filter((x) => x !== c))}
+                className="hover:opacity-70 transition-opacity leading-none"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          <input
+            type="text"
+            value={convenioInput}
+            onChange={(e) => setConvenioInput(e.target.value)}
+            onKeyDown={handleConvenioKey}
+            onBlur={addConvenio}
+            placeholder={convenios.length === 0 ? "Ex: Unimed, Bradesco Saúde…" : ""}
+            className="flex-1 min-w-[160px] text-sm outline-none placeholder-gray-400 bg-transparent py-0.5"
+          />
+        </div>
       </section>
 
       {/* Observações */}
