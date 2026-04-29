@@ -96,20 +96,44 @@ export default function NovoPacienteForm({ clinicas }: Props) {
       return;
     }
 
-    // Insere responsável se nome foi preenchido
+    // Cria usuário e vínculo do responsável se nome foi preenchido
     if (form.nome_responsavel.trim()) {
-      const { error: guardianError } = await supabase
-        .from("guardians")
+      if (!form.email_responsavel.trim()) {
+        // Sem email: pula criação de usuário, redireciona com aviso
+        router.push("/terapeuta/pacientes?aviso=responsavel-sem-email");
+        return;
+      }
+
+      // Cria usuário familiar na tabela users
+      const { data: familyUser, error: familyUserError } = await supabase
+        .from("users")
         .insert({
-          patient_id: patient.id,
+          tenant_id: userData.tenant_id,
           full_name: form.nome_responsavel,
+          email: form.email_responsavel,
           phone: form.telefone_responsavel || null,
-          email: form.email_responsavel || null,
+          role: "family",
+        })
+        .select("id")
+        .single();
+
+      if (familyUserError) {
+        setError(`Paciente salvo, mas erro ao criar usuário do responsável: ${familyUserError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // Cria vínculo family_patient
+      const { error: linkError } = await supabase
+        .from("family_patient")
+        .insert({
+          user_id: familyUser.id,
+          patient_id: patient.id,
           relationship: form.parentesco || null,
         });
 
-      if (guardianError) {
-        setError(`Paciente salvo, mas erro ao salvar responsável: ${guardianError.message}`);
+      if (linkError) {
+        setError(`Paciente salvo, mas erro ao criar vínculo familiar: ${linkError.message}`);
         setLoading(false);
         return;
       }

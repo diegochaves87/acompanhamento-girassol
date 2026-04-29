@@ -19,8 +19,11 @@ async function getPacientes(): Promise<Paciente[]> {
   return data ?? [];
 }
 
-export default async function PacientesPage() {
+type Props = { searchParams: { aviso?: string } };
+
+export default async function PacientesPage({ searchParams }: Props) {
   const pacientes = await getPacientes();
+  const avisoSemEmail = searchParams.aviso === "responsavel-sem-email";
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
@@ -53,6 +56,20 @@ export default async function PacientesPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-8">
+        {avisoSemEmail && (
+          <div className="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Paciente salvo — responsável sem acesso ao app</p>
+              <p className="text-sm text-amber-700 mt-0.5">
+                Nenhum e-mail foi informado para o responsável. O acesso ao app da família poderá ser configurado depois no perfil do paciente.
+              </p>
+            </div>
+          </div>
+        )}
+
         {pacientes.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-16 flex flex-col items-center text-center">
             <div
