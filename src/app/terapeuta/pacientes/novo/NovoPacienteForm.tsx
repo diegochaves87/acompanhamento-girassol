@@ -96,46 +96,21 @@ export default function NovoPacienteForm({ clinicas }: Props) {
       return;
     }
 
-    // Cria usuário e vínculo do responsável se nome foi preenchido
+    // Salva dados do responsável em family_patient sem criar usuário no Auth
+    // O acesso ao app será configurado depois quando a Thaís quiser dar login ao responsável
     if (form.nome_responsavel.trim()) {
-      if (!form.email_responsavel.trim()) {
-        // Sem email: pula criação de usuário, redireciona com aviso
-        router.push("/terapeuta/pacientes?aviso=responsavel-sem-email");
-        return;
-      }
-
-      // Cria usuário familiar na tabela users com UUID gerado no frontend
-      const familyUserId = crypto.randomUUID();
-      const { data: familyUser, error: familyUserError } = await supabase
-        .from("users")
-        .insert({
-          id: familyUserId,
-          tenant_id: userData.tenant_id,
-          full_name: form.nome_responsavel,
-          email: form.email_responsavel,
-          phone: form.telefone_responsavel || null,
-          role: "family",
-        })
-        .select("id")
-        .single();
-
-      if (familyUserError) {
-        setError(`Paciente salvo, mas erro ao criar usuário do responsável: ${familyUserError.message}`);
-        setLoading(false);
-        return;
-      }
-
-      // Cria vínculo family_patient
       const { error: linkError } = await supabase
         .from("family_patient")
         .insert({
-          user_id: familyUser.id,
           patient_id: patient.id,
-          relationship: form.parentesco || null,
+          guardian_name: form.nome_responsavel,
+          guardian_phone: form.telefone_responsavel || null,
+          guardian_email: form.email_responsavel || null,
+          guardian_relationship: form.parentesco || null,
         });
 
       if (linkError) {
-        setError(`Paciente salvo, mas erro ao criar vínculo familiar: ${linkError.message}`);
+        setError(`Paciente salvo, mas erro ao salvar dados do responsável: ${linkError.message}`);
         setLoading(false);
         return;
       }
