@@ -77,7 +77,18 @@ export default function NovaClinicaForm() {
 
     const supabase = createClient();
 
+    const { data: { user } } = await supabase.auth.getUser();
+    const tenant_id =
+      user?.user_metadata?.tenant_id ?? user?.app_metadata?.tenant_id ?? null;
+
+    if (!tenant_id) {
+      setError("Não foi possível identificar o tenant do usuário. Faça login novamente.");
+      setLoading(false);
+      return;
+    }
+
     const { error: dbError } = await supabase.from("clinics").insert({
+      tenant_id,
       name: form.name,
       cnpj: form.cnpj.replace(/\D/g, "") || null,
       address: form.address || null,
