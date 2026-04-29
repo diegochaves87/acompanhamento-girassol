@@ -4,10 +4,11 @@ import NovoPacienteForm from "./NovoPacienteForm";
 
 async function getClinicas() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("clinicas")
-    .select("id, nome")
-    .order("nome");
+  const { data, error } = await supabase
+    .from("clinics")
+    .select("id, name")
+    .order("name");
+  if (error) console.error("[getClinicas]", error.message);
   return data ?? [];
 }
 

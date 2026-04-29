@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Clinica = { id: string; nome: string };
+type Clinica = { id: string; name: string };
 
 type Props = {
   clinicas: Clinica[];
@@ -151,7 +151,7 @@ export default function NovoPacienteForm({ clinicas }: Props) {
                 <option value="">Selecione uma clínica</option>
                 {clinicas.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nome}
+                    {c.name}
                   </option>
                 ))}
               </select>
