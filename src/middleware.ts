@@ -55,11 +55,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Proteção cruzada: terapeuta tentando acessar /familia e vice-versa
-  if (user && pathname.startsWith("/terapeuta") && role !== "therapist") {
+  if (user && role && pathname.startsWith("/terapeuta") && role !== "therapist") {
     return NextResponse.redirect(new URL("/familia", request.url));
   }
 
-  if (user && pathname.startsWith("/familia") && role !== "family") {
+  if (user && role && pathname.startsWith("/familia") && role !== "family") {
     return NextResponse.redirect(new URL("/terapeuta", request.url));
   }
 
