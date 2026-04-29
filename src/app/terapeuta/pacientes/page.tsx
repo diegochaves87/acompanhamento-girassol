@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import ImportarExcelButton from "./ImportarExcelButton";
+import ImportarExcelButton, { BaixarModeloButton } from "./ImportarExcelButton";
 
 type Paciente = {
   id: string;
@@ -36,6 +36,7 @@ export default async function PacientesPage() {
             <h1 className="text-white font-semibold">Pacientes</h1>
           </div>
           <div className="flex items-center gap-2">
+            <BaixarModeloButton />
             <ImportarExcelButton />
             <Link
               href="/terapeuta/pacientes/novo"
@@ -65,6 +66,7 @@ export default async function PacientesPage() {
             <p className="font-semibold text-gray-700 mb-1">Nenhum paciente cadastrado ainda</p>
             <p className="text-sm text-gray-400 mb-6">Adicione seu primeiro paciente ou importe uma planilha Excel.</p>
             <div className="flex items-center gap-3">
+              <BaixarModeloButton variant="outline" />
               <ImportarExcelButton variant="outline" />
               <Link
                 href="/terapeuta/pacientes/novo"
