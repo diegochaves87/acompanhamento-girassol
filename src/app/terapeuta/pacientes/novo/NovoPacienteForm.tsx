@@ -43,10 +43,36 @@ export default function NovoPacienteForm({ clinicas }: Props) {
 
     const supabase = createClient();
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Usuário não autenticado. Faça login novamente.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (userError) {
+      setError(`Erro ao buscar tenant: ${userError.message}`);
+      setLoading(false);
+      return;
+    }
+
+    if (!userData?.tenant_id) {
+      setError(`tenant_id não encontrado para o usuário ${user.id}. Verifique RLS na tabela users.`);
+      setLoading(false);
+      return;
+    }
+
     // Insere paciente
     const { data: patient, error: patientError } = await supabase
       .from("patients")
       .insert({
+        tenant_id: userData.tenant_id,
         full_name: form.full_name,
         birth_date: form.birth_date || null,
         diagnosis: form.diagnosis
