@@ -104,10 +104,12 @@ export default function NovoPacienteForm({ clinicas }: Props) {
         return;
       }
 
-      // Cria usuário familiar na tabela users
+      // Cria usuário familiar na tabela users com UUID gerado no frontend
+      const familyUserId = crypto.randomUUID();
       const { data: familyUser, error: familyUserError } = await supabase
         .from("users")
         .insert({
+          id: familyUserId,
           tenant_id: userData.tenant_id,
           full_name: form.nome_responsavel,
           email: form.email_responsavel,
