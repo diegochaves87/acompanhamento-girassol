@@ -131,6 +131,7 @@ export default function NovaClinicaForm() {
         ? parseFloat(form.default_value_brl.replace(",", "."))
         : null,
       payment_day: form.payment_day ? parseInt(form.payment_day, 10) : null,
+      accepted_insurances: convenios.length > 0 ? convenios : [],
       notes: form.notes || null,
     });
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Clinica = { id: string; name: string };
+type Clinica = { id: string; name: string; accepted_insurances: string[] | null };
 
 type Props = {
   clinicas: Clinica[];
@@ -206,13 +206,29 @@ export default function NovoPacienteForm({ clinicas }: Props) {
           {form.payment_type === "convenio" && (
             <div className="sm:col-span-2">
               <label className={labelClass}>Convênio</label>
-              <input
-                type="text"
-                placeholder="Nome do convênio"
-                value={form.insurance_name}
-                onChange={(e) => set("insurance_name", e.target.value)}
-                className={inputClass}
-              />
+              {(() => {
+                const seguros = clinicas.find(c => c.id === form.clinic_id)?.accepted_insurances ?? [];
+                return seguros.length > 0 ? (
+                  <select
+                    value={form.insurance_name}
+                    onChange={(e) => set("insurance_name", e.target.value)}
+                    className={selectClass}
+                  >
+                    <option value="">Selecione o convênio</option>
+                    {seguros.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder={form.clinic_id ? "Nenhum convênio cadastrado nesta clínica" : "Selecione uma clínica primeiro"}
+                    value={form.insurance_name}
+                    onChange={(e) => set("insurance_name", e.target.value)}
+                    className={inputClass}
+                  />
+                );
+              })()}
             </div>
           )}
         </div>
