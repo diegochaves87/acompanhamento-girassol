@@ -97,10 +97,16 @@ export default function NovaClinicaForm() {
       .from("users")
       .select("tenant_id")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (userError || !userData?.tenant_id) {
-      setError(`Não foi possível identificar o tenant: ${userError?.message ?? "tenant_id não encontrado"}`);
+    if (userError) {
+      setError(`Erro ao buscar tenant: ${userError.message}`);
+      setLoading(false);
+      return;
+    }
+
+    if (!userData?.tenant_id) {
+      setError(`tenant_id não encontrado para o usuário ${user.id}. Verifique RLS na tabela users.`);
       setLoading(false);
       return;
     }
