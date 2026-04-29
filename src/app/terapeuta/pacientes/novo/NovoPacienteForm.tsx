@@ -18,18 +18,18 @@ export default function NovoPacienteForm({ clinicas }: Props) {
   const [error, setError] = useState("");
 
   const [form, setForm] = useState({
-    nome: "",
-    data_nascimento: "",
-    diagnostico: "",
-    clinica: "",
-    tipo_pagamento: "particular",
-    valor_sessao: "",
-    convenio: "",
+    full_name: "",
+    birth_date: "",
+    diagnosis: "",
+    clinic_id: "",
+    payment_type: "particular",
+    value_per_session_brl: "",
+    insurance_name: "",
     nome_responsavel: "",
     telefone_responsavel: "",
     email_responsavel: "",
     parentesco: "",
-    observacoes: "",
+    notes: "",
   });
 
   function set(field: string, value: string) {
@@ -43,27 +43,50 @@ export default function NovoPacienteForm({ clinicas }: Props) {
 
     const supabase = createClient();
 
-    const payload = {
-      nome: form.nome,
-      data_nascimento: form.data_nascimento || null,
-      diagnostico: form.diagnostico || null,
-      clinica: form.clinica || null,
-      tipo_pagamento: form.tipo_pagamento,
-      valor_sessao: form.valor_sessao ? parseFloat(form.valor_sessao.replace(",", ".")) : null,
-      convenio: form.tipo_pagamento === "convenio" ? form.convenio || null : null,
-      nome_responsavel: form.nome_responsavel || null,
-      telefone_responsavel: form.telefone_responsavel || null,
-      email_responsavel: form.email_responsavel || null,
-      parentesco: form.parentesco || null,
-      observacoes: form.observacoes || null,
-    };
+    // Insere paciente
+    const { data: patient, error: patientError } = await supabase
+      .from("patients")
+      .insert({
+        full_name: form.full_name,
+        birth_date: form.birth_date || null,
+        diagnosis: form.diagnosis
+          ? form.diagnosis.split(",").map((d) => d.trim()).filter(Boolean)
+          : [],
+        clinic_id: form.clinic_id || null,
+        payment_type: form.payment_type,
+        value_per_session_brl: form.value_per_session_brl
+          ? parseFloat(form.value_per_session_brl.replace(",", "."))
+          : null,
+        insurance_name:
+          form.payment_type === "convenio" ? form.insurance_name || null : null,
+        notes: form.notes || null,
+      })
+      .select("id")
+      .single();
 
-    const { error: dbError } = await supabase.from("patients").insert(payload);
-
-    if (dbError) {
-      setError("Erro ao salvar paciente. Tente novamente.");
+    if (patientError) {
+      setError(`Erro ao salvar paciente: ${patientError.message}`);
       setLoading(false);
       return;
+    }
+
+    // Insere responsável se nome foi preenchido
+    if (form.nome_responsavel.trim()) {
+      const { error: guardianError } = await supabase
+        .from("guardians")
+        .insert({
+          patient_id: patient.id,
+          full_name: form.nome_responsavel,
+          phone: form.telefone_responsavel || null,
+          email: form.email_responsavel || null,
+          relationship: form.parentesco || null,
+        });
+
+      if (guardianError) {
+        setError(`Paciente salvo, mas erro ao salvar responsável: ${guardianError.message}`);
+        setLoading(false);
+        return;
+      }
     }
 
     router.push("/terapeuta/pacientes");
@@ -90,8 +113,8 @@ export default function NovoPacienteForm({ clinicas }: Props) {
               type="text"
               required
               placeholder="Nome completo do paciente"
-              value={form.nome}
-              onChange={(e) => set("nome", e.target.value)}
+              value={form.full_name}
+              onChange={(e) => set("full_name", e.target.value)}
               className={inputClass}
             />
           </div>
@@ -100,8 +123,8 @@ export default function NovoPacienteForm({ clinicas }: Props) {
             <label className={labelClass}>Data de nascimento</label>
             <input
               type="date"
-              value={form.data_nascimento}
-              onChange={(e) => set("data_nascimento", e.target.value)}
+              value={form.birth_date}
+              onChange={(e) => set("birth_date", e.target.value)}
               className={inputClass}
             />
           </div>
@@ -110,9 +133,9 @@ export default function NovoPacienteForm({ clinicas }: Props) {
             <label className={labelClass}>Diagnóstico</label>
             <input
               type="text"
-              placeholder="Ex: TEA, TDAH, Dislexia…"
-              value={form.diagnostico}
-              onChange={(e) => set("diagnostico", e.target.value)}
+              placeholder="Ex: TEA, TDAH, Dislexia (separe por vírgula)"
+              value={form.diagnosis}
+              onChange={(e) => set("diagnosis", e.target.value)}
               className={inputClass}
             />
           </div>
@@ -121,25 +144,21 @@ export default function NovoPacienteForm({ clinicas }: Props) {
             <label className={labelClass}>Clínica</label>
             {clinicas.length > 0 ? (
               <select
-                value={form.clinica}
-                onChange={(e) => set("clinica", e.target.value)}
+                value={form.clinic_id}
+                onChange={(e) => set("clinic_id", e.target.value)}
                 className={selectClass}
               >
                 <option value="">Selecione uma clínica</option>
                 {clinicas.map((c) => (
-                  <option key={c.id} value={c.nome}>
+                  <option key={c.id} value={c.id}>
                     {c.nome}
                   </option>
                 ))}
               </select>
             ) : (
-              <input
-                type="text"
-                placeholder="Nome da clínica"
-                value={form.clinica}
-                onChange={(e) => set("clinica", e.target.value)}
-                className={inputClass}
-              />
+              <p className="text-sm text-gray-400 py-2.5">
+                Nenhuma clínica cadastrada ainda.
+              </p>
             )}
           </div>
         </div>
@@ -158,10 +177,10 @@ export default function NovoPacienteForm({ clinicas }: Props) {
                 <button
                   key={tipo}
                   type="button"
-                  onClick={() => set("tipo_pagamento", tipo)}
+                  onClick={() => set("payment_type", tipo)}
                   className="flex-1 py-2.5 transition-colors"
                   style={
-                    form.tipo_pagamento === tipo
+                    form.payment_type === tipo
                       ? { backgroundColor: "#1a4a3a", color: "#ffffff" }
                       : { backgroundColor: "#ffffff", color: "#6b7280" }
                   }
@@ -178,20 +197,20 @@ export default function NovoPacienteForm({ clinicas }: Props) {
               type="text"
               inputMode="decimal"
               placeholder="0,00"
-              value={form.valor_sessao}
-              onChange={(e) => set("valor_sessao", e.target.value)}
+              value={form.value_per_session_brl}
+              onChange={(e) => set("value_per_session_brl", e.target.value)}
               className={inputClass}
             />
           </div>
 
-          {form.tipo_pagamento === "convenio" && (
+          {form.payment_type === "convenio" && (
             <div className="sm:col-span-2">
               <label className={labelClass}>Convênio</label>
               <input
                 type="text"
                 placeholder="Nome do convênio"
-                value={form.convenio}
-                onChange={(e) => set("convenio", e.target.value)}
+                value={form.insurance_name}
+                onChange={(e) => set("insurance_name", e.target.value)}
                 className={inputClass}
               />
             </div>
@@ -264,14 +283,14 @@ export default function NovoPacienteForm({ clinicas }: Props) {
         <textarea
           rows={4}
           placeholder="Informações adicionais sobre o paciente…"
-          value={form.observacoes}
-          onChange={(e) => set("observacoes", e.target.value)}
+          value={form.notes}
+          onChange={(e) => set("notes", e.target.value)}
           className={`${inputClass} resize-none`}
         />
       </section>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3 font-mono">
           {error}
         </p>
       )}
