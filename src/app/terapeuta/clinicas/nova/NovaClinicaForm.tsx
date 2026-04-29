@@ -26,6 +26,10 @@ export default function NovaClinicaForm() {
     razao_social: "",
     cnpj: "",
     address: "",
+    address_number: "",
+    neighborhood: "",
+    zip_code: "",
+    landmark: "",
     city: "",
     state: "",
     phone: "",
@@ -41,6 +45,11 @@ export default function NovaClinicaForm() {
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function formatZip(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    return digits.replace(/^(\d{5})(\d)/, "$1-$2");
   }
 
   function formatCnpj(value: string) {
@@ -103,6 +112,10 @@ export default function NovaClinicaForm() {
       name: form.name,
       cnpj: form.cnpj.replace(/\D/g, "") || null,
       address: form.address || null,
+      address_number: form.address_number || null,
+      neighborhood: form.neighborhood || null,
+      zip_code: form.zip_code.replace(/\D/g, "") || null,
+      landmark: form.landmark || null,
       city: form.city || null,
       state: form.state || null,
       phone: form.phone || null,
@@ -189,9 +202,54 @@ export default function NovaClinicaForm() {
             <label className={labelClass}>Endereço</label>
             <input
               type="text"
-              placeholder="Rua, número, bairro"
+              placeholder="Rua ou Avenida"
               value={form.address}
               onChange={(e) => set("address", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Número</label>
+            <input
+              type="text"
+              placeholder="123"
+              value={form.address_number}
+              onChange={(e) => set("address_number", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Bairro</label>
+            <input
+              type="text"
+              placeholder="Bairro"
+              value={form.neighborhood}
+              onChange={(e) => set("neighborhood", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>CEP</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="00000-000"
+              value={form.zip_code}
+              onChange={(e) => set("zip_code", formatZip(e.target.value))}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>Ponto de referência</label>
+            <input
+              type="text"
+              placeholder="Ex: próximo ao metrô, em frente ao parque…"
+              value={form.landmark}
+              onChange={(e) => set("landmark", e.target.value)}
               className={inputClass}
             />
           </div>
