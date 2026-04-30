@@ -148,6 +148,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
               <strong className="text-gray-600">{futurasCount}</strong> sessão{futurasCount !== 1 ? "ões" : ""} agendada{futurasCount !== 1 ? "s" : ""} neste grupo.
             </p>
             <CancelarRecorrenciaButton
+              sessaoId={params.sessaoId}
               recurrenceId={sessao.recurrence_id}
               patientId={params.id}
               futurasCount={futurasCount}
