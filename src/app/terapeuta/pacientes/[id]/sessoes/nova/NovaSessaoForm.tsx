@@ -70,6 +70,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const [slots, setSlots] = useState<Slot[]>([
     { id: crypto.randomUUID(), dayOfWeek: 1, hour: 9, minute: 0 },
@@ -156,6 +157,8 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
     const valueRaw = valueBrl.replace(",", ".").replace(/[^\d.]/g, "");
     const parsedValue = valueRaw ? parseFloat(valueRaw) : null;
 
+    let count = 0;
+
     const base = {
       tenant_id: userData.tenant_id,
       patient_id: patientId,
@@ -188,6 +191,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
         setLoading(false);
         return;
       }
+      count = sessionsToInsert.length;
     } else {
       const sessionsToInsert = slots.map((slot) => {
         const date = specificDate || nextOccurrence(todayISO(), slot.dayOfWeek);
@@ -205,10 +209,17 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
         setLoading(false);
         return;
       }
+      count = sessionsToInsert.length;
     }
 
-    router.push(`/terapeuta/pacientes/${patientId}/sessoes`);
-    router.refresh();
+    setSuccessMsg(
+      count === 1 ? "1 sessão cadastrada com sucesso!" : `${count} sessões cadastradas com sucesso!`
+    );
+    setLoading(false);
+    setTimeout(() => {
+      router.push(`/terapeuta/pacientes/${patientId}/sessoes`);
+      router.refresh();
+    }, 1500);
   }
 
   const inputClass =
@@ -462,6 +473,12 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
             </div>
           )}
         </section>
+
+        {successMsg && (
+          <p className="text-sm font-medium text-green-700 bg-green-50 border border-green-100 rounded-xl px-4 py-3">
+            {successMsg}
+          </p>
+        )}
 
         {erro && (
           <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">

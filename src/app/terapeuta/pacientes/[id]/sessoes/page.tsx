@@ -7,27 +7,25 @@ type Props = { params: { id: string } };
 
 type Sessao = {
   id: string;
-  session_date: string;
-  start_time: string | null;
+  scheduled_at: string;
   duration_minutes: number | null;
   status: string;
   value_brl: number | null;
-  absence_notes: string | null;
+  absence_note: string | null;
   is_recurring: boolean | null;
   clinics: { name: string } | null;
 };
 
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("pt-BR", {
+function formatDate(scheduledAt: string) {
+  return new Date(scheduledAt).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatTime(time: string | null) {
-  if (!time) return null;
-  return time.slice(0, 5);
+function formatTime(scheduledAt: string) {
+  return scheduledAt.slice(11, 16);
 }
 
 function formatCurrency(value: number | null) {
@@ -47,11 +45,10 @@ export default async function SessoesPacientePage({ params }: Props) {
     supabase
       .from("sessions")
       .select(
-        "id, session_date, start_time, duration_minutes, status, value_brl, absence_notes, is_recurring, clinics(name)"
+        "id, scheduled_at, duration_minutes, status, value_brl, absence_note, is_recurring, clinics(name)"
       )
       .eq("patient_id", params.id)
-      .order("session_date", { ascending: false })
-      .order("start_time", { ascending: false }),
+      .order("scheduled_at", { ascending: false }),
   ]);
 
   if (!patient) notFound();
@@ -62,7 +59,7 @@ export default async function SessoesPacientePage({ params }: Props) {
   // Agrupa por mês
   const grupos = new Map<string, Sessao[]>();
   for (const s of lista) {
-    const key = s.session_date.slice(0, 7); // "YYYY-MM"
+    const key = s.scheduled_at.slice(0, 7); // "YYYY-MM"
     if (!grupos.has(key)) grupos.set(key, []);
     grupos.get(key)!.push(s);
   }
@@ -183,13 +180,11 @@ export default async function SessoesPacientePage({ params }: Props) {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <span className="text-sm font-semibold text-gray-800">
-                                {formatDate(s.session_date)}
+                                {formatDate(s.scheduled_at)}
                               </span>
-                              {formatTime(s.start_time) && (
-                                <span className="text-sm text-gray-400">
-                                  {formatTime(s.start_time)}
-                                </span>
-                              )}
+                              <span className="text-sm text-gray-400">
+                                {formatTime(s.scheduled_at)}
+                              </span>
                             </div>
                             <p className="text-sm text-gray-400 truncate">
                               {[
@@ -200,9 +195,9 @@ export default async function SessoesPacientePage({ params }: Props) {
                                 .filter(Boolean)
                                 .join(" · ")}
                             </p>
-                            {s.absence_notes && (
+                            {s.absence_note && (
                               <p className="text-xs text-gray-400 mt-1 italic">
-                                {s.absence_notes}
+                                {s.absence_note}
                               </p>
                             )}
                           </div>
