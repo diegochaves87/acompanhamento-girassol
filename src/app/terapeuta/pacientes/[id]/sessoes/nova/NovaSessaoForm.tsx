@@ -75,6 +75,8 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
     { id: crypto.randomUUID(), dayOfWeek: 1, hour: 9, minute: 0 },
   ]);
   const [specificDate, setSpecificDate] = useState("");
+  const [specificHour, setSpecificHour] = useState(9);
+  const [specificMinute, setSpecificMinute] = useState(0);
   const [isRepetir, setIsRepetir] = useState(false);
   const [showRetroModal, setShowRetroModal] = useState(false);
 
@@ -161,7 +163,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
       duration_minutes: duration ? parseInt(duration, 10) : null,
       status,
       value_brl: parsedValue != null && !isNaN(parsedValue) ? parsedValue : null,
-      absence_notes: showNotes ? absenceNotes || null : null,
+      absence_note: showNotes ? absenceNotes || null : null,
     };
 
     if (isRepetir) {
@@ -191,7 +193,9 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
       const sessionsToInsert = slots.map((slot) => ({
         ...base,
         session_date: specificDate || nextOccurrence(todayISO(), slot.dayOfWeek),
-        start_time: slotTime(slot.hour, slot.minute),
+        start_time: specificDate
+          ? slotTime(specificHour, specificMinute)
+          : slotTime(slot.hour, slot.minute),
         is_recurring: false,
       }));
       const { error } = await supabase.from("sessions").insert(sessionsToInsert);
@@ -288,12 +292,37 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
                 (opcional — para sessão avulsa ou retroativa)
               </span>
             </label>
-            <input
-              type="date"
-              value={specificDate}
-              onChange={(e) => setSpecificDate(e.target.value)}
-              className={`max-w-xs ${inputClass}`}
-            />
+            <div className="flex items-center gap-2 flex-wrap">
+              <input
+                type="date"
+                value={specificDate}
+                onChange={(e) => setSpecificDate(e.target.value)}
+                className={`max-w-xs ${inputClass}`}
+              />
+              {specificDate && (
+                <>
+                  <select
+                    value={specificHour}
+                    onChange={(e) => setSpecificHour(Number(e.target.value))}
+                    className={selectClass}
+                  >
+                    {HOURS.map((h) => (
+                      <option key={h} value={h}>{String(h).padStart(2, "0")}</option>
+                    ))}
+                  </select>
+                  <span className="text-gray-400 text-sm font-medium">:</span>
+                  <select
+                    value={specificMinute}
+                    onChange={(e) => setSpecificMinute(Number(e.target.value))}
+                    className={selectClass}
+                  >
+                    {MINUTES.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
             {!specificDate && (
               <p className="mt-1.5 text-xs text-gray-400">
                 Sem data específica: agendado para a próxima ocorrência de cada dia.
