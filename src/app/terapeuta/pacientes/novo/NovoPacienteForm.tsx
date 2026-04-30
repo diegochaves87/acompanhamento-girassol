@@ -19,6 +19,7 @@ export default function NovoPacienteForm({ clinicas }: Props) {
 
   const [form, setForm] = useState({
     full_name: "",
+    cpf: "",
     birth_date: "",
     diagnosis: "",
     clinic_id: "",
@@ -34,6 +35,14 @@ export default function NovoPacienteForm({ clinicas }: Props) {
 
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function formatCpf(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    return digits
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -68,12 +77,30 @@ export default function NovoPacienteForm({ clinicas }: Props) {
       return;
     }
 
+    // Verifica CPF duplicado
+    const cpfDigits = form.cpf.replace(/\D/g, "");
+    if (cpfDigits.length === 11) {
+      const { data: existing } = await supabase
+        .from("patients")
+        .select("id")
+        .eq("cpf", cpfDigits)
+        .eq("tenant_id", userData.tenant_id)
+        .maybeSingle();
+
+      if (existing) {
+        setError("Paciente já cadastrado com este CPF.");
+        setLoading(false);
+        return;
+      }
+    }
+
     // Insere paciente
     const { data: patient, error: patientError } = await supabase
       .from("patients")
       .insert({
         tenant_id: userData.tenant_id,
         full_name: form.full_name,
+        cpf: cpfDigits || null,
         birth_date: form.birth_date || null,
         diagnosis: form.diagnosis
           ? form.diagnosis.split(",").map((d) => d.trim()).filter(Boolean)
@@ -142,6 +169,18 @@ export default function NovoPacienteForm({ clinicas }: Props) {
               placeholder="Nome completo do paciente"
               value={form.full_name}
               onChange={(e) => set("full_name", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass}>CPF</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000.000.000-00"
+              value={form.cpf}
+              onChange={(e) => set("cpf", formatCpf(e.target.value))}
               className={inputClass}
             />
           </div>
