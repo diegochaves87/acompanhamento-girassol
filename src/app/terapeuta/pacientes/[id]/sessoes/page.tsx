@@ -13,6 +13,7 @@ type Sessao = {
   status: string;
   value_brl: number | null;
   absence_notes: string | null;
+  is_recurring: boolean | null;
   clinics: { name: string } | null;
 };
 
@@ -46,7 +47,7 @@ export default async function SessoesPacientePage({ params }: Props) {
     supabase
       .from("sessions")
       .select(
-        "id, session_date, start_time, duration_minutes, status, value_brl, absence_notes, clinics(name)"
+        "id, session_date, start_time, duration_minutes, status, value_brl, absence_notes, is_recurring, clinics(name)"
       )
       .eq("patient_id", params.id)
       .order("session_date", { ascending: false })
@@ -172,45 +173,57 @@ export default async function SessoesPacientePage({ params }: Props) {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <ul className="divide-y divide-gray-50">
                   {sessoesMes.map((s) => (
-                    <li key={s.id} className="px-6 py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        {/* Data + info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <span className="text-sm font-semibold text-gray-800">
-                              {formatDate(s.session_date)}
-                            </span>
-                            {formatTime(s.start_time) && (
-                              <span className="text-sm text-gray-400">
-                                {formatTime(s.start_time)}
+                    <li key={s.id}>
+                      <Link
+                        href={`/terapeuta/pacientes/${params.id}/sessoes/${s.id}`}
+                        className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          {/* Data + info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <span className="text-sm font-semibold text-gray-800">
+                                {formatDate(s.session_date)}
                               </span>
+                              {formatTime(s.start_time) && (
+                                <span className="text-sm text-gray-400">
+                                  {formatTime(s.start_time)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400 truncate">
+                              {[
+                                s.clinics?.name,
+                                s.duration_minutes ? `${s.duration_minutes} min` : null,
+                                formatCurrency(s.value_brl),
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </p>
+                            {s.absence_notes && (
+                              <p className="text-xs text-gray-400 mt-1 italic">
+                                {s.absence_notes}
+                              </p>
                             )}
                           </div>
-                          <p className="text-sm text-gray-400 truncate">
-                            {[
-                              s.clinics?.name,
-                              s.duration_minutes
-                                ? `${s.duration_minutes} min`
-                                : null,
-                              formatCurrency(s.value_brl),
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </p>
-                          {s.absence_notes && (
-                            <p className="text-xs text-gray-400 mt-1 italic">
-                              {s.absence_notes}
-                            </p>
-                          )}
-                        </div>
 
-                        {/* Badge de status */}
-                        <span
-                          className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${statusClassName(s.status)}`}
-                        >
-                          {statusLabel(s.status)}
-                        </span>
-                      </div>
+                          {/* Badge + ícone recorrência */}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {s.is_recurring && (
+                              <span title="Sessão recorrente" className="text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                              </span>
+                            )}
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${statusClassName(s.status)}`}
+                            >
+                              {statusLabel(s.status)}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
                     </li>
                   ))}
                 </ul>
