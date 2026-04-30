@@ -455,8 +455,8 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>
-                <strong>{preview}</strong> sessão{preview !== 1 ? "ões" : ""}{" "}
-                será{preview !== 1 ? "ão" : ""} criada{preview !== 1 ? "s" : ""}
+                <strong>{preview}</strong>{" "}
+                {preview !== 1 ? "sessões serão criadas" : "sessão será criada"}
               </span>
             </div>
           )}
