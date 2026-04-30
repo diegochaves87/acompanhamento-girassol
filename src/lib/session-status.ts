@@ -1,5 +1,6 @@
 export type SessionStatus =
   | "scheduled"
+  | "confirmed"
   | "completed"
   | "unjustified_absence"
   | "justified_absence"
@@ -10,6 +11,7 @@ export type SessionStatus =
 
 export const SESSION_STATUS_OPTIONS: { value: SessionStatus; label: string }[] = [
   { value: "scheduled", label: "Agendada" },
+  { value: "confirmed", label: "Confirmada" },
   { value: "completed", label: "Realizada" },
   { value: "unjustified_absence", label: "Falta injustificada" },
   { value: "justified_absence", label: "Falta justificada" },
@@ -21,39 +23,61 @@ export const SESSION_STATUS_OPTIONS: { value: SessionStatus; label: string }[] =
 
 export const STATUS_CONFIG: Record<
   SessionStatus,
-  { label: string; className: string }
+  { label: string; className: string; badge: string; cardClass: string }
 > = {
   scheduled: {
     label: "Agendada",
     className: "bg-blue-50 text-blue-700 border border-blue-100",
+    badge: "AGENDADO",
+    cardClass: "bg-blue-50 border-l-2 border-blue-400 text-blue-900",
+  },
+  confirmed: {
+    label: "Confirmada",
+    className: "bg-teal-50 text-teal-700 border border-teal-100",
+    badge: "CONFIRMADO",
+    cardClass: "bg-teal-50 border-l-2 border-teal-500 text-teal-900",
   },
   completed: {
     label: "Realizada",
     className: "bg-green-50 text-green-700 border border-green-100",
+    badge: "FINALIZADO",
+    cardClass: "bg-green-50 border-l-2 border-green-500 text-green-900",
   },
   unjustified_absence: {
     label: "Falta injustificada",
     className: "bg-red-50 text-red-700 border border-red-100",
+    badge: "FALTA",
+    cardClass: "bg-red-50 border-l-2 border-red-400 text-red-900",
   },
   justified_absence: {
     label: "Falta justificada",
     className: "bg-amber-50 text-amber-700 border border-amber-100",
+    badge: "FALTA JUST.",
+    cardClass: "bg-amber-50 border-l-2 border-amber-400 text-amber-900",
   },
   makeup: {
     label: "Reposição",
     className: "bg-purple-50 text-purple-700 border border-purple-100",
+    badge: "REPOSIÇÃO",
+    cardClass: "bg-purple-50 border-l-2 border-purple-400 text-purple-900",
   },
   holiday: {
     label: "Feriado",
     className: "bg-gray-100 text-gray-500 border border-gray-200",
+    badge: "FERIADO",
+    cardClass: "bg-gray-50 border-l-2 border-gray-300 text-gray-500",
   },
   cancelled_therapist: {
     label: "Cancelada pela terapeuta",
     className: "bg-orange-50 text-orange-700 border border-orange-100",
+    badge: "CANCELADO",
+    cardClass: "bg-gray-50 border-l-2 border-gray-200 text-gray-400",
   },
   cancelled_family: {
     label: "Cancelada pela família",
     className: "bg-orange-50 text-orange-700 border border-orange-100",
+    badge: "CANCELADO",
+    cardClass: "bg-gray-50 border-l-2 border-gray-200 text-gray-400",
   },
 };
 
@@ -72,5 +96,16 @@ export function statusClassName(status: string): string {
   return (
     STATUS_CONFIG[status as SessionStatus]?.className ??
     "bg-gray-100 text-gray-500 border border-gray-200"
+  );
+}
+
+export function statusBadge(status: string): string {
+  return STATUS_CONFIG[status as SessionStatus]?.badge ?? status.toUpperCase();
+}
+
+export function statusCardClass(status: string): string {
+  return (
+    STATUS_CONFIG[status as SessionStatus]?.cardClass ??
+    "bg-gray-50 border-l-2 border-gray-200 text-gray-600"
   );
 }
