@@ -26,7 +26,12 @@ function addDaysISO(iso: string, days: number): string {
 }
 
 function formatTime(scheduledAt: string): string {
-  return scheduledAt.slice(11, 16);
+  return new Date(scheduledAt).toLocaleTimeString("pt-BR", {
+    timeZone: "America/Fortaleza",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 function formatPhone(raw: string): string {
@@ -115,7 +120,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-white font-semibold capitalize">{dateLabel}</h1>
-              <p className="text-white/60 text-xs mt-0.5">{sessions.length} sessão{sessions.length !== 1 ? "ões" : ""}</p>
+              <p className="text-white/60 text-xs mt-0.5">{sessions.length !== 1 ? `${sessions.length} sessões` : "1 sessão"}</p>
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/terapeuta/agenda/dia/${prevDay}`} className="text-white/60 hover:text-white transition-colors p-1">

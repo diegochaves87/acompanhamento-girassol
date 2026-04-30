@@ -27,6 +27,7 @@ type Atendimento = {
 
 function formatDateTime(scheduledAt: string) {
   return new Date(scheduledAt).toLocaleString("pt-BR", {
+    timeZone: "America/Fortaleza",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

@@ -53,9 +53,15 @@ function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
   const diffMs = d.getTime() - monday.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (diffDays < 0 || diffDays > 5) return null;
-  const hour = d.getHours();
-  const minute = d.getMinutes();
-  const slotIndex = (hour - 7) * 2 + (minute >= 30 ? 1 : 0);
+  // Extrai hora/minuto no fuso de Fortaleza (UTC-3)
+  const timeStr = d.toLocaleTimeString("en-US", {
+    timeZone: "America/Fortaleza",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const [h, m] = timeStr.split(":").map(Number);
+  const slotIndex = (h - 7) * 2 + (m >= 30 ? 1 : 0);
   if (slotIndex < 0 || slotIndex >= 23) return null;
   return `${diffDays}-${slotIndex}`;
 }
@@ -159,11 +165,12 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
             <div className="border-b border-r border-gray-100 bg-gray-50" />
             {weekDays.map((dayISO, i) => {
               const isToday = dayISO === today;
+              const colBg = isToday ? "bg-[#f0f4f1]" : i % 2 === 0 ? "bg-white" : "bg-[#f5f5f3]";
               return (
                 <Link
                   key={dayISO}
                   href={`/terapeuta/agenda/dia/${dayISO}`}
-                  className={`border-b border-r border-gray-100 py-2 text-center hover:bg-gray-50 transition-colors ${isToday ? "bg-[#f0f4f1]" : "bg-gray-50"}`}
+                  className={`border-b border-r border-gray-100 py-2 text-center hover:brightness-95 transition-all ${colBg}`}
                 >
                   <p className="text-xs font-semibold text-gray-500">{DAY_NAMES[i]}</p>
                   <p className={`text-sm font-bold ${isToday ? "text-[#1a4a3a]" : "text-gray-700"}`}>
@@ -187,7 +194,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                       key={dayISO}
                       className={`border-b border-r border-gray-100 min-h-[30px] p-0.5 ${
                         slot.minute === 0 ? "border-t border-t-gray-100" : ""
-                      } ${dayISO === today ? "bg-[#f0f4f1]/30" : ""}`}
+                      } ${dayISO === today ? "bg-[#f0f4f1]/40" : dayIdx % 2 === 0 ? "bg-white" : "bg-[#f5f5f3]"}`}
                     >
                       {slotSessions.map((s) => (
                         <Link
