@@ -34,8 +34,8 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function slotTime(hour: number, minute: number) {
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+function scheduledAt(dateISO: string, hour: number, minute: number): string {
+  return `${dateISO}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
 }
 
 function nextOccurrence(fromISO: string, targetDow: number): string {
@@ -172,8 +172,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
       const sessionsToInsert = slots.flatMap((slot) =>
         generateWeekly(start, endDate, slot.dayOfWeek).map((date) => ({
           ...base,
-          session_date: date,
-          start_time: slotTime(slot.hour, slot.minute),
+          scheduled_at: scheduledAt(date, slot.hour, slot.minute),
           is_recurring: true,
           recurrence_id,
         }))
@@ -190,14 +189,16 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
         return;
       }
     } else {
-      const sessionsToInsert = slots.map((slot) => ({
-        ...base,
-        session_date: specificDate || nextOccurrence(todayISO(), slot.dayOfWeek),
-        start_time: specificDate
-          ? slotTime(specificHour, specificMinute)
-          : slotTime(slot.hour, slot.minute),
-        is_recurring: false,
-      }));
+      const sessionsToInsert = slots.map((slot) => {
+        const date = specificDate || nextOccurrence(todayISO(), slot.dayOfWeek);
+        const h = specificDate ? specificHour : slot.hour;
+        const min = specificDate ? specificMinute : slot.minute;
+        return {
+          ...base,
+          scheduled_at: scheduledAt(date, h, min),
+          is_recurring: false,
+        };
+      });
       const { error } = await supabase.from("sessions").insert(sessionsToInsert);
       if (error) {
         setErro(`Erro ao salvar: ${error.message}`);
