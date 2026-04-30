@@ -1,19 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import ImportarExcelButton, { BaixarModeloButton } from "./ImportarExcelButton";
+import PacientesInativos from "./PacientesInativos";
 
 type Paciente = {
   id: string;
   full_name: string;
   birth_date: string | null;
   diagnosis: string[] | null;
+  active: boolean | null;
+  inactivation_reason: string | null;
 };
 
-async function getPacientes(): Promise<Paciente[]> {
+async function getPacientes(): Promise<{ ativos: Paciente[]; inativos: Paciente[] }> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  if (!user) return { ativos: [], inativos: [] };
 
   const { data: userData } = await supabase
     .from("users")
@@ -21,22 +24,27 @@ async function getPacientes(): Promise<Paciente[]> {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!userData?.tenant_id) return [];
+  if (!userData?.tenant_id) return { ativos: [], inativos: [] };
 
   const { data, error } = await supabase
     .from("patients")
-    .select("id, full_name, birth_date, diagnosis")
+    .select("id, full_name, birth_date, diagnosis, active, inactivation_reason")
     .eq("tenant_id", userData.tenant_id)
     .order("full_name");
 
   if (error) console.error("[getPacientes]", error.message);
-  return data ?? [];
+
+  const todos = data ?? [];
+  return {
+    ativos: todos.filter((p) => p.active !== false),
+    inativos: todos.filter((p) => p.active === false),
+  };
 }
 
 type Props = { searchParams: { aviso?: string } };
 
 export default async function PacientesPage({ searchParams }: Props) {
-  const pacientes = await getPacientes();
+  const { ativos, inativos } = await getPacientes();
   const avisoSemEmail = searchParams.aviso === "responsavel-sem-email";
 
   return (
@@ -84,7 +92,7 @@ export default async function PacientesPage({ searchParams }: Props) {
           </div>
         )}
 
-        {pacientes.length === 0 ? (
+        {ativos.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-16 flex flex-col items-center text-center">
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
@@ -94,7 +102,7 @@ export default async function PacientesPage({ searchParams }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 0 0-4-4h-1M9 20H4v-2a4 4 0 0 1 4-4h1m4-4a4 4 0 1 0-4-4 4 4 0 0 0 4 4z" />
               </svg>
             </div>
-            <p className="font-semibold text-gray-700 mb-1">Nenhum paciente cadastrado ainda</p>
+            <p className="font-semibold text-gray-700 mb-1">Nenhum paciente ativo</p>
             <p className="text-sm text-gray-400 mb-6">Adicione seu primeiro paciente ou importe uma planilha Excel.</p>
             <div className="flex items-center gap-3">
               <BaixarModeloButton variant="outline" />
@@ -111,7 +119,7 @@ export default async function PacientesPage({ searchParams }: Props) {
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <ul className="divide-y divide-gray-100">
-              {pacientes.map((p) => (
+              {ativos.map((p) => (
                 <li key={p.id}>
                   <Link
                     href={`/terapeuta/pacientes/${p.id}`}
@@ -138,6 +146,8 @@ export default async function PacientesPage({ searchParams }: Props) {
             </ul>
           </div>
         )}
+
+        <PacientesInativos inativos={inativos} />
       </main>
     </div>
   );

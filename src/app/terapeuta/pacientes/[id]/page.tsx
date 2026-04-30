@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
-import ExcluirPacienteButton from "./ExcluirPacienteButton";
+import InativarPacienteButton from "./InativarPacienteButton";
 
 type Props = { params: { id: string } };
 
@@ -184,10 +184,9 @@ export default async function PacientePerfilPage({ params }: Props) {
           </section>
         )}
 
-        {/* Zona de perigo */}
-        <section className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
-          <h2 className="text-base font-semibold mb-4 text-red-600">Zona de perigo</h2>
-          <ExcluirPacienteButton patientId={params.id} />
+        {/* Inativar */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <InativarPacienteButton patientId={params.id} />
         </section>
 
       </main>
