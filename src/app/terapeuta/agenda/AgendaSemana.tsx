@@ -49,11 +49,11 @@ function formatWeekRange(monday: string): string {
 
 function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
   const d = new Date(scheduledAt);
-  const monday = new Date(mondayISO + "T00:00:00");
-  const diffMs = d.getTime() - monday.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const dateStr = d.toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
+  const sessionDay = new Date(dateStr + "T12:00:00");
+  const monday = new Date(mondayISO + "T12:00:00");
+  const diffDays = Math.round((sessionDay.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays < 0 || diffDays > 5) return null;
-  // Extrai hora/minuto no fuso de Fortaleza (UTC-3)
   const timeStr = d.toLocaleTimeString("en-US", {
     timeZone: "America/Fortaleza",
     hour: "2-digit",
