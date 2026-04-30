@@ -10,7 +10,6 @@ type PlanilhaRow = {
   email_responsavel: string;
   parentesco: string;
   clinica: string;
-  tipo_pagamento: string;
   valor_sessao: string;
   convenio: string;
   cpf: string;
@@ -110,9 +109,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Normaliza tipo de pagamento
-    const paymentTypeRaw = (row.tipo_pagamento ?? "").toLowerCase().trim();
-    const payment_type = paymentTypeRaw.includes("conv") ? "convenio" : "particular";
+    // Convênio preenchido → convenio, caso contrário → particular
+    const payment_type = row.convenio?.trim() ? "convenio" : "particular";
 
     // Valor por sessão
     const valorRaw = String(row.valor_sessao ?? "")

@@ -15,7 +15,6 @@ type PlanilhaRow = {
   email_responsavel: string;
   parentesco: string;
   clinica: string;
-  tipo_pagamento: string;
   valor_sessao: string;
   convenio: string;
   cpf: string;
@@ -63,9 +62,6 @@ const COLUMN_MAP: Record<string, keyof Omit<PlanilhaRow, "_linha">> = {
   "clinica": "clinica",
   "clinica (nome fantasia)": "clinica",
   "nome da clinica": "clinica",
-  "tipo de pagamento": "tipo_pagamento",
-  "tipo pagamento": "tipo_pagamento",
-  "pagamento": "tipo_pagamento",
   "valor por sessao": "valor_sessao",
   "valor sessao": "valor_sessao",
   "valor por sessao (r$)": "valor_sessao",
@@ -179,7 +175,6 @@ export default function ImportarExcelButton({ variant = "ghost" }: Props) {
               email_responsavel: "",
               parentesco: "",
               clinica: "",
-              tipo_pagamento: "",
               valor_sessao: "",
               convenio: "",
               cpf: "",
@@ -350,7 +345,7 @@ export default function ImportarExcelButton({ variant = "ghost" }: Props) {
                           <td className="py-2 pr-3 text-gray-500">{r.data_nascimento || "—"}</td>
                           <td className="py-2 pr-3 text-gray-500">{r.clinica || "—"}</td>
                           <td className="py-2 pr-3 text-gray-500">
-                            {r.tipo_pagamento.toLowerCase().includes("conv") ? "Convênio" : "Particular"}
+                            {r.convenio?.trim() ? "Convênio" : "Particular"}
                           </td>
                           <td className="py-2 text-gray-500">{r.nome_responsavel || "—"}</td>
                         </tr>
