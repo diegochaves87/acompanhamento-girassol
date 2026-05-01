@@ -26,14 +26,13 @@ type Atendimento = {
 };
 
 function formatDateTime(scheduledAt: string) {
-  return new Date(scheduledAt).toLocaleString("pt-BR", {
-    timeZone: "America/Fortaleza",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const d = new Date(scheduledAt);
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const hour = String(d.getUTCHours()).padStart(2, "0");
+  const minute = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hour}:${minute}`;
 }
 
 function formatCurrency(v: number | null) {
