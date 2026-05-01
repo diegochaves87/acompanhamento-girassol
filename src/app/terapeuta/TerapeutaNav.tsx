@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import WelcomePopup from "@/components/WelcomePopup";
 
 const NAV_ITEMS = [
   {
@@ -75,25 +76,8 @@ const NAV_ITEMS = [
 
 export default function TerapeutaNav() {
   const [open, setOpen] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!localStorage.getItem("girassol_welcome_seen")) {
-      setShowWelcome(true);
-    }
-  }, []);
-
-  function closeWelcome() {
-    localStorage.setItem("girassol_welcome_seen", "1");
-    setShowWelcome(false);
-  }
-
-  function handleSaibaMais() {
-    closeWelcome();
-    router.push("/terapeuta/sobre");
-  }
 
   async function handleLogout() {
     const supabase = createClient();
@@ -108,6 +92,8 @@ export default function TerapeutaNav() {
 
   return (
     <>
+      <WelcomePopup saibaMaisHref="/terapeuta/sobre" />
+
       {/* FAB hambúrguer */}
       <button
         onClick={() => setOpen(true)}
@@ -120,7 +106,7 @@ export default function TerapeutaNav() {
         </svg>
       </button>
 
-      {/* Backdrop drawer */}
+      {/* Backdrop */}
       {open && (
         <div
           className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
@@ -181,47 +167,6 @@ export default function TerapeutaNav() {
           </button>
         </div>
       </div>
-
-      {/* Popup de boas-vindas */}
-      {showWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <div className="flex items-start gap-3">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m8.66-13l-.87.5M4.21 17.5l-.87.5M20.66 17.5l-.87-.5M4.21 6.5l-.87-.5M21 12h-1M4 12H3" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900 text-base">
-                  Por que foi criado o Acompanhamento Girassol?
-                </h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Uma ferramenta pensada para terapeutas que querem acompanhar seus pacientes com mais cuidado, organização e afeto.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <button
-                onClick={closeWelcome}
-                className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                Fechar
-              </button>
-              <button
-                onClick={handleSaibaMais}
-                className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#1a4a3a" }}
-              >
-                Saiba Mais
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

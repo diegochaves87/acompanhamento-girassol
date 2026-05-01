@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import WelcomePopup from "@/components/WelcomePopup";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -41,6 +42,7 @@ export default function LoginPage() {
       className="min-h-screen flex flex-col items-center justify-center px-4"
       style={{ backgroundColor: "#f0f4f1" }}
     >
+      <WelcomePopup />
       <div className="w-full max-w-md">
 
         {/* Logo / cabeçalho */}
