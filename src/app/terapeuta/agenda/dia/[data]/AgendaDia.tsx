@@ -26,12 +26,8 @@ function addDaysISO(iso: string, days: number): string {
 }
 
 function formatTime(scheduledAt: string): string {
-  return new Date(scheduledAt).toLocaleTimeString("pt-BR", {
-    timeZone: "America/Fortaleza",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const d = new Date(scheduledAt);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 function formatPhone(raw: string): string {
