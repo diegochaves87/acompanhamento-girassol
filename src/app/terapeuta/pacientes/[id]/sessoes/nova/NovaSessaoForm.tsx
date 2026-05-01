@@ -15,13 +15,11 @@ type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica
 type Slot = { id: string; dayOfWeek: number; hour: number; minute: number };
 
 const WEEKDAYS = [
-  { value: 0, label: "Dom" },
-  { value: 1, label: "Seg" },
-  { value: 2, label: "Ter" },
-  { value: 3, label: "Qua" },
-  { value: 4, label: "Qui" },
-  { value: 5, label: "Sex" },
-  { value: 6, label: "Sáb" },
+  { value: 1, label: "Segunda" },
+  { value: 2, label: "Terça" },
+  { value: 3, label: "Quarta" },
+  { value: 4, label: "Quinta" },
+  { value: 5, label: "Sexta" },
 ];
 const HOURS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
 const MINUTES = [

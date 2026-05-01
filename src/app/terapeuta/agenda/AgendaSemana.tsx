@@ -13,7 +13,7 @@ type Props = {
   initialMonday: string;
 };
 
-const DAY_NAMES = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DAY_NAMES = ["Seg", "Ter", "Qua", "Qui", "Sex"];
 
 const TIME_SLOTS = Array.from({ length: 23 }, (_, i) => {
   const hour = 7 + Math.floor(i / 2);
@@ -41,10 +41,10 @@ function formatDayLabel(iso: string): string {
 }
 
 function formatWeekRange(monday: string): string {
-  const saturday = addDaysISO(monday, 5);
+  const friday = addDaysISO(monday, 4);
   const fmt = (d: string) =>
     new Date(d + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  return `${fmt(monday)} – ${fmt(saturday)}`;
+  return `${fmt(monday)} – ${fmt(friday)}`;
 }
 
 function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
@@ -56,7 +56,7 @@ function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
     (new Date(dateISO + "T12:00:00Z").getTime() - new Date(mondayISO + "T12:00:00Z").getTime()) /
     (1000 * 60 * 60 * 24)
   );
-  if (diffDays < 0 || diffDays > 5) return null;
+  if (diffDays < 0 || diffDays > 4) return null;
   const slotIndex = (h - 7) * 2 + (m >= 30 ? 1 : 0);
   if (slotIndex < 0 || slotIndex >= 23) return null;
   return `${diffDays}-${slotIndex}`;
@@ -69,7 +69,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
   const [loading, setLoading] = useState(false);
 
   const today = todayISO();
-  const weekDays = Array.from({ length: 6 }, (_, i) => addDaysISO(monday, i));
+  const weekDays = Array.from({ length: 5 }, (_, i) => addDaysISO(monday, i));
 
   const slotsMap = new Map<string, AgendaSession[]>();
   for (const s of sessions) {
@@ -155,7 +155,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
         <div className="min-w-[640px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div
             className="grid"
-            style={{ gridTemplateColumns: "52px repeat(6, 1fr)" }}
+            style={{ gridTemplateColumns: "52px repeat(5, 1fr)" }}
           >
             {/* Header row */}
             <div className="border-b border-r border-gray-100 bg-gray-50" />
