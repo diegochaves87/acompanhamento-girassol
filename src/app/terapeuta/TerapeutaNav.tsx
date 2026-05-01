@@ -158,7 +158,10 @@ export default function TerapeutaNav() {
               </Link>
             );
           })}
-          <div className="mx-4 my-3 border-t border-white/10" />
+        </nav>
+
+        {/* Seção inferior colada ao rodapé */}
+        <div className="px-3 pt-2 pb-0 border-t border-white/10">
           {NAV_BOTTOM.map((item) => {
             const active = isActive(item.href, item.exact);
             return (
@@ -166,7 +169,7 @@ export default function TerapeutaNav() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 mx-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                   active
                     ? "text-white bg-white/15"
                     : "text-white/65 hover:text-white hover:bg-white/10"
@@ -177,9 +180,9 @@ export default function TerapeutaNav() {
               </Link>
             );
           })}
-        </nav>
+        </div>
 
-        <div className="px-3 py-4 border-t border-white/10">
+        <div className="px-3 py-3 border-t border-white/10">
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-white/65 hover:text-white hover:bg-white/10 transition-colors"
