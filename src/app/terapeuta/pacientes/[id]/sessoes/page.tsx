@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { statusLabel, statusClassName } from "@/lib/session-status";
+import CancelarSessaoActions from "./CancelarSessaoActions";
 
 type Props = { params: { id: string } };
 
@@ -13,6 +14,7 @@ type Sessao = {
   value_brl: number | null;
   absence_note: string | null;
   is_recurring: boolean | null;
+  recurrence_id: string | null;
   clinics: { name: string } | null;
 };
 
@@ -45,7 +47,7 @@ export default async function SessoesPacientePage({ params }: Props) {
     supabase
       .from("sessions")
       .select(
-        "id, scheduled_at, duration_minutes, status, value_brl, absence_note, is_recurring, clinics(name)"
+        "id, scheduled_at, duration_minutes, status, value_brl, absence_note, is_recurring, recurrence_id, clinics(name)"
       )
       .eq("patient_id", params.id)
       .order("scheduled_at", { ascending: false }),
@@ -173,7 +175,7 @@ export default async function SessoesPacientePage({ params }: Props) {
                     <li key={s.id}>
                       <Link
                         href={`/terapeuta/pacientes/${params.id}/sessoes/${s.id}`}
-                        className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                        className="block px-6 pt-4 pb-2 hover:bg-gray-50 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           {/* Data + info */}
@@ -219,6 +221,15 @@ export default async function SessoesPacientePage({ params }: Props) {
                           </div>
                         </div>
                       </Link>
+                      {s.status === "scheduled" && (
+                        <div className="px-6 pb-3">
+                          <CancelarSessaoActions
+                            sessaoId={s.id}
+                            isRecurring={!!s.is_recurring}
+                            recurrenceId={s.recurrence_id}
+                          />
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
