@@ -10,7 +10,7 @@ export default function SobrePage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-white font-semibold">Quem é Thaís Freitas</h1>
+          <h1 className="text-white font-semibold">Quem Somos</h1>
         </div>
       </header>
 
@@ -55,7 +55,7 @@ export default function SobrePage() {
             </h2>
           </div>
           <p className="text-sm text-gray-600 leading-relaxed">
-            A ideia nasceu da experiência de Thaís Freitas, terapeuta que percebeu, no dia a dia das famílias, uma necessidade real de mais conexão entre o espaço terapêutico e a vida em casa.
+            A ideia nasceu da experiência de Thaís Freitas, fisioterapeuta especialista em psicomotricidade, que percebeu, no dia a dia das famílias, uma necessidade real de mais conexão entre o espaço terapêutico e a vida em casa.
           </p>
           <p className="text-sm text-gray-600 leading-relaxed mt-3">
             Em meio à correria da rotina, informações importantes sobre o tratamento ficavam perdidas, e as famílias muitas vezes se sentiam distantes do processo. O Girassol nasceu para mudar isso: aproximar quem cuida, quem acompanha e quem evolui a cada dia.
@@ -74,7 +74,7 @@ export default function SobrePage() {
               </svg>
             </div>
             <h2 className="text-base font-bold" style={{ color: "#1a4a3a" }}>
-              Conheça Thaís Freitas
+              Quem Somos
             </h2>
           </div>
           <p className="text-sm text-gray-400 italic">
