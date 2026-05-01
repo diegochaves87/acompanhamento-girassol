@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import WelcomePopup from "@/components/WelcomePopup";
 
-const NAV_TOP = [
+type NavItem = { label: string; href: string; exact?: boolean; icon: React.ReactElement };
+
+const NAV_TOP: NavItem[] = [
   {
     label: "Página Inicial",
     href: "/terapeuta",
@@ -55,7 +57,7 @@ const NAV_TOP = [
   },
 ];
 
-const NAV_BOTTOM = [
+const NAV_BOTTOM: NavItem[] = [
   {
     label: "Quem Somos",
     href: "/terapeuta/sobre",
