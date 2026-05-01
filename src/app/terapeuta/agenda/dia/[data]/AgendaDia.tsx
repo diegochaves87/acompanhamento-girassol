@@ -46,6 +46,7 @@ type SessionCardState = {
   hasEvolution: boolean;
   absenceNote: string;
   saving: boolean;
+  saved: boolean;
   erro: string;
 };
 
@@ -64,6 +65,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
             hasEvolution: s.has_evolution ?? false,
             absenceNote: s.absence_note ?? "",
             saving: false,
+            saved: false,
             erro: "",
           },
         ])
@@ -89,7 +91,8 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
     if (error) {
       updateCard(sessionId, { saving: false, erro: error.message });
     } else {
-      updateCard(sessionId, { saving: false });
+      updateCard(sessionId, { saving: false, saved: true });
+      setTimeout(() => updateCard(sessionId, { saved: false }), 3000);
     }
   }
 
@@ -269,6 +272,14 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
                   )}
                 </div>
 
+                {state.saved && (
+                  <p className="text-xs font-semibold text-green-700 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Status atualizado!
+                  </p>
+                )}
                 {state.erro && (
                   <p className="text-xs text-red-600">{state.erro}</p>
                 )}

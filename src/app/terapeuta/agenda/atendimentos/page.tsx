@@ -18,8 +18,6 @@ type Atendimento = {
   id: string;
   scheduled_at: string;
   status: string;
-  duration_minutes: number | null;
-  value_brl: number | null;
   has_evolution: boolean | null;
   patient_id: string;
   patients: { id: string; full_name: string; insurance_name: string | null } | null;
@@ -34,11 +32,6 @@ function formatDateTime(scheduledAt: string) {
   const hour = String(d.getUTCHours()).padStart(2, "0");
   const minute = String(d.getUTCMinutes()).padStart(2, "0");
   return `${day}/${month}/${year} ${hour}:${minute}`;
-}
-
-function formatCurrency(v: number | null) {
-  if (v == null) return "—";
-  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export default async function AtendimentosPage({ searchParams }: Props) {
@@ -58,7 +51,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
   let query = supabase
     .from("sessions")
     .select(
-      "id, scheduled_at, status, duration_minutes, value_brl, has_evolution, patient_id, patients(id, full_name, insurance_name), clinics(name)"
+      "id, scheduled_at, status, has_evolution, patient_id, patients(id, full_name, insurance_name), clinics(name)"
     )
     .eq("tenant_id", tenantId)
     .order("scheduled_at", { ascending: true });
@@ -146,11 +139,9 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500">Data / hora</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Local</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Paciente</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Status</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500">Local</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Duração</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500">Valor</th>
                     <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500">Evolução</th>
                   </tr>
                 </thead>
@@ -162,6 +153,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                           {formatDateTime(s.scheduled_at)}
                         </Link>
                       </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{s.clinics?.name ?? "—"}</td>
                       <td className="px-4 py-3 text-gray-700">
                         <Link href={`/terapeuta/pacientes/${s.patient_id}`} className="hover:text-[#1a4a3a] transition-colors">
                           {s.patients?.full_name ?? "—"}
@@ -175,34 +167,19 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                           {statusBadge(s.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{s.clinics?.name ?? "—"}</td>
-                      <td className="px-4 py-3 text-right text-gray-500">
-                        {s.duration_minutes ? `${s.duration_minutes} min` : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-700 font-medium">
-                        {formatCurrency(s.value_brl)}
-                      </td>
                       <td className="px-4 py-3 text-center">
                         {s.status === "completed" ? (
                           <Link
-                            href={`/terapeuta/pacientes/${s.patient_id}/sessoes/${s.id}`}
-                            className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
-                              s.has_evolution
-                                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                            }`}
-                            title={s.has_evolution ? "Ver evolução" : "Registrar evolução"}
+                            href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors whitespace-nowrap"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
+                            Registrar evolução
                           </Link>
                         ) : (
-                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-300 cursor-not-allowed" title="Disponível somente para sessões realizadas">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                     </tr>
@@ -223,14 +200,19 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-800 truncate">{s.patients?.full_name ?? "—"}</p>
                         <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(s.scheduled_at)}</p>
-                        <p className="text-xs text-gray-400">{[s.clinics?.name, s.duration_minutes ? `${s.duration_minutes} min` : null, formatCurrency(s.value_brl)].filter(Boolean).join(" · ")}</p>
+                        {s.clinics?.name && <p className="text-xs text-gray-400">{s.clinics.name}</p>}
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
                           {statusBadge(s.status)}
                         </span>
-                        {s.status === "completed" && s.has_evolution && (
-                          <span className="text-[10px] font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">Evolução</span>
+                        {s.status === "completed" && (
+                          <Link
+                            href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
+                            className="text-[10px] font-semibold text-white bg-green-600 px-1.5 py-0.5 rounded-full"
+                          >
+                            + Evolução
+                          </Link>
                         )}
                       </div>
                     </div>
