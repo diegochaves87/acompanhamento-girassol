@@ -10,6 +10,7 @@ type Props = {
     paciente?: string;
     convenio?: string;
     evolucao?: string;
+    status?: string;
   };
 };
 
@@ -60,7 +61,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
       "id, scheduled_at, status, duration_minutes, value_brl, has_evolution, patient_id, patients(id, full_name, insurance_name), clinics(name)"
     )
     .eq("tenant_id", tenantId)
-    .order("scheduled_at", { ascending: false });
+    .order("scheduled_at", { ascending: true });
 
   if (searchParams.de) query = query.gte("scheduled_at", searchParams.de + "T00:00:00");
   if (searchParams.ate) query = query.lte("scheduled_at", searchParams.ate + "T23:59:59");
@@ -68,6 +69,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
   if (searchParams.evolucao === "sim") query = query.eq("has_evolution", true);
   if (searchParams.evolucao === "nao")
     query = query.or("has_evolution.is.null,has_evolution.eq.false");
+  if (searchParams.status) query = query.eq("status", searchParams.status);
 
   const { data: sessoes, error } = await query;
   if (error) console.error("[Atendimentos]", error.message);
@@ -128,6 +130,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
         <AtendimentosFiltros
           conveniosUnicos={conveniosUnicos}
           pacientesUnicos={pacientesUnicos}
+          statusAtivo={searchParams.status ?? ""}
         />
 
         {lista.length === 0 ? (
@@ -180,10 +183,26 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                         {formatCurrency(s.value_brl)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {s.has_evolution ? (
-                          <span className="text-xs font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">Sim</span>
+                        {s.status === "completed" ? (
+                          <Link
+                            href={`/terapeuta/pacientes/${s.patient_id}/sessoes/${s.id}`}
+                            className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors ${
+                              s.has_evolution
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            }`}
+                            title={s.has_evolution ? "Ver evolução" : "Registrar evolução"}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </Link>
                         ) : (
-                          <span className="text-xs text-gray-400">—</span>
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-300 cursor-not-allowed" title="Disponível somente para sessões realizadas">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -210,7 +229,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                         <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
                           {statusBadge(s.status)}
                         </span>
-                        {s.has_evolution && (
+                        {s.status === "completed" && s.has_evolution && (
                           <span className="text-[10px] font-semibold text-green-700 bg-green-50 px-1.5 py-0.5 rounded-full">Evolução</span>
                         )}
                       </div>

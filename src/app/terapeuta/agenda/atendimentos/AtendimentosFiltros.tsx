@@ -2,13 +2,15 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { SESSION_STATUS_OPTIONS } from "@/lib/session-status";
 
 type Props = {
   conveniosUnicos: string[];
   pacientesUnicos: { id: string; full_name: string }[];
+  statusAtivo: string;
 };
 
-export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos }: Props) {
+export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos, statusAtivo }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
   const [, startTransition] = useTransition();
@@ -18,6 +20,7 @@ export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos }
   const [paciente, setPaciente] = useState(sp.get("paciente") ?? "");
   const [convenio, setConvenio] = useState(sp.get("convenio") ?? "");
   const [evolucao, setEvolucao] = useState(sp.get("evolucao") ?? "");
+  const [status, setStatus] = useState(statusAtivo);
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -26,13 +29,14 @@ export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos }
     if (paciente) params.set("paciente", paciente);
     if (convenio) params.set("convenio", convenio);
     if (evolucao) params.set("evolucao", evolucao);
+    if (status) params.set("status", status);
     startTransition(() => {
       router.push(`/terapeuta/agenda/atendimentos?${params.toString()}`);
     });
   }
 
   function clearFilters() {
-    setDe(""); setAte(""); setPaciente(""); setConvenio(""); setEvolucao("");
+    setDe(""); setAte(""); setPaciente(""); setConvenio(""); setEvolucao(""); setStatus("");
     startTransition(() => {
       router.push("/terapeuta/agenda/atendimentos");
     });
@@ -41,7 +45,7 @@ export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos }
   const inputClass =
     "w-full px-3 py-2 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-[#1a4a3a] focus:ring-2 focus:ring-[#1a4a3a]/10 bg-white";
 
-  const hasFilters = de || ate || paciente || convenio || evolucao;
+  const hasFilters = de || ate || paciente || convenio || evolucao || status;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -60,6 +64,15 @@ export default function AtendimentosFiltros({ conveniosUnicos, pacientesUnicos }
             <option value="">Todos</option>
             {pacientesUnicos.map((p) => (
               <option key={p.id} value={p.id}>{p.full_name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>
+            <option value="">Todos</option>
+            {SESSION_STATUS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
         </div>
