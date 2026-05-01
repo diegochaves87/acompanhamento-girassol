@@ -48,12 +48,10 @@ function formatWeekRange(monday: string): string {
 }
 
 function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
-  // Fortaleza is always UTC-3, no DST — pure arithmetic avoids any locale/system timezone dependency
-  const utcMs = new Date(scheduledAt).getTime();
-  const fortaleza = new Date(utcMs - 3 * 60 * 60 * 1000);
-  const h = fortaleza.getUTCHours();
-  const m = fortaleza.getUTCMinutes();
-  const dateISO = `${fortaleza.getUTCFullYear()}-${String(fortaleza.getUTCMonth() + 1).padStart(2, "0")}-${String(fortaleza.getUTCDate()).padStart(2, "0")}`;
+  const d = new Date(scheduledAt);
+  const h = d.getUTCHours();
+  const m = d.getUTCMinutes();
+  const dateISO = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
   const diffDays = Math.round(
     (new Date(dateISO + "T12:00:00Z").getTime() - new Date(mondayISO + "T12:00:00Z").getTime()) /
     (1000 * 60 * 60 * 24)
