@@ -48,19 +48,17 @@ function formatWeekRange(monday: string): string {
 }
 
 function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
-  const d = new Date(scheduledAt);
-  const dateStr = d.toLocaleDateString("en-CA", { timeZone: "America/Fortaleza" });
-  const sessionDay = new Date(dateStr + "T12:00:00");
-  const monday = new Date(mondayISO + "T12:00:00");
-  const diffDays = Math.round((sessionDay.getTime() - monday.getTime()) / (1000 * 60 * 60 * 24));
+  // Fortaleza is always UTC-3, no DST — pure arithmetic avoids any locale/system timezone dependency
+  const utcMs = new Date(scheduledAt).getTime();
+  const fortaleza = new Date(utcMs - 3 * 60 * 60 * 1000);
+  const h = fortaleza.getUTCHours();
+  const m = fortaleza.getUTCMinutes();
+  const dateISO = `${fortaleza.getUTCFullYear()}-${String(fortaleza.getUTCMonth() + 1).padStart(2, "0")}-${String(fortaleza.getUTCDate()).padStart(2, "0")}`;
+  const diffDays = Math.round(
+    (new Date(dateISO + "T12:00:00Z").getTime() - new Date(mondayISO + "T12:00:00Z").getTime()) /
+    (1000 * 60 * 60 * 24)
+  );
   if (diffDays < 0 || diffDays > 5) return null;
-  const timeStr = d.toLocaleTimeString("en-US", {
-    timeZone: "America/Fortaleza",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const [h, m] = timeStr.split(":").map(Number);
   const slotIndex = (h - 7) * 2 + (m >= 30 ? 1 : 0);
   if (slotIndex < 0 || slotIndex >= 23) return null;
   return `${diffDays}-${slotIndex}`;
