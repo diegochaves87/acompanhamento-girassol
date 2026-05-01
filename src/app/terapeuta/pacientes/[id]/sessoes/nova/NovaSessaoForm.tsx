@@ -35,7 +35,7 @@ function todayISO() {
 }
 
 function scheduledAt(dateISO: string, hour: number, minute: number): string {
-  return `${dateISO}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-03:00`;
+  return `${dateISO}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
 }
 
 function nextOccurrence(fromISO: string, targetDow: number): string {
