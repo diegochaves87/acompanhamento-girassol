@@ -303,25 +303,24 @@ export default function TerapeutaShell({ children, profissional }: Props) {
       </div>
 
       {/* ── Profile badge — top-right, desktop only ── */}
-      <div className="hidden md:flex fixed top-3 right-4 z-30 items-center gap-2.5 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow select-none">
-        <div className="text-right leading-none">
-          {profissional?.profession && (
-            <p className="text-[10px] font-semibold mb-0.5" style={{ color: "#1a4a3a" }}>
-              {profissional.profession}
+      <div className="hidden md:flex fixed top-2 right-3 z-30 items-center gap-1.5 bg-white/95 backdrop-blur-sm rounded-lg px-2 py-1 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow select-none max-h-[38px] overflow-hidden">
+        <div className="text-right leading-tight">
+          {(profissional?.profession || profissional?.specialty) && (
+            <p className="text-[9px] text-gray-400 truncate max-w-[150px] leading-none mb-0.5">
+              {[profissional?.profession, profissional?.specialty].filter(Boolean).join(" · ")}
             </p>
           )}
-          {profissional?.specialty && (
-            <p className="text-[9px] text-gray-400 mb-1">{profissional.specialty}</p>
-          )}
-          <p className="text-xs font-bold text-gray-800">{profissional?.full_name ?? "—"}</p>
+          <p className="text-[10px] font-bold text-gray-800 truncate max-w-[150px] leading-none">
+            {profissional?.full_name ?? "—"}
+          </p>
         </div>
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
           style={{ backgroundColor: "#1a4a3a" }}
         >
           {initial}
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </div>

@@ -10,6 +10,7 @@ type Props = {
   tenantId: string;
   patientName: string;
   sessionDate: string;
+  clinicName: string | null;
   guardianName: string | null;
   guardianRelationship: string | null;
   existingEvolutionId?: string;
@@ -26,6 +27,7 @@ export default function NovaEvolucaoForm({
   tenantId,
   patientName,
   sessionDate,
+  clinicName,
   guardianName,
   guardianRelationship,
   existingEvolutionId,
@@ -83,12 +85,18 @@ export default function NovaEvolucaoForm({
         setUploadState({ status: "error", message: "Erro ao ler o arquivo." });
       reader.readAsDataURL(file);
     } else if (ext === "docx") {
-      setUploadState({
-        status: "error",
-        message: "Para .docx, abra o arquivo, selecione todo o texto e cole abaixo.",
-      });
+      setUploadState({ status: "loading", message: "Extraindo texto do Word..." });
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const mammoth = await import("mammoth");
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        setTechnicalText(result.value);
+        setUploadState({ status: "done", message: "Texto extraído do Word." });
+      } catch {
+        setUploadState({ status: "error", message: "Erro ao ler o arquivo .docx." });
+      }
     } else {
-      setUploadState({ status: "error", message: "Formato não suportado. Use .txt ou .pdf." });
+      setUploadState({ status: "error", message: "Formato não suportado. Use .txt, .pdf ou .docx." });
     }
   }
 
@@ -180,7 +188,9 @@ export default function NovaEvolucaoForm({
         </div>
         <div>
           <p className="font-semibold text-gray-900 leading-tight">{patientName}</p>
-          <p className="text-sm text-gray-400 mt-0.5">{sessionDate}</p>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {[sessionDate, clinicName].filter(Boolean).join(" · ")}
+          </p>
           {(guardianRelationship || guardianName) && (
             <p className="text-xs text-gray-400 mt-0.5">Responsável: {guardianDesc}</p>
           )}

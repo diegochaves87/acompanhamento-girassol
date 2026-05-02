@@ -32,7 +32,7 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
 
   const { data: session } = await supabase
     .from("sessions")
-    .select("id, scheduled_at, patient_id, tenant_id, status")
+    .select("id, scheduled_at, patient_id, tenant_id, status, clinics(name)")
     .eq("id", sessaoId)
     .maybeSingle();
 
@@ -95,6 +95,7 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
           tenantId={session.tenant_id as string}
           patientName={patient?.full_name ?? "Paciente"}
           sessionDate={formatSessionDate(session.scheduled_at)}
+          clinicName={(session.clinics as { name?: string } | null)?.name ?? null}
           guardianName={guardian?.guardian_name ?? null}
           guardianRelationship={guardian?.guardian_relationship ?? null}
           existingEvolutionId={existing?.id}

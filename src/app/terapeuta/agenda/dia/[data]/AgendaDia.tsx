@@ -49,10 +49,18 @@ type SessionCardState = {
   erro: string;
 };
 
+const FUTURE_FORBIDDEN: SessionStatus[] = [
+  "completed",
+  "unjustified_absence",
+  "justified_absence",
+  "cancelled_family",
+];
+
 export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: Props) {
   const guardianMap = new Map<string, GuardianInfo>(
     guardians.map((g) => [g.patient_id, g])
   );
+  const sessionDateMap = new Map(sessions.map((s) => [s.id, s.scheduled_at]));
 
   const [cardStates, setCardStates] = useState<Record<string, SessionCardState>>(
     () =>
@@ -76,6 +84,13 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
 
   async function saveStatus(sessionId: string) {
     const state = cardStates[sessionId];
+
+    const scheduledAt = sessionDateMap.get(sessionId);
+    if (scheduledAt && new Date(scheduledAt).getTime() > Date.now() && FUTURE_FORBIDDEN.includes(state.status)) {
+      updateCard(sessionId, { erro: "Não é possível finalizar uma sessão futura. Aguarde o horário da sessão." });
+      return;
+    }
+
     updateCard(sessionId, { saving: true, erro: "" });
     const supabase = createClient();
     const { error } = await supabase

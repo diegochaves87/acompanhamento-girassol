@@ -119,7 +119,18 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <h1 className="text-white font-semibold text-lg">Agenda</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-white font-semibold text-lg">Agenda</h1>
+              <Link
+                href="/terapeuta/agenda/atendimentos"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/15 text-white hover:bg-white/25 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h10" />
+                </svg>
+                Atendimentos
+              </Link>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => navigate(addDaysISO(monday, -7))}
