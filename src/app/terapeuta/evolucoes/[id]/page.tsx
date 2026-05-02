@@ -107,7 +107,7 @@ export default async function VerEvolucaoPage({ params }: Props) {
         {/* Ações */}
         <div className="flex gap-3">
           <Link
-            href={`/terapeuta/evolucoes/nova?sessao=${evo.session_id}`}
+            href={`/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
           >
             Editar
