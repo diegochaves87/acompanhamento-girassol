@@ -34,6 +34,11 @@ function formatDate(iso: string) {
   });
 }
 
+function formatDateLabel(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function formatTime(time: string | null) {
   return time ? time.slice(0, 5) : null;
 }
@@ -152,6 +157,8 @@ export default async function SessaoPerfilPage({ params }: Props) {
               recurrenceId={sessao.recurrence_id}
               patientId={params.id}
               futurasCount={futurasCount}
+              sessionDate={sessao.session_date}
+              sessionDateLabel={formatDateLabel(sessao.session_date)}
             />
           </section>
         )}

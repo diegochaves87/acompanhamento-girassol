@@ -26,6 +26,11 @@ function formatDate(scheduledAt: string) {
   });
 }
 
+function formatDateLabel(scheduledAt: string): string {
+  const d = new Date(scheduledAt);
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+}
+
 function formatTime(scheduledAt: string) {
   return scheduledAt.slice(11, 16);
 }
@@ -227,6 +232,8 @@ export default async function SessoesPacientePage({ params }: Props) {
                             sessaoId={s.id}
                             isRecurring={!!s.is_recurring}
                             recurrenceId={s.recurrence_id}
+                            scheduledAt={s.scheduled_at}
+                            sessionDateLabel={formatDateLabel(s.scheduled_at)}
                           />
                         </div>
                       )}

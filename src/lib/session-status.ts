@@ -6,7 +6,7 @@ export type SessionStatus =
   | "justified_absence"
   | "makeup"
   | "holiday"
-  | "cancelled_therapist"
+  | "canceled_therapist"
   | "cancelled_family";
 
 export const SESSION_STATUS_OPTIONS: { value: SessionStatus; label: string }[] = [
@@ -17,7 +17,7 @@ export const SESSION_STATUS_OPTIONS: { value: SessionStatus; label: string }[] =
   { value: "justified_absence", label: "Falta justificada" },
   { value: "makeup", label: "Reposição" },
   { value: "holiday", label: "Feriado" },
-  { value: "cancelled_therapist", label: "Cancelada pela terapeuta" },
+  { value: "canceled_therapist", label: "Cancelada pela terapeuta" },
   { value: "cancelled_family", label: "Cancelada pela família" },
 ];
 
@@ -67,7 +67,7 @@ export const STATUS_CONFIG: Record<
     badge: "FERIADO",
     cardClass: "bg-gray-50 border-l-2 border-gray-300 text-gray-500",
   },
-  cancelled_therapist: {
+  canceled_therapist: {
     label: "Cancelada pela terapeuta",
     className: "bg-orange-50 text-orange-700 border border-orange-100",
     badge: "CANCELADO",
@@ -84,7 +84,7 @@ export const STATUS_CONFIG: Record<
 export const NEEDS_NOTES: SessionStatus[] = [
   "unjustified_absence",
   "justified_absence",
-  "cancelled_therapist",
+  "canceled_therapist",
   "cancelled_family",
 ];
 

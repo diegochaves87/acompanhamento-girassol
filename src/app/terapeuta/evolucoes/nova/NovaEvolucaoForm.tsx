@@ -156,6 +156,7 @@ export default function NovaEvolucaoForm({
     }
 
     if (saveError) {
+      console.error("[handleSave] error:", saveError.message);
       setSaveState({ saving: false, message: saveError.message, type: "error" });
     } else {
       if (savedId && savedId !== evolucaoId) setEvolucaoId(savedId);

@@ -9,20 +9,19 @@ type Props = {
   recurrenceId: string;
   patientId: string;
   futurasCount: number;
+  sessionDate: string;
+  sessionDateLabel: string;
 };
 
 type Action = "single" | "recurrence";
-
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 export default function CancelarRecorrenciaButton({
   sessaoId,
   recurrenceId,
   patientId,
   futurasCount,
+  sessionDate,
+  sessionDateLabel,
 }: Props) {
   const router = useRouter();
   const [action, setAction] = useState<Action | null>(null);
@@ -35,7 +34,7 @@ export default function CancelarRecorrenciaButton({
     const supabase = createClient();
     const { error } = await supabase
       .from("sessions")
-      .update({ status: "cancelled_therapist" })
+      .update({ status: "canceled_therapist" })
       .eq("id", sessaoId);
 
     if (error) {
@@ -57,7 +56,7 @@ export default function CancelarRecorrenciaButton({
       .delete()
       .eq("recurrence_id", recurrenceId)
       .eq("status", "scheduled")
-      .gte("session_date", todayISO());
+      .gte("session_date", sessionDate);
 
     if (error) {
       setErro(error.message);
@@ -73,7 +72,7 @@ export default function CancelarRecorrenciaButton({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-600">
-          Cancelar apenas esta sessão. As demais da recorrência continuam agendadas.
+          Esta sessão será cancelada. Tem certeza?
         </p>
         {erro && <p className="text-sm text-red-600">{erro}</p>}
         <div className="flex gap-2">
@@ -100,10 +99,9 @@ export default function CancelarRecorrenciaButton({
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm text-gray-600">
-          Isso excluirá{" "}
-          <strong>{futurasCount}</strong>{" "}
-          sessão{futurasCount !== 1 ? "ões" : ""} agendada{futurasCount !== 1 ? "s" : ""}{" "}
-          desta recorrência. As sessões já realizadas são mantidas.
+          Todas as sessões futuras a partir de{" "}
+          <strong>{sessionDateLabel}</strong>{" "}
+          serão excluídas permanentemente. Esta ação não pode ser desfeita. Tem certeza?
         </p>
         {erro && <p className="text-sm text-red-600">{erro}</p>}
         <div className="flex gap-2">
@@ -119,7 +117,7 @@ export default function CancelarRecorrenciaButton({
             disabled={loading}
             className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-60"
           >
-            {loading ? "Cancelando…" : "Confirmar"}
+            {loading ? "Excluindo…" : "Confirmar"}
           </button>
         </div>
       </div>
@@ -138,7 +136,7 @@ export default function CancelarRecorrenciaButton({
         onClick={() => setAction("recurrence")}
         className="w-full px-4 py-2 rounded-xl text-sm font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
       >
-        Cancelar toda a recorrência
+        Cancelar toda a recorrência ({futurasCount} sessões)
       </button>
     </div>
   );
