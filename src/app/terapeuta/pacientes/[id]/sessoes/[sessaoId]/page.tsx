@@ -63,7 +63,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
   const sessionDateISO = sessao.scheduled_at.slice(0, 10);
   const ehFutura = sessionDateISO >= today && sessao.status === "scheduled";
 
-  const [futurasRes, evolutionRes] = await Promise.all([
+  const futurasPromise =
     sessao.is_recurring && sessao.recurrence_id && ehFutura
       ? supabase
           .from("sessions")
@@ -71,7 +71,10 @@ export default async function SessaoPerfilPage({ params }: Props) {
           .eq("recurrence_id", sessao.recurrence_id)
           .eq("status", "scheduled")
           .gte("scheduled_at", sessao.scheduled_at)
-      : Promise.resolve({ count: 0 }),
+      : Promise.resolve({ count: 0 as number | null });
+
+  const [futurasRes, evolutionRes] = await Promise.all([
+    futurasPromise,
     supabase
       .from("evolutions")
       .select("id")
@@ -80,7 +83,11 @@ export default async function SessaoPerfilPage({ params }: Props) {
   ]);
 
   const futurasCount = futurasRes.count ?? 0;
-  const evolution = evolutionRes.data as { id: string } | null;
+
+  if (evolutionRes.error) {
+    console.error("[SessaoDetalhe] evolution query error:", evolutionRes.error.message);
+  }
+  const evolution = (evolutionRes.data ?? null) as { id: string } | null;
 
   const dl: { label: string; value: string }[] = [
     { label: "Data", value: formatScheduledAt(sessao.scheduled_at) },
