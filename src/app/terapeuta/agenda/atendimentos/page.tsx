@@ -71,9 +71,10 @@ export default async function AtendimentosPage({ searchParams }: Props) {
 
   const sessionIds = lista.map((s) => s.id);
   const { data: evoData } = sessionIds.length
-    ? await supabase.from("evolutions").select("session_id").in("session_id", sessionIds)
-    : { data: [] as { session_id: string }[] };
-  const evolvedSessionIds = new Set((evoData ?? []).map((e) => e.session_id));
+    ? await supabase.from("evolutions").select("id, session_id").in("session_id", sessionIds)
+    : { data: [] as { id: string; session_id: string }[] };
+  const evoBySession = new Map((evoData ?? []).map((e) => [e.session_id, e.id]));
+  const evolvedSessionIds = new Set(evoBySession.keys());
 
   if (searchParams.convenio) {
     lista = lista.filter((s) => s.patients?.insurance_name === searchParams.convenio);
@@ -154,6 +155,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 <tbody className="divide-y divide-gray-50">
                   {lista.map((s) => {
                     const hasEvo = evolvedSessionIds.has(s.id);
+                    const evoId = evoBySession.get(s.id);
                     const rowBg =
                       s.status === "completed"
                         ? hasEvo
@@ -183,13 +185,17 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {s.status === "completed" ? (
-                            hasEvo ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap" style={{ backgroundColor: "#1a4a3a" }}>
+                            hasEvo && evoId ? (
+                              <Link
+                                href={`/terapeuta/evolucoes/${evoId}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap hover:opacity-80 transition-opacity"
+                                style={{ backgroundColor: "#1a4a3a" }}
+                              >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                                 Evolução registrada
-                              </span>
+                              </Link>
                             ) : (
                               <Link
                                 href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
@@ -216,6 +222,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
             <ul className="sm:hidden divide-y divide-gray-100">
               {lista.map((s) => {
                 const hasEvo = evolvedSessionIds.has(s.id);
+                const evoId = evoBySession.get(s.id);
                 const rowBg = s.status === "completed" ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
                 return (
                   <li key={s.id} style={rowBg ? { backgroundColor: rowBg } : undefined}>
@@ -241,10 +248,14 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                               + Evolução
                             </Link>
                           )}
-                          {s.status === "completed" && hasEvo && (
-                            <span className="text-[10px] font-semibold text-white px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#1a4a3a" }}>
+                          {s.status === "completed" && hasEvo && evoId && (
+                            <Link
+                              href={`/terapeuta/evolucoes/${evoId}`}
+                              className="text-[10px] font-semibold text-white px-1.5 py-0.5 rounded-full hover:opacity-80 transition-opacity"
+                              style={{ backgroundColor: "#1a4a3a" }}
+                            >
                               ✓ Registrada
-                            </span>
+                            </Link>
                           )}
                         </div>
                       </div>

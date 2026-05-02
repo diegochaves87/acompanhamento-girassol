@@ -8,12 +8,11 @@ type Props = { params: { id: string; sessaoId: string } };
 
 type SessaoDetalhe = {
   id: string;
-  session_date: string;
-  start_time: string | null;
+  scheduled_at: string;
   duration_minutes: number | null;
   status: string;
   value_brl: number | null;
-  absence_notes: string | null;
+  absence_note: string | null;
   is_recurring: boolean | null;
   recurrence_id: string | null;
   clinics: { name: string } | null;
@@ -25,22 +24,25 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function formatDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("pt-BR", {
+function formatScheduledAt(scheduledAt: string) {
+  const d = new Date(scheduledAt);
+  return d.toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
-function formatDateLabel(iso: string): string {
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
+function formatTime(scheduledAt: string) {
+  const d = new Date(scheduledAt);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-function formatTime(time: string | null) {
-  return time ? time.slice(0, 5) : null;
+function formatDateLabel(scheduledAt: string): string {
+  const d = new Date(scheduledAt);
+  return `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
 }
 
 export default async function SessaoPerfilPage({ params }: Props) {
@@ -49,7 +51,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
   const { data: raw, error } = await supabase
     .from("sessions")
     .select(
-      "id, session_date, start_time, duration_minutes, status, value_brl, absence_notes, is_recurring, recurrence_id, clinics(name), patients(id, full_name)"
+      "id, scheduled_at, duration_minutes, status, value_brl, absence_note, is_recurring, recurrence_id, clinics(name), patients(id, full_name)"
     )
     .eq("id", params.sessaoId)
     .single();
@@ -59,7 +61,8 @@ export default async function SessaoPerfilPage({ params }: Props) {
   const sessao = raw as unknown as SessaoDetalhe;
 
   const today = todayISO();
-  const ehFutura = sessao.session_date >= today && sessao.status === "scheduled";
+  const sessionDateISO = sessao.scheduled_at.slice(0, 10);
+  const ehFutura = sessionDateISO >= today && sessao.status === "scheduled";
 
   let futurasCount = 0;
   if (sessao.is_recurring && sessao.recurrence_id && ehFutura) {
@@ -68,13 +71,13 @@ export default async function SessaoPerfilPage({ params }: Props) {
       .select("id", { count: "exact", head: true })
       .eq("recurrence_id", sessao.recurrence_id)
       .eq("status", "scheduled")
-      .gte("session_date", today);
+      .gte("scheduled_at", sessao.scheduled_at);
     futurasCount = count ?? 0;
   }
 
   const dl: { label: string; value: string }[] = [
-    { label: "Data", value: formatDate(sessao.session_date) },
-    ...(formatTime(sessao.start_time) ? [{ label: "Horário", value: formatTime(sessao.start_time)! }] : []),
+    { label: "Data", value: formatScheduledAt(sessao.scheduled_at) },
+    { label: "Horário", value: formatTime(sessao.scheduled_at) },
     ...(sessao.clinics?.name ? [{ label: "Local", value: sessao.clinics.name }] : []),
     ...(sessao.duration_minutes ? [{ label: "Duração", value: `${sessao.duration_minutes} min` }] : []),
     ...(sessao.value_brl != null
@@ -96,7 +99,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
           </Link>
           <div>
             <h1 className="text-white font-semibold leading-tight capitalize">
-              {formatDate(sessao.session_date)}
+              {formatScheduledAt(sessao.scheduled_at)}
             </h1>
             <p className="text-white/60 text-xs">{sessao.patients?.full_name}</p>
           </div>
@@ -134,10 +137,10 @@ export default async function SessaoPerfilPage({ params }: Props) {
             ))}
           </dl>
 
-          {sessao.absence_notes && (
+          {sessao.absence_note && (
             <div className="mt-4 pt-4 border-t border-gray-50">
               <dt className="text-xs text-gray-400 mb-1">Observação</dt>
-              <dd className="text-sm text-gray-600 italic">{sessao.absence_notes}</dd>
+              <dd className="text-sm text-gray-600 italic">{sessao.absence_note}</dd>
             </div>
           )}
         </section>
@@ -157,8 +160,8 @@ export default async function SessaoPerfilPage({ params }: Props) {
               recurrenceId={sessao.recurrence_id}
               patientId={params.id}
               futurasCount={futurasCount}
-              sessionDate={sessao.session_date}
-              sessionDateLabel={formatDateLabel(sessao.session_date)}
+              scheduledAt={sessao.scheduled_at}
+              sessionDateLabel={formatDateLabel(sessao.scheduled_at)}
             />
           </section>
         )}

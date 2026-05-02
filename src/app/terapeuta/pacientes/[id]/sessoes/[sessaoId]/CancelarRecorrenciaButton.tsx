@@ -9,7 +9,7 @@ type Props = {
   recurrenceId: string;
   patientId: string;
   futurasCount: number;
-  sessionDate: string;
+  scheduledAt: string;
   sessionDateLabel: string;
 };
 
@@ -20,7 +20,7 @@ export default function CancelarRecorrenciaButton({
   recurrenceId,
   patientId,
   futurasCount,
-  sessionDate,
+  scheduledAt,
   sessionDateLabel,
 }: Props) {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function CancelarRecorrenciaButton({
       .delete()
       .eq("recurrence_id", recurrenceId)
       .eq("status", "scheduled")
-      .gte("session_date", sessionDate);
+      .gte("scheduled_at", scheduledAt);
 
     if (error) {
       setErro(error.message);

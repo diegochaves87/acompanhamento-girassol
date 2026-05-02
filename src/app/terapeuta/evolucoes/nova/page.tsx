@@ -4,7 +4,7 @@ import Link from "next/link";
 import NovaEvolucaoForm from "./NovaEvolucaoForm";
 
 type Props = {
-  searchParams: { sessao?: string };
+  searchParams: { sessao?: string; evolution?: string };
 };
 
 function formatSessionDate(scheduledAt: string): string {
@@ -26,6 +26,7 @@ function formatSessionDate(scheduledAt: string): string {
 
 export default async function NovaEvolucaoPage({ searchParams }: Props) {
   const sessaoId = searchParams.sessao;
+  const evolutionParamId = searchParams.evolution;
   if (!sessaoId) redirect("/terapeuta/evolucoes");
 
   const supabase = await createClient();
@@ -38,6 +39,19 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
 
   if (!session) notFound();
 
+  // Fetch existing evolution: prefer explicit evolution ID param, fall back to session lookup
+  const evoQuery = evolutionParamId
+    ? supabase
+        .from("evolutions")
+        .select("id, technical_text, family_text, status")
+        .eq("id", evolutionParamId)
+        .maybeSingle()
+    : supabase
+        .from("evolutions")
+        .select("id, technical_text, family_text, status")
+        .eq("session_id", sessaoId)
+        .maybeSingle();
+
   const [patientRes, guardianRes, evolutionRes] = await Promise.all([
     supabase
       .from("patients")
@@ -49,11 +63,7 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
       .select("guardian_name, guardian_relationship")
       .eq("patient_id", session.patient_id)
       .maybeSingle(),
-    supabase
-      .from("evolutions")
-      .select("id, technical_text, family_text, status")
-      .eq("session_id", sessaoId)
-      .maybeSingle(),
+    evoQuery,
   ]);
 
   const patient = patientRes.data;
@@ -64,6 +74,9 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
     family_text: string | null;
     status: string;
   } | null;
+
+  console.log("[NovaEvolucaoPage] sessaoId:", sessaoId, "evolutionParamId:", evolutionParamId);
+  console.log("[NovaEvolucaoPage] existing:", existing);
 
   const isEditing = !!existing;
 

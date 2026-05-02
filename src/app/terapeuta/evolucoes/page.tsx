@@ -249,7 +249,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
                   href={
                     item.status === "published"
                       ? `/terapeuta/evolucoes/${item.id}`
-                      : `/terapeuta/evolucoes/nova?sessao=${item.sessionId}`
+                      : `/terapeuta/evolucoes/nova?sessao=${item.sessionId}&evolution=${item.id}`
                   }
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
                 >

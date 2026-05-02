@@ -55,7 +55,7 @@ export default async function SessoesPacientePage({ params }: Props) {
         "id, scheduled_at, duration_minutes, status, value_brl, absence_note, is_recurring, recurrence_id, clinics(name)"
       )
       .eq("patient_id", params.id)
-      .order("scheduled_at", { ascending: false }),
+      .order("scheduled_at", { ascending: true }),
   ]);
 
   if (!patient) notFound();

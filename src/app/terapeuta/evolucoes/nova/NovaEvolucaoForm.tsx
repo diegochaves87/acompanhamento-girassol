@@ -34,6 +34,8 @@ export default function NovaEvolucaoForm({
   existingTechnicalText,
   existingFamilyText,
 }: Props) {
+  console.log("[NovaEvolucaoForm] props:", { existingEvolutionId, existingTechnicalText, existingFamilyText });
+
   const [evolucaoId, setEvolucaoId] = useState<string | null>(existingEvolutionId ?? null);
   const [technicalText, setTechnicalText] = useState(existingTechnicalText ?? "");
   const [familyText, setFamilyText] = useState(existingFamilyText ?? "");
