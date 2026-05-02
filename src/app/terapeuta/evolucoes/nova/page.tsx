@@ -58,7 +58,12 @@ export default async function NovaEvolucaoPage({ searchParams }: Props) {
 
   const patient = patientRes.data;
   const guardian = guardianRes.data;
-  const existing = evolutionRes.data;
+  const existing = evolutionRes.data as {
+    id: string;
+    technical_text: string | null;
+    family_text: string | null;
+    status: string;
+  } | null;
 
   const isEditing = !!existing;
 

@@ -20,21 +20,39 @@ export async function POST(request: NextRequest) {
   }
 
   const guardianDesc =
-    [guardianRelationship, guardianName].filter(Boolean).join(", ") ||
-    "responsável pelo paciente";
+    guardianRelationship || guardianName
+      ? [guardianRelationship, guardianName].filter(Boolean).join(" ")
+      : "responsável";
 
-  const prompt = `Você é uma assistente que ajuda fisioterapeutas a comunicar o progresso do tratamento para as famílias dos pacientes de forma clara e acolhedora.
+  const addressTitle = guardianRelationship ?? "Responsável";
 
-Transforme o texto técnico abaixo em uma mensagem calorosa para ser enviada ao(a) ${guardianDesc} de ${patientName}.
+  const prompt = `Você é uma assistente que ajuda terapeutas a comunicar o progresso do atendimento para as famílias dos pacientes de forma clara, acolhedora e estruturada.
+
+Transforme o texto técnico abaixo em uma mensagem para o(a) ${guardianDesc} de ${patientName}.
 
 Regras obrigatórias:
+- Proibido usar travessão em qualquer parte do texto (nem " - " nem "--")
 - Linguagem simples, calorosa e acessível, sem jargão técnico
-- Proibido usar travessão em qualquer parte do texto
-- Dirija-se ao responsável de forma direta e pessoal (ex: "Como mãe da ${patientName}...")
-- Inclua de 2 a 3 dicas práticas que a família pode aplicar no dia a dia em casa
-- Tom positivo, encorajador e empático
-- Parágrafos curtos e bem espaçados
-- Não use listas com marcadores, escreva em forma de texto corrido
+- Dirija-se sempre ao(a) ${addressTitle} de forma direta
+- Máximo de 300 palavras no total
+- Use exatamente os cinco títulos em negrito abaixo, nessa ordem, sem adicionar nem remover nenhum
+
+Estrutura obrigatória (copie os títulos exatamente como estão):
+
+**Como foi a sessão**
+[parágrafo descrevendo o atendimento e o que foi trabalhado]
+
+**O que observamos hoje**
+[parágrafo sobre comportamentos, avanços e dificuldades observadas]
+
+**Dicas para o dia a dia**
+[2 a 3 sugestões práticas que a família pode aplicar em casa, em forma de texto corrido sem marcadores]
+
+**Sua participação faz diferença**
+[parágrafo motivacional pedindo feedback sobre como foi a semana da criança em casa]
+
+**Até a próxima sessão**
+[encerramento acolhedor com expectativas para o próximo encontro]
 
 Texto técnico:
 ${technicalText}`;
@@ -48,7 +66,7 @@ ${technicalText}`;
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [{ role: "user", content: prompt }],
     }),
   });
