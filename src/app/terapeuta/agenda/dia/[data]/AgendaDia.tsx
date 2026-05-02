@@ -43,7 +43,6 @@ function buildWhatsappLink(phone: string, patientName: string, dateLabel: string
 
 type SessionCardState = {
   status: SessionStatus;
-  hasEvolution: boolean;
   absenceNote: string;
   saving: boolean;
   saved: boolean;
@@ -62,7 +61,6 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
           s.id,
           {
             status: s.status as SessionStatus,
-            hasEvolution: s.has_evolution ?? false,
             absenceNote: s.absence_note ?? "",
             saving: false,
             saved: false,
@@ -85,7 +83,6 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
       .update({
         status: state.status,
         absence_note: NEEDS_NOTES.includes(state.status) ? state.absenceNote || null : null,
-        has_evolution: state.hasEvolution,
       })
       .eq("id", sessionId);
     if (error) {
@@ -207,31 +204,6 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
                     />
                   )}
                 </div>
-
-                {/* Evolução */}
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={state.hasEvolution}
-                    onClick={() => updateCard(s.id, { hasEvolution: !state.hasEvolution })}
-                    className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
-                      state.hasEvolution ? "bg-[#1a4a3a]" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition ${
-                        state.hasEvolution ? "translate-x-4" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                  <span className="text-sm text-gray-700 font-medium">
-                    {state.hasEvolution ? "Evolução registrada" : "Sem evolução"}
-                  </span>
-                  {state.hasEvolution && (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold">✓</span>
-                  )}
-                </label>
 
                 {/* Ações */}
                 <div className="flex items-center gap-2 flex-wrap pt-1">
