@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import DespublicarButton from "./DespublicarButton";
 
 type Props = {
   searchParams: { aba?: string };
@@ -240,12 +241,17 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
                   </p>
                 )}
               </div>
-              <Link
-                href={`/terapeuta/evolucoes/nova?sessao=${item.sessionId}`}
-                className="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                {item.status === "draft" ? "Continuar" : "Ver"}
-              </Link>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {item.status === "published" && (
+                  <DespublicarButton evolucaoId={item.id} />
+                )}
+                <Link
+                  href={`/terapeuta/evolucoes/nova?sessao=${item.sessionId}`}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
+                  {item.status === "draft" ? "Continuar" : "Ver"}
+                </Link>
+              </div>
             </div>
           ))}
       </main>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
@@ -34,14 +34,15 @@ export default function NovaEvolucaoForm({
   existingTechnicalText,
   existingFamilyText,
 }: Props) {
+  const [evolucaoId, setEvolucaoId] = useState<string | null>(existingEvolutionId ?? null);
   const [technicalText, setTechnicalText] = useState(existingTechnicalText ?? "");
   const [familyText, setFamilyText] = useState(existingFamilyText ?? "");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [uploadState, setUploadState] = useState<UploadState>({ status: "idle", message: "" });
   const [saveState, setSaveState] = useState<SaveState>({ saving: false, message: "", type: "idle" });
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -129,6 +130,7 @@ export default function NovaEvolucaoForm({
 
   async function handleSave(status: "draft" | "published") {
     setSaveState({ saving: true, message: "", type: "idle" });
+    setPendingCount(null);
     const supabase = createClient();
     const payload = {
       technical_text: technicalText || null,
@@ -136,27 +138,40 @@ export default function NovaEvolucaoForm({
       status,
       updated_at: new Date().toISOString(),
     };
-    const { error } = existingEvolutionId
-      ? await supabase.from("evolutions").update(payload).eq("id", existingEvolutionId)
-      : await supabase.from("evolutions").insert({
-          ...payload,
-          session_id: sessionId,
-          patient_id: patientId,
-          tenant_id: tenantId,
-        });
-    if (error) {
-      setSaveState({ saving: false, message: error.message, type: "error" });
+
+    let saveError: { message: string } | null = null;
+    let savedId = evolucaoId;
+
+    if (evolucaoId) {
+      const { error } = await supabase.from("evolutions").update(payload).eq("id", evolucaoId);
+      saveError = error;
     } else {
+      const { data, error } = await supabase
+        .from("evolutions")
+        .insert({ ...payload, session_id: sessionId, patient_id: patientId, tenant_id: tenantId })
+        .select("id")
+        .single();
+      saveError = error;
+      if (!error && data) savedId = data.id;
+    }
+
+    if (saveError) {
+      setSaveState({ saving: false, message: saveError.message, type: "error" });
+    } else {
+      if (savedId && savedId !== evolucaoId) setEvolucaoId(savedId);
       setSaveState({
         saving: false,
-        message:
-          status === "draft"
-            ? "Rascunho salvo."
-            : "Evolução publicada para a família.",
+        message: status === "draft" ? "Rascunho salvo." : "Evolução publicada para a família.",
         type: "success",
       });
       if (status === "published") {
-        setTimeout(() => router.push("/terapeuta/evolucoes"), 1500);
+        const [completedRes, evolvedRes] = await Promise.all([
+          supabase.from("sessions").select("id").eq("tenant_id", tenantId).eq("status", "completed"),
+          supabase.from("evolutions").select("session_id").eq("tenant_id", tenantId),
+        ]);
+        const evolvedIds = new Set((evolvedRes.data ?? []).map((e: { session_id: string }) => e.session_id));
+        const count = (completedRes.data ?? []).filter((s: { id: string }) => !evolvedIds.has(s.id)).length;
+        setPendingCount(count);
       }
     }
   }
@@ -389,6 +404,32 @@ export default function NovaEvolucaoForm({
               </svg>
             )}
             {saveState.message}
+          </p>
+        )}
+
+        {pendingCount !== null && pendingCount > 0 && (
+          <Link
+            href="/terapeuta/agenda/atendimentos"
+            className="mt-3 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-semibold text-amber-800">
+                Você ainda tem {pendingCount} {pendingCount === 1 ? "evolução pendente" : "evoluções pendentes"}
+              </span>
+            </div>
+            <span className="text-xs font-bold text-amber-700 whitespace-nowrap">Continuar →</span>
+          </Link>
+        )}
+
+        {pendingCount === 0 && (
+          <p className="mt-3 text-xs font-medium text-green-700 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Todas as evoluções em dia!
           </p>
         )}
       </div>

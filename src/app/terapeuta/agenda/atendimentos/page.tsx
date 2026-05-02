@@ -69,6 +69,12 @@ export default async function AtendimentosPage({ searchParams }: Props) {
 
   let lista = (sessoes ?? []) as unknown as Atendimento[];
 
+  const sessionIds = lista.map((s) => s.id);
+  const { data: evoData } = sessionIds.length
+    ? await supabase.from("evolutions").select("session_id").in("session_id", sessionIds)
+    : { data: [] as { session_id: string }[] };
+  const evolvedSessionIds = new Set((evoData ?? []).map((e) => e.session_id));
+
   if (searchParams.convenio) {
     lista = lista.filter((s) => s.patients?.insurance_name === searchParams.convenio);
   }
@@ -146,79 +152,106 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {lista.map((s) => (
-                    <tr key={s.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-3 font-medium text-gray-800 whitespace-nowrap">
-                        <Link href={`/terapeuta/agenda/dia/${s.scheduled_at.slice(0, 10)}`} className="hover:text-[#1a4a3a] transition-colors">
-                          {formatDateTime(s.scheduled_at)}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{s.clinics?.name ?? "—"}</td>
-                      <td className="px-4 py-3 text-gray-700">
-                        <Link href={`/terapeuta/pacientes/${s.patient_id}`} className="hover:text-[#1a4a3a] transition-colors">
-                          {s.patients?.full_name ?? "—"}
-                        </Link>
-                        {s.patients?.insurance_name && (
-                          <p className="text-xs text-gray-400">{s.patients.insurance_name}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${statusClassName(s.status)}`}>
-                          {statusBadge(s.status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {s.status === "completed" ? (
-                          <Link
-                            href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors whitespace-nowrap"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Registrar evolução
+                  {lista.map((s) => {
+                    const hasEvo = evolvedSessionIds.has(s.id);
+                    const rowBg =
+                      s.status === "completed"
+                        ? hasEvo
+                          ? "#E8F5E9"
+                          : "#FFF3E0"
+                        : undefined;
+                    return (
+                      <tr key={s.id} className="transition-colors" style={rowBg ? { backgroundColor: rowBg } : undefined}>
+                        <td className="px-5 py-3 font-medium text-gray-800 whitespace-nowrap">
+                          <Link href={`/terapeuta/agenda/dia/${s.scheduled_at.slice(0, 10)}`} className="hover:text-[#1a4a3a] transition-colors">
+                            {formatDateTime(s.scheduled_at)}
                           </Link>
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{s.clinics?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-gray-700">
+                          <Link href={`/terapeuta/pacientes/${s.patient_id}`} className="hover:text-[#1a4a3a] transition-colors">
+                            {s.patients?.full_name ?? "—"}
+                          </Link>
+                          {s.patients?.insurance_name && (
+                            <p className="text-xs text-gray-400">{s.patients.insurance_name}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${statusClassName(s.status)}`}>
+                            {statusBadge(s.status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {s.status === "completed" ? (
+                            hasEvo ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap" style={{ backgroundColor: "#1a4a3a" }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Evolução registrada
+                              </span>
+                            ) : (
+                              <Link
+                                href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors whitespace-nowrap"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Registrar evolução
+                              </Link>
+                            )
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile list */}
             <ul className="sm:hidden divide-y divide-gray-100">
-              {lista.map((s) => (
-                <li key={s.id}>
-                  <Link
-                    href={`/terapeuta/agenda/dia/${s.scheduled_at.slice(0, 10)}`}
-                    className="block px-5 py-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800 truncate">{s.patients?.full_name ?? "—"}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(s.scheduled_at)}</p>
-                        {s.clinics?.name && <p className="text-xs text-gray-400">{s.clinics.name}</p>}
+              {lista.map((s) => {
+                const hasEvo = evolvedSessionIds.has(s.id);
+                const rowBg = s.status === "completed" ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
+                return (
+                  <li key={s.id} style={rowBg ? { backgroundColor: rowBg } : undefined}>
+                    <Link
+                      href={`/terapeuta/agenda/dia/${s.scheduled_at.slice(0, 10)}`}
+                      className="block px-5 py-4 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-800 truncate">{s.patients?.full_name ?? "—"}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(s.scheduled_at)}</p>
+                          {s.clinics?.name && <p className="text-xs text-gray-400">{s.clinics.name}</p>}
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
+                            {statusBadge(s.status)}
+                          </span>
+                          {s.status === "completed" && !hasEvo && (
+                            <Link
+                              href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
+                              className="text-[10px] font-semibold text-white bg-green-600 px-1.5 py-0.5 rounded-full"
+                            >
+                              + Evolução
+                            </Link>
+                          )}
+                          {s.status === "completed" && hasEvo && (
+                            <span className="text-[10px] font-semibold text-white px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#1a4a3a" }}>
+                              ✓ Registrada
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
-                          {statusBadge(s.status)}
-                        </span>
-                        {s.status === "completed" && (
-                          <Link
-                            href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
-                            className="text-[10px] font-semibold text-white bg-green-600 px-1.5 py-0.5 rounded-full"
-                          >
-                            + Evolução
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}
