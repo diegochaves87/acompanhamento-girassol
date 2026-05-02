@@ -8,18 +8,21 @@ type Props = { params: { id: string } };
 export default async function EditarPacientePage({ params }: Props) {
   const supabase = await createClient();
 
-  const { data: patient, error } = await supabase
-    .from("patients")
-    .select("id, full_name, cpf, birth_date, diagnosis, clinic_id, payment_type, value_per_session_brl, insurance_name, notes")
-    .eq("id", params.id)
-    .single();
+  const [patientRes, clinicasRes, guardianRes] = await Promise.all([
+    supabase
+      .from("patients")
+      .select("id, full_name, cpf, birth_date, diagnosis, clinic_id, payment_type, value_per_session_brl, insurance_name, notes")
+      .eq("id", params.id)
+      .single(),
+    supabase.from("clinics").select("id, name, accepted_insurances").order("name"),
+    supabase
+      .from("family_patient")
+      .select("guardian_name, guardian_phone, guardian_email, guardian_relationship")
+      .eq("patient_id", params.id)
+      .maybeSingle(),
+  ]);
 
-  if (error || !patient) notFound();
-
-  const { data: clinicas } = await supabase
-    .from("clinics")
-    .select("id, name, accepted_insurances")
-    .order("name");
+  if (patientRes.error || !patientRes.data) notFound();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
@@ -39,8 +42,13 @@ export default async function EditarPacientePage({ params }: Props) {
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <EditarPacienteForm
-          patient={patient}
-          clinicas={(clinicas ?? []).map((c) => ({ id: c.id, name: c.name, accepted_insurances: c.accepted_insurances ?? [] }))}
+          patient={patientRes.data}
+          clinicas={(clinicasRes.data ?? []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            accepted_insurances: c.accepted_insurances ?? [],
+          }))}
+          guardian={guardianRes.data ?? null}
         />
       </main>
     </div>

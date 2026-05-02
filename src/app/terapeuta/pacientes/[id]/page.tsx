@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
 import InativarPacienteButton from "./InativarPacienteButton";
+import NotasTab from "./NotasTab";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
 
@@ -24,13 +25,26 @@ const CONTRACT_LABEL: Record<string, string> = {
   convenio: "Convênio",
 };
 
-type EvoRow = {
+type AgendaSession = {
+  id: string;
+  scheduled_at: string;
+  clinics: { name: string } | null;
+};
+
+type CompletedSession = {
+  id: string;
+  scheduled_at: string;
+  clinics: { name: string } | null;
+};
+
+type EvoItem = {
   id: string;
   status: string;
   updated_at: string | null;
   session_id: string;
-  sessions: { scheduled_at: string } | null;
 };
+
+type Note = { id: string; content: string; created_at: string };
 
 function diagnosisBadgeClass(d: string): string {
   const key = d.toLowerCase().replace(/\s/g, "");
@@ -66,9 +80,11 @@ function formatDate(iso: string) {
 
 function formatScheduledAt(scheduledAt: string) {
   const d = new Date(scheduledAt);
-  const date = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+  const weekdays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
+  const weekday = weekdays[d.getUTCDay()];
+  const date = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
   const time = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
-  return `${date} às ${time}`;
+  return { weekday, date, time };
 }
 
 function formatUpdatedAt(iso: string) {
@@ -114,27 +130,70 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
   if (error || !patient) notFound();
 
-  const [guardianRes, evolucoeRes] = await Promise.all([
+  const now = new Date().toISOString();
+
+  const [
+    guardianRes,
+    agendaRes,
+    completedRes,
+    evosRes,
+    notasRes,
+  ] = await Promise.all([
     supabase
       .from("family_patient")
       .select("guardian_name, guardian_phone, guardian_email, guardian_relationship, invited_at")
       .eq("patient_id", params.id)
       .maybeSingle(),
+
+    aba === "agenda"
+      ? supabase
+          .from("sessions")
+          .select("id, scheduled_at, clinics(name)")
+          .eq("patient_id", params.id)
+          .eq("status", "scheduled")
+          .gte("scheduled_at", now)
+          .order("scheduled_at")
+          .limit(5)
+      : Promise.resolve({ data: [] as AgendaSession[] }),
+
+    aba === "evolucoes"
+      ? supabase
+          .from("sessions")
+          .select("id, scheduled_at, clinics(name)")
+          .eq("patient_id", params.id)
+          .eq("status", "completed")
+          .order("scheduled_at", { ascending: false })
+      : Promise.resolve({ data: [] as CompletedSession[] }),
+
     aba === "evolucoes"
       ? supabase
           .from("evolutions")
-          .select("id, status, updated_at, session_id, sessions(scheduled_at)")
+          .select("id, status, updated_at, session_id")
           .eq("patient_id", params.id)
-          .order("updated_at", { ascending: false })
-      : Promise.resolve({ data: [] as EvoRow[] }),
+      : Promise.resolve({ data: [] as EvoItem[] }),
+
+    aba === "notas"
+      ? supabase
+          .from("multidisciplinary_notes")
+          .select("id, content, created_at")
+          .eq("patient_id", params.id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as Note[] }),
   ]);
 
   const guardian = guardianRes.data;
-  const evolucoes = (evolucoeRes.data ?? []) as EvoRow[];
+  const agendaSessions = (agendaRes.data ?? []) as AgendaSession[];
+  const completedSessions = (completedRes.data ?? []) as CompletedSession[];
+  const evos = (evosRes.data ?? []) as EvoItem[];
+  const notas = (notasRes.data ?? []) as Note[];
+
+  const evoBySessionId = new Map(evos.map((e) => [e.session_id, e]));
+
   const clinicName = (patient.clinics as { name: string } | null)?.name ?? null;
   const diagnoses: string[] = patient.diagnosis ?? [];
   const supportLevel = (patient as Record<string, unknown>).support_level as string | null ?? null;
   const initial = patient.full_name.trim().charAt(0).toUpperCase();
+  const tenantId = (patient as Record<string, unknown>).tenant_id as string ?? "";
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
@@ -156,7 +215,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
           {/* Avatar + info */}
           <div className="flex items-start gap-5 mb-5">
-            {/* Avatar */}
             <div
               className="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold shadow-lg select-none"
               style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
@@ -164,7 +222,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
               {initial}
             </div>
 
-            {/* Name, badges, guardian */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <h1 className="text-white font-bold text-xl leading-tight">{patient.full_name}</h1>
@@ -179,7 +236,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                 </Link>
               </div>
 
-              {/* Diagnosis + support level badges */}
               {(diagnoses.length > 0 || supportLevel) && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {diagnoses.map((d) => (
@@ -195,7 +251,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                 </div>
               )}
 
-              {/* Guardian contact */}
               {guardian && (
                 <div className="mt-3 space-y-1.5">
                   {guardian.guardian_name && (
@@ -205,25 +260,16 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                         <span className="text-white/40 text-xs">{guardian.guardian_relationship}</span>
                       )}
                       {guardian.guardian_phone && (
-                        <a
-                          href={waLink(guardian.guardian_phone)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-green-400 hover:text-green-300 transition-colors"
-                          title="Abrir WhatsApp"
-                        >
+                        <a href={waLink(guardian.guardian_phone)} target="_blank" rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300 transition-colors" title="Abrir WhatsApp">
                           <WhatsAppIcon className="w-4 h-4" />
                         </a>
                       )}
                     </div>
                   )}
                   {guardian.guardian_phone && (
-                    <a
-                      href={waLink(guardian.guardian_phone)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-white/55 hover:text-green-300 text-sm transition-colors"
-                    >
+                    <a href={waLink(guardian.guardian_phone)} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-white/55 hover:text-green-300 text-sm transition-colors">
                       <WhatsAppIcon className="w-3.5 h-3.5 text-green-400" />
                       {guardian.guardian_phone}
                     </a>
@@ -303,11 +349,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                     <dt className="text-gray-400 mb-0.5">Pagamento</dt>
                     <dd className="font-medium text-gray-800">
                       {CONTRACT_LABEL[patient.payment_type] ?? patient.payment_type}
-                      {patient.value_per_session_brl != null && (
-                        <span className="text-gray-400 font-normal ml-1">
-                          · {patient.value_per_session_brl.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/sessão
-                        </span>
-                      )}
                     </dd>
                   </div>
                 )}
@@ -342,7 +383,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
               </section>
             )}
 
-            {/* Responsável / acesso */}
             {guardian?.guardian_email && (
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Acesso familiar</h2>
@@ -363,26 +403,53 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
         {/* ── ANAMNESE ── */}
         {aba === "anamnese" && (
-          <PlaceholderTab
-            title="Anamnese"
-            message="Aguardando preenchimento pelo responsável."
-          />
+          <PlaceholderTab title="Anamnese" message="Aguardando preenchimento pelo responsável." />
         )}
 
         {/* ── AGENDA ── */}
         {aba === "agenda" && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#e8f0ec" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#1a4a3a" strokeWidth={1.6}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
-              </svg>
-            </div>
-            <p className="font-semibold text-gray-700 mb-1">Agenda</p>
-            <p className="text-sm text-gray-400 mb-5">Gerencie os agendamentos deste paciente na agenda geral.</p>
+          <div className="space-y-3">
+            {agendaSessions.length > 0 && (
+              <section className="space-y-3">
+                {agendaSessions.map((s) => {
+                  const { weekday, date, time } = formatScheduledAt(s.scheduled_at);
+                  const clinic = (s.clinics as { name: string } | null)?.name ?? null;
+                  return (
+                    <Link
+                      key={s.id}
+                      href={`/terapeuta/pacientes/${params.id}/sessoes/${s.id}`}
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="text-center flex-shrink-0">
+                          <p className="text-xs text-gray-400 capitalize">{weekday}</p>
+                          <p className="text-lg font-bold leading-tight" style={{ color: "#1a4a3a" }}>{date.split("/")[0]}</p>
+                          <p className="text-xs text-gray-400">{date.split("/").slice(1).join("/")}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-800 text-sm">{time}</p>
+                          {clinic && <p className="text-xs text-gray-400 mt-0.5">{clinic}</p>}
+                        </div>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  );
+                })}
+              </section>
+            )}
+
+            {agendaSessions.length === 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-10 text-center">
+                <p className="font-semibold text-gray-600 mb-1">Sem sessões agendadas</p>
+                <p className="text-sm text-gray-400 mb-5">Não há próximas sessões para este paciente.</p>
+              </div>
+            )}
+
             <Link
               href="/terapeuta/agenda"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#1a4a3a" }}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-semibold border border-gray-200 text-gray-600 bg-white hover:bg-gray-50 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
@@ -395,48 +462,63 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
         {/* ── EVOLUÇÕES ── */}
         {aba === "evolucoes" && (
           <>
-            {evolucoes.length === 0 ? (
-              <PlaceholderTab
-                title="Nenhuma evolução"
-                message="As evoluções registradas aparecerão aqui."
-              />
+            {completedSessions.length === 0 ? (
+              <PlaceholderTab title="Nenhuma sessão realizada" message="As evoluções aparecerão aqui após a realização de sessões." />
             ) : (
               <div className="space-y-3">
-                {evolucoes.map((evo) => {
-                  const sessionDate = evo.sessions?.scheduled_at
-                    ? formatScheduledAt(evo.sessions.scheduled_at)
-                    : "Data não disponível";
-                  const href =
-                    evo.status === "published"
-                      ? `/terapeuta/evolucoes/${evo.id}`
-                      : `/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`;
-                  return (
-                    <Link
-                      key={evo.id}
-                      href={href}
-                      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium text-gray-800 text-sm">{sessionDate}</p>
-                        {evo.updated_at && (
-                          <p className="text-xs text-gray-400 mt-0.5">Atualizada em {formatUpdatedAt(evo.updated_at)}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                {completedSessions.map((session) => {
+                  const evo = evoBySessionId.get(session.id);
+                  const { weekday, date, time } = formatScheduledAt(session.scheduled_at);
+                  const clinic = (session.clinics as { name: string } | null)?.name ?? null;
+                  const sessionLabel = `${weekday} ${date} às ${time}`;
+
+                  if (evo) {
+                    const href =
+                      evo.status === "published"
+                        ? `/terapeuta/evolucoes/${evo.id}`
+                        : `/terapeuta/evolucoes/nova?sessao=${session.id}&evolution=${evo.id}`;
+                    return (
+                      <Link key={session.id} href={href}
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow">
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-800 text-sm">{sessionLabel}</p>
+                          {clinic && <p className="text-xs text-gray-400 mt-0.5">{clinic}</p>}
+                          {evo.updated_at && (
+                            <p className="text-xs text-gray-400">Atualizada em {formatUpdatedAt(evo.updated_at)}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                             evo.status === "published"
                               ? "bg-green-50 text-green-700 border-green-100"
                               : "bg-amber-50 text-amber-700 border-amber-100"
-                          }`}
-                        >
-                          {evo.status === "published" ? "PUBLICADA" : "RASCUNHO"}
-                        </span>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
+                          }`}>
+                            {evo.status === "published" ? "PUBLICADA" : "RASCUNHO"}
+                          </span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={session.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-800 text-sm">{sessionLabel}</p>
+                        {clinic && <p className="text-xs text-gray-400 mt-0.5">{clinic}</p>}
                       </div>
-                    </Link>
+                      <Link
+                        href={`/terapeuta/evolucoes/nova?sessao=${session.id}`}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-green-600 hover:bg-green-700 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Registrar
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
@@ -446,7 +528,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
         {/* ── NOTAS ── */}
         {aba === "notas" && (
-          <PlaceholderTab title="Notas" message="Em breve." />
+          <NotasTab patientId={params.id} tenantId={tenantId} initialNotes={notas} />
         )}
 
         {/* ── ARQUIVOS ── */}

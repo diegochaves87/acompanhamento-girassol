@@ -19,8 +19,16 @@ type Patient = {
   notes: string | null;
 };
 
-type Props = { patient: Patient; clinicas: Clinica[] };
+type Guardian = {
+  guardian_name: string | null;
+  guardian_phone: string | null;
+  guardian_email: string | null;
+  guardian_relationship: string | null;
+} | null;
 
+type Props = { patient: Patient; clinicas: Clinica[]; guardian: Guardian };
+
+const PARENTESCO_OPTIONS = ["Mãe", "Pai", "Avó", "Avô", "Tio(a)", "Irmão/Irmã", "Outro"];
 
 function formatCpf(digits: string) {
   return digits
@@ -29,7 +37,7 @@ function formatCpf(digits: string) {
     .replace(/\.(\d{3})(\d)/, ".$1-$2");
 }
 
-export default function EditarPacienteForm({ patient, clinicas }: Props) {
+export default function EditarPacienteForm({ patient, clinicas, guardian }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,8 +55,20 @@ export default function EditarPacienteForm({ patient, clinicas }: Props) {
     notes: patient.notes ?? "",
   });
 
+  const [guardianForm, setGuardianForm] = useState({
+    guardian_name: guardian?.guardian_name ?? "",
+    guardian_phone: guardian?.guardian_phone ?? "",
+    guardian_phone_alt: "",
+    guardian_email: guardian?.guardian_email ?? "",
+    guardian_relationship: guardian?.guardian_relationship ?? "",
+  });
+
   function set(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function setG(field: string, value: string) {
+    setGuardianForm((prev) => ({ ...prev, [field]: value }));
   }
 
   function applyCpf(value: string) {
@@ -88,6 +108,43 @@ export default function EditarPacienteForm({ patient, clinicas }: Props) {
       setError(`Erro ao salvar: ${dbError.message}`);
       setLoading(false);
       return;
+    }
+
+    // Save guardian — insert if new, update if existing
+    const hasGuardianData =
+      guardianForm.guardian_name.trim() ||
+      guardianForm.guardian_phone.trim() ||
+      guardianForm.guardian_email.trim();
+
+    if (hasGuardianData) {
+      const guardianPayload = {
+        guardian_name: guardianForm.guardian_name || null,
+        guardian_phone: guardianForm.guardian_phone || null,
+        guardian_phone_alt: guardianForm.guardian_phone_alt || null,
+        guardian_email: guardianForm.guardian_email || null,
+        guardian_relationship: guardianForm.guardian_relationship || null,
+      };
+
+      if (guardian) {
+        const { error: gErr } = await supabase
+          .from("family_patient")
+          .update(guardianPayload)
+          .eq("patient_id", patient.id);
+        if (gErr) {
+          setError(`Erro ao salvar responsável: ${gErr.message}`);
+          setLoading(false);
+          return;
+        }
+      } else {
+        const { error: gErr } = await supabase
+          .from("family_patient")
+          .insert({ patient_id: patient.id, ...guardianPayload });
+        if (gErr) {
+          setError(`Erro ao salvar responsável: ${gErr.message}`);
+          setLoading(false);
+          return;
+        }
+      }
     }
 
     setSuccess(true);
@@ -180,6 +237,40 @@ export default function EditarPacienteForm({ patient, clinicas }: Props) {
               )}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Responsável */}
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-base font-semibold mb-5" style={{ color: "#1a4a3a" }}>Responsável</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>Nome do responsável</label>
+            <input type="text" placeholder="Nome completo" value={guardianForm.guardian_name}
+              onChange={(e) => setG("guardian_name", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Parentesco</label>
+            <select value={guardianForm.guardian_relationship} onChange={(e) => setG("guardian_relationship", e.target.value)} className={selectClass}>
+              <option value="">Selecione</option>
+              {PARENTESCO_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Telefone</label>
+            <input type="tel" placeholder="(00) 00000-0000" value={guardianForm.guardian_phone}
+              onChange={(e) => setG("guardian_phone", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Telefone alternativo</label>
+            <input type="tel" placeholder="(00) 00000-0000" value={guardianForm.guardian_phone_alt}
+              onChange={(e) => setG("guardian_phone_alt", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>E-mail do responsável</label>
+            <input type="email" placeholder="email@exemplo.com" value={guardianForm.guardian_email}
+              onChange={(e) => setG("guardian_email", e.target.value)} className={inputClass} />
+          </div>
         </div>
       </section>
 
