@@ -130,19 +130,20 @@ export default function NovaEvolucaoForm({
   async function handleSave(status: "draft" | "published") {
     setSaveState({ saving: true, message: "", type: "idle" });
     const supabase = createClient();
-    const { error } = await supabase.from("evolutions").upsert(
-      {
-        ...(existingEvolutionId ? { id: existingEvolutionId } : {}),
-        session_id: sessionId,
-        patient_id: patientId,
-        tenant_id: tenantId,
-        technical_text: technicalText || null,
-        family_text: familyText || null,
-        status,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "session_id" }
-    );
+    const payload = {
+      technical_text: technicalText || null,
+      family_text: familyText || null,
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = existingEvolutionId
+      ? await supabase.from("evolutions").update(payload).eq("id", existingEvolutionId)
+      : await supabase.from("evolutions").insert({
+          ...payload,
+          session_id: sessionId,
+          patient_id: patientId,
+          tenant_id: tenantId,
+        });
     if (error) {
       setSaveState({ saving: false, message: error.message, type: "error" });
     } else {
