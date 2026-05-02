@@ -3,14 +3,58 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
 import InativarPacienteButton from "./InativarPacienteButton";
-import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
+
+const ABAS = ["dados", "anamnese", "agenda", "evolucoes", "notas", "arquivos", "relatorios"] as const;
+type Aba = (typeof ABAS)[number];
+
+const ABA_LABELS: Record<Aba, string> = {
+  dados: "Dados",
+  anamnese: "Anamnese",
+  agenda: "Agenda",
+  evolucoes: "Evoluções",
+  notas: "Notas",
+  arquivos: "Arquivos",
+  relatorios: "Relatórios",
+};
 
 const CONTRACT_LABEL: Record<string, string> = {
   particular: "Particular",
   convenio: "Convênio",
 };
+
+type EvoRow = {
+  id: string;
+  status: string;
+  updated_at: string | null;
+  session_id: string;
+  sessions: { scheduled_at: string } | null;
+};
+
+function diagnosisBadgeClass(d: string): string {
+  const key = d.toLowerCase().replace(/\s/g, "");
+  const map: Record<string, string> = {
+    tea: "bg-blue-100 text-blue-800",
+    autismo: "bg-blue-100 text-blue-800",
+    tdah: "bg-amber-100 text-amber-800",
+    tda: "bg-orange-100 text-orange-800",
+    dislexia: "bg-purple-100 text-purple-800",
+    tdl: "bg-pink-100 text-pink-800",
+    toc: "bg-red-100 text-red-800",
+    ansiedade: "bg-rose-100 text-rose-800",
+    dpac: "bg-cyan-100 text-cyan-800",
+  };
+  return map[key] ?? "bg-teal-100 text-teal-800";
+}
+
+function supportLevelBadgeClass(level: string): string {
+  const n = level.replace(/\D/g, "");
+  if (n === "1") return "bg-green-100 text-green-800";
+  if (n === "2") return "bg-amber-100 text-amber-800";
+  if (n === "3") return "bg-red-100 text-red-800";
+  return "bg-gray-100 text-gray-700";
+}
 
 function formatCpf(digits: string) {
   return digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
@@ -27,15 +71,39 @@ function formatScheduledAt(scheduledAt: string) {
   return `${date} às ${time}`;
 }
 
-type SessionRow = {
-  id: string;
-  scheduled_at: string;
-  status: string;
-  clinics: { name: string } | null;
-};
+function formatUpdatedAt(iso: string) {
+  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function waLink(phone: string) {
+  return `https://wa.me/55${phone.replace(/\D/g, "")}`;
+}
+
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+  </svg>
+);
+
+function PlaceholderTab({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-16 text-center">
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#e8f0ec" }}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#1a4a3a" strokeWidth={1.6}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
+        </svg>
+      </div>
+      <p className="font-semibold text-gray-600 mb-1">{title}</p>
+      <p className="text-sm text-gray-400">{message}</p>
+    </div>
+  );
+}
 
 export default async function PacientePerfilPage({ params, searchParams }: Props) {
-  const aba = searchParams.aba === "atendimentos" ? "atendimentos" : "cadastro";
+  const aba: Aba = (ABAS as readonly string[]).includes(searchParams.aba ?? "")
+    ? (searchParams.aba as Aba)
+    : "dados";
+
   const supabase = await createClient();
 
   const { data: patient, error } = await supabase
@@ -46,114 +114,176 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
   if (error || !patient) notFound();
 
-  const [guardianRes, sessionsRes] = await Promise.all([
+  const [guardianRes, evolucoeRes] = await Promise.all([
     supabase
       .from("family_patient")
       .select("guardian_name, guardian_phone, guardian_email, guardian_relationship, invited_at")
       .eq("patient_id", params.id)
       .maybeSingle(),
-    aba === "atendimentos"
+    aba === "evolucoes"
       ? supabase
-          .from("sessions")
-          .select("id, scheduled_at, status, clinics(name)")
+          .from("evolutions")
+          .select("id, status, updated_at, session_id, sessions(scheduled_at)")
           .eq("patient_id", params.id)
-          .order("scheduled_at", { ascending: false })
-      : Promise.resolve({ data: [] as SessionRow[] }),
+          .order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [] as EvoRow[] }),
   ]);
 
   const guardian = guardianRes.data;
-  const sessions = (sessionsRes.data ?? []) as SessionRow[];
+  const evolucoes = (evolucoeRes.data ?? []) as EvoRow[];
   const clinicName = (patient.clinics as { name: string } | null)?.name ?? null;
+  const diagnoses: string[] = patient.diagnosis ?? [];
+  const supportLevel = (patient as Record<string, unknown>).support_level as string | null ?? null;
+  const initial = patient.full_name.trim().charAt(0).toUpperCase();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Link href="/terapeuta/pacientes" className="text-white/60 hover:text-white transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <h1 className="text-white font-semibold truncate">{patient.full_name}</h1>
+
+      {/* ── Profile header ── */}
+      <div style={{ backgroundColor: "#1a4a3a" }}>
+        <div className="max-w-3xl mx-auto px-6 pt-4 pb-0">
+
+          {/* Back */}
+          <Link
+            href="/terapeuta/pacientes"
+            className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors mb-5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Pacientes
+          </Link>
+
+          {/* Avatar + info */}
+          <div className="flex items-start gap-5 mb-5">
+            {/* Avatar */}
+            <div
+              className="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold shadow-lg select-none"
+              style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
+            >
+              {initial}
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href={`/terapeuta/pacientes/${params.id}?aba=atendimentos`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" />
-                </svg>
-                Ver atendimentos
-              </Link>
-              <Link
-                href={`/terapeuta/pacientes/${params.id}/editar`}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-opacity hover:opacity-80"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Editar
-              </Link>
+
+            {/* Name, badges, guardian */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="text-white font-bold text-xl leading-tight">{patient.full_name}</h1>
+                <Link
+                  href={`/terapeuta/pacientes/${params.id}/editar`}
+                  className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white border border-white/20 hover:border-white/40 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Editar cadastro
+                </Link>
+              </div>
+
+              {/* Diagnosis + support level badges */}
+              {(diagnoses.length > 0 || supportLevel) && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {diagnoses.map((d) => (
+                    <span key={d} className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${diagnosisBadgeClass(d)}`}>
+                      {d}
+                    </span>
+                  ))}
+                  {supportLevel && (
+                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${supportLevelBadgeClass(supportLevel)}`}>
+                      Nível {supportLevel}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Guardian contact */}
+              {guardian && (
+                <div className="mt-3 space-y-1.5">
+                  {guardian.guardian_name && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-white/75 text-sm">{guardian.guardian_name}</span>
+                      {guardian.guardian_relationship && (
+                        <span className="text-white/40 text-xs">{guardian.guardian_relationship}</span>
+                      )}
+                      {guardian.guardian_phone && (
+                        <a
+                          href={waLink(guardian.guardian_phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300 transition-colors"
+                          title="Abrir WhatsApp"
+                        >
+                          <WhatsAppIcon className="w-4 h-4" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {guardian.guardian_phone && (
+                    <a
+                      href={waLink(guardian.guardian_phone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-white/55 hover:text-green-300 text-sm transition-colors"
+                    >
+                      <WhatsAppIcon className="w-3.5 h-3.5 text-green-400" />
+                      {guardian.guardian_phone}
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
-          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
-            <Link
-              href={`/terapeuta/pacientes/${params.id}`}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                aba === "cadastro"
-                  ? "text-white bg-white/20"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              Cadastro
-            </Link>
-            <Link
-              href={`/terapeuta/pacientes/${params.id}?aba=atendimentos`}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                aba === "atendimentos"
-                  ? "text-white bg-white/20"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              Atendimentos
-            </Link>
+
+          {/* Tab bar */}
+          <div
+            className="flex overflow-x-auto border-b border-white/10 -mx-6 px-6"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
+          >
+            {ABAS.map((a) => (
+              <Link
+                key={a}
+                href={`/terapeuta/pacientes/${params.id}?aba=${a}`}
+                className={`flex-shrink-0 px-4 py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
+                  aba === a
+                    ? "text-white border-white"
+                    : "text-white/45 border-transparent hover:text-white/75 hover:border-white/30"
+                }`}
+              >
+                {ABA_LABELS[a]}
+              </Link>
+            ))}
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-3xl mx-auto px-6 py-8 space-y-5">
+      {/* ── Tab content ── */}
+      <main className="max-w-3xl mx-auto px-6 py-6 space-y-4">
 
-        {aba === "cadastro" && (
+        {/* ── DADOS ── */}
+        {aba === "dados" && (
           <>
-            {/* Dados pessoais */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-base font-semibold mb-4" style={{ color: "#1a4a3a" }}>Dados do paciente</h2>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Informações clínicas</h2>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                <div>
-                  <dt className="text-gray-400 mb-0.5">Nome completo</dt>
-                  <dd className="font-medium text-gray-800">{patient.full_name}</dd>
-                </div>
-                {patient.cpf && (
-                  <div>
-                    <dt className="text-gray-400 mb-0.5">CPF</dt>
-                    <dd className="font-medium text-gray-800">{formatCpf(patient.cpf)}</dd>
-                  </div>
-                )}
-                {patient.birth_date && (
-                  <div>
-                    <dt className="text-gray-400 mb-0.5">Data de nascimento</dt>
-                    <dd className="font-medium text-gray-800">{formatDate(patient.birth_date)}</dd>
-                  </div>
-                )}
-                {patient.diagnosis?.length > 0 && (
+                {diagnoses.length > 0 && (
                   <div className="sm:col-span-2">
-                    <dt className="text-gray-400 mb-0.5">Diagnóstico</dt>
-                    <dd className="font-medium text-gray-800">{patient.diagnosis.join(", ")}</dd>
+                    <dt className="text-gray-400 mb-1">Diagnóstico</dt>
+                    <dd className="flex flex-wrap gap-1.5">
+                      {diagnoses.map((d) => (
+                        <span key={d} className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${diagnosisBadgeClass(d)}`}>
+                          {d}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+                {supportLevel && (
+                  <div>
+                    <dt className="text-gray-400 mb-1">Nível de suporte</dt>
+                    <dd>
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${supportLevelBadgeClass(supportLevel)}`}>
+                        Nível {supportLevel}
+                      </span>
+                    </dd>
                   </div>
                 )}
                 {clinicName && (
@@ -162,131 +292,145 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                     <dd className="font-medium text-gray-800">{clinicName}</dd>
                   </div>
                 )}
-              </dl>
-            </section>
-
-            {/* Pagamento */}
-            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-base font-semibold mb-4" style={{ color: "#1a4a3a" }}>Pagamento</h2>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                <div>
-                  <dt className="text-gray-400 mb-0.5">Tipo</dt>
-                  <dd className="font-medium text-gray-800">
-                    {CONTRACT_LABEL[patient.payment_type] ?? patient.payment_type ?? "—"}
-                  </dd>
-                </div>
-                {patient.value_per_session_brl != null && (
-                  <div>
-                    <dt className="text-gray-400 mb-0.5">Valor por sessão</dt>
-                    <dd className="font-medium text-gray-800">
-                      {patient.value_per_session_brl.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                    </dd>
-                  </div>
-                )}
                 {patient.insurance_name && (
                   <div>
                     <dt className="text-gray-400 mb-0.5">Convênio</dt>
                     <dd className="font-medium text-gray-800">{patient.insurance_name}</dd>
                   </div>
                 )}
+                {patient.payment_type && (
+                  <div>
+                    <dt className="text-gray-400 mb-0.5">Pagamento</dt>
+                    <dd className="font-medium text-gray-800">
+                      {CONTRACT_LABEL[patient.payment_type] ?? patient.payment_type}
+                      {patient.value_per_session_brl != null && (
+                        <span className="text-gray-400 font-normal ml-1">
+                          · {patient.value_per_session_brl.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/sessão
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                )}
               </dl>
             </section>
 
-            {/* Responsável */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-base font-semibold mb-4" style={{ color: "#1a4a3a" }}>Responsável</h2>
-              {guardian ? (
-                <div className="space-y-4">
-                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                    {guardian.guardian_name && (
-                      <div>
-                        <dt className="text-gray-400 mb-0.5">Nome</dt>
-                        <dd className="font-medium text-gray-800">{guardian.guardian_name}</dd>
-                      </div>
-                    )}
-                    {guardian.guardian_relationship && (
-                      <div>
-                        <dt className="text-gray-400 mb-0.5">Parentesco</dt>
-                        <dd className="font-medium text-gray-800">{guardian.guardian_relationship}</dd>
-                      </div>
-                    )}
-                    {guardian.guardian_phone && (
-                      <div>
-                        <dt className="text-gray-400 mb-0.5">Telefone</dt>
-                        <dd className="font-medium text-gray-800">{guardian.guardian_phone}</dd>
-                      </div>
-                    )}
-                    {guardian.guardian_email && (
-                      <div>
-                        <dt className="text-gray-400 mb-0.5">E-mail</dt>
-                        <dd className="font-medium text-gray-800">{guardian.guardian_email}</dd>
-                      </div>
-                    )}
-                  </dl>
-                  {guardian.guardian_email ? (
-                    <LiberarAcessoButton
-                      patientId={params.id}
-                      guardianEmail={guardian.guardian_email}
-                      guardianName={guardian.guardian_name}
-                      invitedAt={guardian.invited_at ?? null}
-                    />
-                  ) : (
-                    <p className="text-sm text-gray-400">
-                      Sem e-mail cadastrado — acesso ao app não pode ser liberado.
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">Nenhum responsável cadastrado.</p>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Dados pessoais</h2>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                {patient.birth_date && (
+                  <div>
+                    <dt className="text-gray-400 mb-0.5">Data de nascimento</dt>
+                    <dd className="font-medium text-gray-800">{formatDate(patient.birth_date)}</dd>
+                  </div>
+                )}
+                {patient.cpf && (
+                  <div>
+                    <dt className="text-gray-400 mb-0.5">CPF</dt>
+                    <dd className="font-medium text-gray-800">{formatCpf(patient.cpf)}</dd>
+                  </div>
+                )}
+              </dl>
+              {!patient.birth_date && !patient.cpf && (
+                <p className="text-sm text-gray-400">Nenhum dado pessoal cadastrado.</p>
               )}
             </section>
 
-            {/* Observações */}
             {patient.notes && (
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-base font-semibold mb-3" style={{ color: "#1a4a3a" }}>Observações</h2>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{patient.notes}</p>
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Observações</h2>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{patient.notes}</p>
               </section>
             )}
 
-            {/* Inativar */}
+            {/* Responsável / acesso */}
+            {guardian?.guardian_email && (
+              <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Acesso familiar</h2>
+                <LiberarAcessoButton
+                  patientId={params.id}
+                  guardianEmail={guardian.guardian_email}
+                  guardianName={guardian.guardian_name}
+                  invitedAt={guardian.invited_at ?? null}
+                />
+              </section>
+            )}
+
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <InativarPacienteButton patientId={params.id} />
             </section>
           </>
         )}
 
-        {aba === "atendimentos" && (
+        {/* ── ANAMNESE ── */}
+        {aba === "anamnese" && (
+          <PlaceholderTab
+            title="Anamnese"
+            message="Aguardando preenchimento pelo responsável."
+          />
+        )}
+
+        {/* ── AGENDA ── */}
+        {aba === "agenda" && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#e8f0ec" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#1a4a3a" strokeWidth={1.6}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+              </svg>
+            </div>
+            <p className="font-semibold text-gray-700 mb-1">Agenda</p>
+            <p className="text-sm text-gray-400 mb-5">Gerencie os agendamentos deste paciente na agenda geral.</p>
+            <Link
+              href="/terapeuta/agenda"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#1a4a3a" }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+              </svg>
+              Ir para a Agenda
+            </Link>
+          </div>
+        )}
+
+        {/* ── EVOLUÇÕES ── */}
+        {aba === "evolucoes" && (
           <>
-            {sessions.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-14 text-center">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#e8f0ec" }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#1a4a3a" strokeWidth={1.6}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
-                  </svg>
-                </div>
-                <p className="font-semibold text-gray-600 mb-1">Nenhum atendimento</p>
-                <p className="text-sm text-gray-400">Este paciente ainda não possui sessões registradas.</p>
-              </div>
+            {evolucoes.length === 0 ? (
+              <PlaceholderTab
+                title="Nenhuma evolução"
+                message="As evoluções registradas aparecerão aqui."
+              />
             ) : (
               <div className="space-y-3">
-                {sessions.map((s) => {
-                  const clinicLabel = (s.clinics as { name: string } | null)?.name ?? null;
+                {evolucoes.map((evo) => {
+                  const sessionDate = evo.sessions?.scheduled_at
+                    ? formatScheduledAt(evo.sessions.scheduled_at)
+                    : "Data não disponível";
+                  const href =
+                    evo.status === "published"
+                      ? `/terapeuta/evolucoes/${evo.id}`
+                      : `/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`;
                   return (
                     <Link
-                      key={s.id}
-                      href={`/terapeuta/pacientes/${params.id}/sessoes/${s.id}`}
+                      key={evo.id}
+                      href={href}
                       className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-shadow"
                     >
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-800 text-sm">{formatScheduledAt(s.scheduled_at)}</p>
-                        {clinicLabel && (
-                          <p className="text-xs text-gray-400 mt-0.5">{clinicLabel}</p>
+                        <p className="font-medium text-gray-800 text-sm">{sessionDate}</p>
+                        {evo.updated_at && (
+                          <p className="text-xs text-gray-400 mt-0.5">Atualizada em {formatUpdatedAt(evo.updated_at)}</p>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusClassName(s.status)}`}>
-                          {statusLabel(s.status)}
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                            evo.status === "published"
+                              ? "bg-green-50 text-green-700 border-green-100"
+                              : "bg-amber-50 text-amber-700 border-amber-100"
+                          }`}
+                        >
+                          {evo.status === "published" ? "PUBLICADA" : "RASCUNHO"}
                         </span>
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -298,6 +442,21 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
               </div>
             )}
           </>
+        )}
+
+        {/* ── NOTAS ── */}
+        {aba === "notas" && (
+          <PlaceholderTab title="Notas" message="Em breve." />
+        )}
+
+        {/* ── ARQUIVOS ── */}
+        {aba === "arquivos" && (
+          <PlaceholderTab title="Arquivos" message="Em breve." />
+        )}
+
+        {/* ── RELATÓRIOS ── */}
+        {aba === "relatorios" && (
+          <PlaceholderTab title="Relatórios" message="Em breve." />
         )}
 
       </main>
