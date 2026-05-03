@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
 import InativarPacienteButton from "./InativarPacienteButton";
 import NotasTab from "./NotasTab";
+import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
 
@@ -28,6 +29,7 @@ const CONTRACT_LABEL: Record<string, string> = {
 type AgendaSession = {
   id: string;
   scheduled_at: string;
+  status: string;
   clinics: { name: string } | null;
 };
 
@@ -44,7 +46,7 @@ type EvoItem = {
   session_id: string;
 };
 
-type Note = { id: string; content: string; created_at: string };
+type Note = { id: string; technical_note: string; created_at: string };
 
 function diagnosisBadgeClass(d: string): string {
   const key = d.toLowerCase().replace(/\s/g, "");
@@ -148,7 +150,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     aba === "agenda"
       ? supabase
           .from("sessions")
-          .select("id, scheduled_at, clinics(name)")
+          .select("id, scheduled_at, status, clinics(name)")
           .eq("patient_id", params.id)
           .eq("status", "scheduled")
           .gte("scheduled_at", now)
@@ -175,7 +177,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     aba === "notas"
       ? supabase
           .from("multidisciplinary_notes")
-          .select("id, content, created_at")
+          .select("id, technical_note, created_at")
           .eq("patient_id", params.id)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as Note[] }),
@@ -344,14 +346,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                     <dd className="font-medium text-gray-800">{patient.insurance_name}</dd>
                   </div>
                 )}
-                {patient.payment_type && (
-                  <div>
-                    <dt className="text-gray-400 mb-0.5">Pagamento</dt>
-                    <dd className="font-medium text-gray-800">
-                      {CONTRACT_LABEL[patient.payment_type] ?? patient.payment_type}
-                    </dd>
-                  </div>
-                )}
               </dl>
             </section>
 
@@ -429,6 +423,9 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                         <div>
                           <p className="font-semibold text-gray-800 text-sm">{time}</p>
                           {clinic && <p className="text-xs text-gray-400 mt-0.5">{clinic}</p>}
+                          <span className={`inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
+                            {statusLabel(s.status)}
+                          </span>
                         </div>
                       </div>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

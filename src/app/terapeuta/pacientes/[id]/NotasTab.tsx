@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Note = { id: string; content: string; created_at: string };
+type Note = { id: string; technical_note: string; created_at: string };
 
 type Props = {
   patientId: string;
@@ -37,8 +37,8 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     const supabase = createClient();
     const { data, error: dbError } = await supabase
       .from("multidisciplinary_notes")
-      .insert({ patient_id: patientId, tenant_id: tenantId, content: content.trim(), visibility: "interno" })
-      .select("id, content, created_at")
+      .insert({ patient_id: patientId, tenant_id: tenantId, technical_note: content.trim(), visibility: "interno" })
+      .select("id, technical_note, created_at")
       .single();
     if (dbError) {
       setError(dbError.message);
@@ -103,7 +103,7 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
             <div key={note.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <div className="flex items-start gap-3">
                 <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap flex-1">
-                  {note.content}
+                  {note.technical_note}
                 </p>
                 <button
                   onClick={() => handleDelete(note.id)}
