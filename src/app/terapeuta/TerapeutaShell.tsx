@@ -28,7 +28,7 @@ type Props = {
 
 const NAV_TOP: NavItem[] = [
   {
-    label: "Página Inicial",
+    label: "Início",
     href: "/terapeuta",
     exact: true,
     color: "#1D3557",
@@ -73,7 +73,7 @@ const NAV_TOP: NavItem[] = [
     ),
   },
   {
-    label: "Evoluções",
+    label: "Evoluções pendentes",
     href: "/terapeuta/evolucoes",
     color: "#8E6CCF",
     bgColor: "#F3F0FF",
@@ -125,7 +125,7 @@ const NAV_BOTTOM: NavItem[] = [
 const NAV_MOBILE_BOTTOM = NAV_TOP.slice(0, 4);
 
 const OPEN_W = 280;
-const CLOSED_W = 60;
+const CLOSED_W = 64;
 
 export default function TerapeutaShell({ children, profissional }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -166,6 +166,10 @@ export default function TerapeutaShell({ children, profissional }: Props) {
   const sidebarW = sidebarOpen ? OPEN_W : CLOSED_W;
   const contentMargin = mounted && isDesktop ? sidebarW : 0;
   const initial = profissional?.full_name?.trim()[0]?.toUpperCase() ?? "U";
+  const profLabel = [profissional?.profession, profissional?.specialty]
+    .filter(Boolean)
+    .join(" / ")
+    .toUpperCase() || "TERAPEUTA";
 
   function SidebarLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => void }) {
     return (
@@ -179,10 +183,12 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               href={item.href}
               onClick={onNavigate}
               title={collapsed ? item.label : undefined}
-              className={`flex items-center mx-2 px-2 py-2 rounded-xl text-sm font-medium transition-colors hover:bg-gray-50 ${collapsed ? "justify-center" : "gap-3"}`}
+              className={`flex items-center mr-2 ml-0 px-3 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50 ${collapsed ? "justify-center mx-2" : "gap-3"}`}
               style={{
                 backgroundColor: active ? "#F0FFF4" : undefined,
                 color: active ? "#4CAF50" : "#1D3557",
+                borderLeft: active ? "3px solid #4CAF50" : "3px solid transparent",
+                borderRadius: "0 12px 12px 0",
               }}
             >
               <span
@@ -208,49 +214,97 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         className="hidden md:flex fixed top-0 left-0 h-full z-40 flex-col transition-all duration-300 overflow-hidden border-r"
         style={{ width: sidebarW, backgroundColor: "white", borderColor: "#E5E7EB" }}
       >
+        {/* Logo block */}
         <div
-          className="flex items-center justify-between px-3 py-4 border-b flex-shrink-0"
-          style={{ borderColor: "#E5E7EB" }}
+          className="flex items-center justify-between px-3 py-3 border-b flex-shrink-0"
+          style={{ borderColor: "#E5E7EB", minHeight: 72 }}
         >
-          {sidebarOpen && (
-            <span
-              className="font-bold text-sm tracking-tight whitespace-nowrap overflow-hidden pl-1"
-              style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-            >
-              Acompanhamento Girassol
-            </span>
+          {sidebarOpen ? (
+            <div className="flex-1 min-w-0 pr-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/identidade-visual/Logo+Nome+Slogan.png"
+                alt="Acompanhamento Girassol"
+                style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
+              />
+            </div>
+          ) : (
+            <div className="mx-auto w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFF7E6" }}>
+              <span style={{ fontSize: 20 }}>🌻</span>
+            </div>
           )}
           <button
             onClick={toggleSidebar}
             aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
-            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-gray-100 ${!sidebarOpen ? "mx-auto" : ""}`}
-            style={{ color: "#1D3557" }}
+            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-gray-100 ${!sidebarOpen ? "hidden" : ""}`}
+            style={{ color: "#9CA3AF" }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              {sidebarOpen
-                ? <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                : <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              }
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         </div>
 
-        <nav className="flex-1 py-3 overflow-y-auto overflow-x-hidden">
+        {/* Nav */}
+        <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
           <SidebarLinks items={NAV_TOP} />
         </nav>
 
-        <div className="border-t py-2 overflow-x-hidden" style={{ borderColor: "#E5E7EB" }}>
+        {/* People illustration */}
+        {sidebarOpen && (
+          <div className="flex justify-center px-4 pt-1 pb-0">
+            <svg width="120" height="42" viewBox="0 0 120 42" fill="none">
+              <circle cx="24" cy="10" r="7" fill="#4CAF50"/>
+              <path d="M13 40c0-6.075 4.925-11 11-11s11 4.925 11 11H13z" fill="#4CAF50"/>
+              <circle cx="60" cy="8" r="8" fill="#2E7BC1"/>
+              <path d="M48 40c0-6.627 5.373-12 12-12s12 5.373 12 12H48z" fill="#2E7BC1"/>
+              <circle cx="96" cy="10" r="7" fill="#FFC107"/>
+              <path d="M85 40c0-6.075 4.925-11 11-11s11 4.925 11 11H85z" fill="#FFC107"/>
+            </svg>
+          </div>
+        )}
+
+        {/* Precisa de ajuda card */}
+        {sidebarOpen && (
+          <div className="px-3 pb-2 pt-1">
+            <Link
+              href="/terapeuta/sobre"
+              className="flex items-center gap-2.5 p-3 rounded-xl transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#F3F0FF" }}
+            >
+              <div
+                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: "#E9E4F8", color: "#8E6CCF" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold leading-tight" style={{ color: "#8E6CCF" }}>Precisa de ajuda?</p>
+                <p className="text-[10px] leading-tight" style={{ color: "#8E6CCF", opacity: 0.75 }}>Fale com nossa equipe</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "#8E6CCF" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        )}
+
+        {/* Bottom nav links */}
+        <div className="border-t py-1 overflow-x-hidden" style={{ borderColor: "#E5E7EB" }}>
           <SidebarLinks items={NAV_BOTTOM} />
         </div>
 
-        <div className="px-2 py-3 border-t overflow-x-hidden" style={{ borderColor: "#E5E7EB" }}>
+        {/* Logout */}
+        <div className="px-0 py-2 border-t overflow-x-hidden" style={{ borderColor: "#E5E7EB" }}>
           <button
             onClick={handleLogout}
             title={!sidebarOpen ? "Sair" : undefined}
-            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors hover:bg-gray-50 ${!sidebarOpen ? "justify-center" : ""}`}
-            style={{ color: "#6B7280" }}
+            className={`flex items-center mr-2 ml-0 px-3 py-2.5 w-full text-sm font-medium transition-colors hover:bg-gray-50 ${!sidebarOpen ? "justify-center mx-2" : "gap-3"}`}
+            style={{ color: "#9CA3AF", borderLeft: "3px solid transparent", borderRadius: "0 12px 12px 0" }}
           >
-            <span className="flex-shrink-0">
+            <span className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
@@ -258,7 +312,104 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             {sidebarOpen && <span>Sair</span>}
           </button>
         </div>
+
+        {/* Expand button when collapsed */}
+        {!sidebarOpen && (
+          <div className="pb-3 flex justify-center">
+            <button
+              onClick={toggleSidebar}
+              aria-label="Abrir menu"
+              className="p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+              style={{ color: "#9CA3AF" }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        )}
       </aside>
+
+      {/* ── Desktop top header bar ── */}
+      <header
+        className="hidden md:grid grid-cols-3 fixed top-0 z-30 h-14 items-center px-5 border-b"
+        style={{
+          backgroundColor: "white",
+          borderColor: "#E5E7EB",
+          left: sidebarW,
+          right: 0,
+          transition: "left 0.3s",
+        }}
+      >
+        {/* Left: Brand identity */}
+        <div className="flex items-center">
+          <div>
+            <p
+              className="font-bold leading-none"
+              style={{
+                fontSize: 10,
+                color: "#1D3557",
+                fontFamily: "var(--font-poppins, sans-serif)",
+                letterSpacing: "0.06em",
+              }}
+            >
+              ACOMPANHAMENTO GIRASSOL
+            </p>
+            <p style={{ fontSize: 9, color: "#9CA3AF", lineHeight: 1.4, marginTop: 2 }}>
+              Cuidar, acompanhar, evoluir juntos.
+            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <div style={{ height: 1.5, width: 28, backgroundColor: "#FFBA3D", borderRadius: 1 }} />
+              <span style={{ color: "#FFBA3D", fontSize: 10, lineHeight: 1 }}>♡</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Center: Page title */}
+        <div className="flex items-center justify-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.8}
+            style={{ color: "#1D3557" }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span
+            className="font-semibold text-sm whitespace-nowrap"
+            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
+          >
+            Jornada de Evolução Terapêutica
+          </span>
+        </div>
+
+        {/* Right: Profile */}
+        <div className="flex items-center justify-end gap-3 cursor-pointer">
+          <div className="text-right">
+            <p
+              className="text-[11px] font-bold leading-tight tracking-wide"
+              style={{ color: "#4CAF50", fontFamily: "var(--font-poppins, sans-serif)" }}
+            >
+              {profLabel}
+            </p>
+            <p className="text-xs font-medium leading-tight" style={{ color: "#1D3557" }}>
+              {profissional?.full_name ?? "—"}
+            </p>
+          </div>
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 border-2 border-white shadow-sm"
+            style={{ backgroundColor: "#4CAF50" }}
+          >
+            {initial}
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#9CA3AF" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </header>
 
       {/* ── Mobile top header ── */}
       <header
@@ -276,12 +427,12 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </svg>
         </button>
 
-        <span
-          className="font-bold text-sm"
-          style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-        >
-          Acompanhamento Girassol
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/identidade-visual/Logo+Nome+Slogan.png"
+          alt="Acompanhamento Girassol"
+          style={{ height: 36, width: "auto", objectFit: "contain" }}
+        />
 
         <button
           aria-label="Notificações"
@@ -308,15 +459,15 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         style={{ backgroundColor: "white", borderColor: "#E5E7EB" }}
       >
         <div
-          className="flex items-center justify-between px-5 py-5 border-b"
+          className="flex items-center justify-between px-4 py-3 border-b"
           style={{ borderColor: "#E5E7EB" }}
         >
-          <span
-            className="font-bold text-base"
-            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-          >
-            Acompanhamento Girassol
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/identidade-visual/Logo+Nome+Slogan.png"
+            alt="Acompanhamento Girassol"
+            style={{ height: 44, width: "auto", objectFit: "contain" }}
+          />
           <button
             onClick={() => setMobileDrawerOpen(false)}
             className="hover:bg-gray-100 p-1 rounded-lg transition-colors"
@@ -328,15 +479,15 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </button>
         </div>
 
-        <nav className="flex-1 py-3 overflow-y-auto">
+        <nav className="flex-1 py-2 overflow-y-auto">
           <SidebarLinks items={NAV_TOP} onNavigate={() => setMobileDrawerOpen(false)} />
         </nav>
 
-        <div className="border-t py-2" style={{ borderColor: "#E5E7EB" }}>
+        <div className="border-t py-1" style={{ borderColor: "#E5E7EB" }}>
           <SidebarLinks items={NAV_BOTTOM} onNavigate={() => setMobileDrawerOpen(false)} />
         </div>
 
-        <div className="px-3 py-3 border-t" style={{ borderColor: "#E5E7EB" }}>
+        <div className="px-3 pb-3 pt-1 border-t" style={{ borderColor: "#E5E7EB" }}>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-gray-50"
@@ -370,7 +521,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
                 className="text-[9px] font-medium leading-none truncate max-w-full text-center"
                 style={{ color: active ? "#4CAF50" : "#9CA3AF" }}
               >
-                {item.label === "Página Inicial" ? "Início" : item.label}
+                {item.label}
               </span>
             </Link>
           );
@@ -386,36 +537,10 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         </button>
       </nav>
 
-      {/* ── Profile badge — desktop only ── */}
-      <div
-        className="hidden md:flex fixed top-2 right-3 z-30 items-center gap-1.5 bg-white rounded-lg px-2 py-1 shadow-sm border cursor-pointer hover:shadow-md transition-shadow select-none max-h-[38px] overflow-hidden"
-        style={{ borderColor: "#E5E7EB" }}
-      >
-        <div className="text-right leading-tight">
-          {(profissional?.profession || profissional?.specialty) && (
-            <p className="text-[9px] truncate max-w-[150px] leading-none mb-0.5" style={{ color: "#9CA3AF" }}>
-              {[profissional?.profession, profissional?.specialty].filter(Boolean).join(" · ")}
-            </p>
-          )}
-          <p className="text-[10px] font-bold truncate max-w-[150px] leading-none" style={{ color: "#1D3557" }}>
-            {profissional?.full_name ?? "—"}
-          </p>
-        </div>
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-          style={{ backgroundColor: "#4CAF50" }}
-        >
-          {initial}
-        </div>
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#9CA3AF" }}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-
       {/* ── Content wrapper ── */}
       <div
-        className="transition-all duration-300 pt-14 md:pt-0 pb-16 md:pb-0"
-        style={{ marginLeft: contentMargin }}
+        className="transition-all duration-300 pt-14 pb-16 md:pb-0"
+        style={{ marginLeft: contentMargin, backgroundColor: "#F9FAFB", minHeight: "100vh" }}
       >
         {children}
       </div>
