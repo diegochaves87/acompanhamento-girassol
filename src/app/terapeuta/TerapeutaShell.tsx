@@ -230,50 +230,40 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         style={{ width: sidebarW, backgroundColor: "white", borderColor: "#E5E7EB" }}
       >
         {/* Logo / toggle block */}
-        <div
-          className="flex-shrink-0 border-b flex items-center justify-between px-3"
-          style={{ borderColor: "#E5E7EB", height: HEADER_H }}
-        >
+        <div className="flex-shrink-0 border-b" style={{ borderColor: "#E5E7EB" }}>
           {sidebarOpen ? (
-            <>
-              <div className="flex-1 min-w-0 pr-1">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/logo-girassol.png"
-                  alt="Acompanhamento Girassol"
-                  style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
-                />
-              </div>
+            <div className="relative p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/identidade-visual/Logo-Nome-Slogan.png"
+                alt="Acompanhamento Girassol"
+                style={{ width: "100%", height: "auto", maxHeight: 80, objectFit: "contain", objectPosition: "left" }}
+              />
               <button
                 onClick={toggleSidebar}
                 aria-label="Fechar menu"
-                className="flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+                className="absolute top-2 right-2 p-1.5 rounded-lg transition-colors hover:bg-gray-100"
                 style={{ color: "#9CA3AF" }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
-            </>
+            </div>
           ) : (
-            <div className="w-full flex flex-col items-center gap-2 py-2">
-              <button
-                onClick={toggleSidebar}
-                aria-label="Abrir menu"
-                className="p-1.5 rounded-lg transition-colors hover:bg-gray-100"
-                style={{ color: "#9CA3AF" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+            <button
+              onClick={toggleSidebar}
+              aria-label="Abrir menu"
+              className="w-full flex justify-center hover:bg-gray-50 transition-colors"
+              style={{ padding: "12px 0" }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/logo-girassol.png"
+                src="/identidade-visual/Logo-Girassol.png"
                 alt="Girassol"
-                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: "50%", objectPosition: "left top" }}
+                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }}
               />
-            </div>
+            </button>
           )}
         </div>
 
@@ -358,35 +348,17 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           transition: "left 0.3s",
         }}
       >
-        {/* Left: Logo */}
-        <div className="flex items-center">
+        {/* Left: empty (sidebar is outside the header) */}
+        <div />
+
+        {/* Center: brand logo */}
+        <div className="flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-girassol.png"
+            src="/identidade-visual/Logo-Nome-Slogan.png"
             alt="Acompanhamento Girassol"
-            style={{ height: HEADER_H, width: "auto", objectFit: "contain", objectPosition: "left" }}
+            style={{ height: 64, width: "auto", objectFit: "contain" }}
           />
-        </div>
-
-        {/* Center: Girassol icon + title */}
-        <div className="flex items-center justify-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#FFBA3D" strokeWidth={1.8}>
-            <circle cx="12" cy="12" r="4" fill="#FFBA3D" stroke="none"/>
-            <line x1="12" y1="2" x2="12" y2="5" strokeLinecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="22" strokeLinecap="round"/>
-            <line x1="2" y1="12" x2="5" y2="12" strokeLinecap="round"/>
-            <line x1="19" y1="12" x2="22" y2="12" strokeLinecap="round"/>
-            <line x1="4.93" y1="4.93" x2="7.05" y2="7.05" strokeLinecap="round"/>
-            <line x1="16.95" y1="16.95" x2="19.07" y2="19.07" strokeLinecap="round"/>
-            <line x1="19.07" y1="4.93" x2="16.95" y2="7.05" strokeLinecap="round"/>
-            <line x1="7.05" y1="16.95" x2="4.93" y2="19.07" strokeLinecap="round"/>
-          </svg>
-          <span
-            className="font-semibold text-sm whitespace-nowrap"
-            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-          >
-            Jornada de Evolução Terapêutica
-          </span>
         </div>
 
         {/* Right: Profile dropdown */}
