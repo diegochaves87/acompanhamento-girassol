@@ -124,6 +124,16 @@ function getSlotKey(scheduledAt: string, mondayISO: string): string | null {
   return `${diffDays}-${slotIndex}`;
 }
 
+function formatTime(scheduledAt: string): string {
+  const d = new Date(scheduledAt);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+}
+
+function formatEndTime(scheduledAt: string, durationMinutes: number | null): string {
+  const d = new Date(new Date(scheduledAt).getTime() + (durationMinutes ?? 30) * 60000);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+}
+
 export default function AgendaSemana({ tenantId, initialSessions, initialMonday }: Props) {
   const router = useRouter();
   const [monday, setMonday] = useState(initialMonday);
@@ -296,7 +306,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                                   href={`/terapeuta/agenda/dia/${dayISO}`}
                                   className="block text-[10px] opacity-70 hover:opacity-100"
                                 >
-                                  {statusBadge(s.status)}
+                                  {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)} · {statusBadge(s.status)}
                                 </Link>
                               )}
                             </div>

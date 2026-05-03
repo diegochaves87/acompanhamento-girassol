@@ -26,6 +26,7 @@ type AgendaSession = {
   id: string;
   scheduled_at: string;
   status: string;
+  duration_minutes: number | null;
   clinics: { name: string } | null;
 };
 
@@ -76,12 +77,15 @@ function formatDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-function formatScheduledAt(scheduledAt: string) {
+function formatScheduledAt(scheduledAt: string, durationMinutes?: number | null) {
   const d = new Date(scheduledAt);
   const weekdays = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
   const weekday = weekdays[d.getUTCDay()];
   const date = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  const time = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+  const startTime = `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+  const end = new Date(d.getTime() + (durationMinutes ?? 30) * 60000);
+  const endTime = `${String(end.getUTCHours()).padStart(2, "0")}:${String(end.getUTCMinutes()).padStart(2, "0")}`;
+  const time = `${startTime} – ${endTime}`;
   return { weekday, date, time };
 }
 
@@ -144,7 +148,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     aba === "agenda"
       ? supabase
           .from("sessions")
-          .select("id, scheduled_at, status, clinics(name)")
+          .select("id, scheduled_at, status, duration_minutes, clinics(name)")
           .eq("patient_id", params.id)
           .order("scheduled_at", { ascending: false })
           .limit(50)
@@ -398,7 +402,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
             {agendaSessions.length > 0 && (
               <section className="space-y-3">
                 {agendaSessions.map((s) => {
-                  const { weekday, date, time } = formatScheduledAt(s.scheduled_at);
+                  const { weekday, date, time } = formatScheduledAt(s.scheduled_at, s.duration_minutes);
                   const clinic = (s.clinics as { name: string } | null)?.name ?? null;
                   return (
                     <Link

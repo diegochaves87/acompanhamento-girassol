@@ -223,7 +223,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             <div className="flex-1 min-w-0 pr-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/identidade-visual/Logo%2BNome%2BSlogan.png"
+                src="/logo-girassol.png"
                 alt="Acompanhamento Girassol"
                 style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
               />
@@ -345,7 +345,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         <div className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/identidade-visual/Logo%2BNome%2BSlogan.png"
+            src="/logo-girassol.png"
             alt="Acompanhamento Girassol"
             style={{ height: 56, width: "auto", objectFit: "contain", objectPosition: "left" }}
           />
@@ -415,7 +415,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/identidade-visual/Logo%2BNome%2BSlogan.png"
+          src="/logo-girassol.png"
           alt="Acompanhamento Girassol"
           style={{ height: 36, width: "auto", objectFit: "contain" }}
         />
@@ -450,7 +450,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/identidade-visual/Logo%2BNome%2BSlogan.png"
+            src="/logo-girassol.png"
             alt="Acompanhamento Girassol"
             style={{ height: 44, width: "auto", objectFit: "contain" }}
           />
