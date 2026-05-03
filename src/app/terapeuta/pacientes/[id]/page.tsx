@@ -21,10 +21,6 @@ const ABA_LABELS: Record<Aba, string> = {
   relatorios: "Relatórios",
 };
 
-const CONTRACT_LABEL: Record<string, string> = {
-  particular: "Particular",
-  convenio: "Convênio",
-};
 
 type AgendaSession = {
   id: string;
