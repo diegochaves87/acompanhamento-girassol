@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,8 @@ type Profissional = {
   full_name: string | null;
   profession: string | null;
   specialty: string | null;
+  email: string | null;
+  userId: string | null;
 };
 
 type Props = {
@@ -126,14 +128,17 @@ const NAV_MOBILE_BOTTOM = NAV_TOP.slice(0, 4);
 
 const OPEN_W = 280;
 const CLOSED_W = 64;
+const HEADER_H = 72;
 
 export default function TerapeutaShell({ children, profissional }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar_open");
@@ -146,6 +151,16 @@ export default function TerapeutaShell({ children, profissional }: Props) {
   }, []);
 
   useEffect(() => { setMobileDrawerOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    if (profileOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [profileOpen]);
 
   function toggleSidebar() {
     const next = !sidebarOpen;
@@ -214,35 +229,52 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         className="hidden md:flex fixed top-0 left-0 h-full z-40 flex-col transition-all duration-300 overflow-hidden border-r"
         style={{ width: sidebarW, backgroundColor: "white", borderColor: "#E5E7EB" }}
       >
-        {/* Logo block */}
+        {/* Logo / toggle block */}
         <div
-          className="flex items-center justify-between px-3 py-3 border-b flex-shrink-0"
-          style={{ borderColor: "#E5E7EB", minHeight: 72 }}
+          className="flex-shrink-0 border-b flex items-center justify-between px-3"
+          style={{ borderColor: "#E5E7EB", height: HEADER_H }}
         >
           {sidebarOpen ? (
-            <div className="flex-1 min-w-0 pr-1">
+            <>
+              <div className="flex-1 min-w-0 pr-1">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-girassol.png"
+                  alt="Acompanhamento Girassol"
+                  style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
+                />
+              </div>
+              <button
+                onClick={toggleSidebar}
+                aria-label="Fechar menu"
+                className="flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+                style={{ color: "#9CA3AF" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            </>
+          ) : (
+            <div className="w-full flex flex-col items-center gap-2 py-2">
+              <button
+                onClick={toggleSidebar}
+                aria-label="Abrir menu"
+                className="p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+                style={{ color: "#9CA3AF" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo-girassol.png"
-                alt="Acompanhamento Girassol"
-                style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
+                alt="Girassol"
+                style={{ width: 36, height: 36, objectFit: "cover", borderRadius: "50%", objectPosition: "left top" }}
               />
             </div>
-          ) : (
-            <div className="mx-auto w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFF7E6" }}>
-              <span style={{ fontSize: 20 }}>🌻</span>
-            </div>
           )}
-          <button
-            onClick={toggleSidebar}
-            aria-label={sidebarOpen ? "Fechar menu" : "Abrir menu"}
-            className={`flex-shrink-0 p-1.5 rounded-lg transition-colors hover:bg-gray-100 ${!sidebarOpen ? "hidden" : ""}`}
-            style={{ color: "#9CA3AF" }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
         </div>
 
         {/* Nav */}
@@ -312,32 +344,17 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             {sidebarOpen && <span>Sair</span>}
           </button>
         </div>
-
-        {/* Expand button when collapsed */}
-        {!sidebarOpen && (
-          <div className="pb-3 flex justify-center">
-            <button
-              onClick={toggleSidebar}
-              aria-label="Abrir menu"
-              className="p-1.5 rounded-lg transition-colors hover:bg-gray-100"
-              style={{ color: "#9CA3AF" }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        )}
       </aside>
 
       {/* ── Desktop top header bar ── */}
       <header
-        className="hidden md:grid grid-cols-3 fixed top-0 z-30 h-14 items-center px-5 border-b"
+        className="hidden md:grid grid-cols-3 fixed top-0 z-30 items-center px-5 border-b"
         style={{
           backgroundColor: "white",
           borderColor: "#E5E7EB",
           left: sidebarW,
           right: 0,
+          height: HEADER_H,
           transition: "left 0.3s",
         }}
       >
@@ -347,22 +364,22 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           <img
             src="/logo-girassol.png"
             alt="Acompanhamento Girassol"
-            style={{ height: 56, width: "auto", objectFit: "contain", objectPosition: "left" }}
+            style={{ height: HEADER_H, width: "auto", objectFit: "contain", objectPosition: "left" }}
           />
         </div>
 
-        {/* Center: Page title */}
+        {/* Center: Girassol icon + title */}
         <div className="flex items-center justify-center gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-4 h-4 flex-shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.8}
-            style={{ color: "#1D3557" }}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="#FFBA3D" strokeWidth={1.8}>
+            <circle cx="12" cy="12" r="4" fill="#FFBA3D" stroke="none"/>
+            <line x1="12" y1="2" x2="12" y2="5" strokeLinecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="22" strokeLinecap="round"/>
+            <line x1="2" y1="12" x2="5" y2="12" strokeLinecap="round"/>
+            <line x1="19" y1="12" x2="22" y2="12" strokeLinecap="round"/>
+            <line x1="4.93" y1="4.93" x2="7.05" y2="7.05" strokeLinecap="round"/>
+            <line x1="16.95" y1="16.95" x2="19.07" y2="19.07" strokeLinecap="round"/>
+            <line x1="19.07" y1="4.93" x2="16.95" y2="7.05" strokeLinecap="round"/>
+            <line x1="7.05" y1="16.95" x2="4.93" y2="19.07" strokeLinecap="round"/>
           </svg>
           <span
             className="font-semibold text-sm whitespace-nowrap"
@@ -372,28 +389,102 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </span>
         </div>
 
-        {/* Right: Profile */}
-        <div className="flex items-center justify-end gap-3 cursor-pointer">
-          <div className="text-right">
-            <p
-              className="text-[11px] font-bold leading-tight tracking-wide"
-              style={{ color: "#4CAF50", fontFamily: "var(--font-poppins, sans-serif)" }}
-            >
-              {profLabel}
-            </p>
-            <p className="text-xs font-medium leading-tight" style={{ color: "#1D3557" }}>
-              {profissional?.full_name ?? "—"}
-            </p>
-          </div>
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 border-2 border-white shadow-sm"
-            style={{ backgroundColor: "#4CAF50" }}
+        {/* Right: Profile dropdown */}
+        <div className="flex items-center justify-end" ref={profileRef}>
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-50"
           >
-            {initial}
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "#9CA3AF" }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+            <div className="text-right">
+              <p
+                className="text-[11px] font-bold leading-tight tracking-wide"
+                style={{ color: "#4CAF50", fontFamily: "var(--font-poppins, sans-serif)" }}
+              >
+                {profLabel}
+              </p>
+              <p className="text-xs font-medium leading-tight" style={{ color: "#1D3557" }}>
+                {profissional?.full_name ?? "—"}
+              </p>
+            </div>
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 border-2 border-white shadow-sm"
+              style={{ backgroundColor: "#4CAF50" }}
+            >
+              {initial}
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className={`w-4 h-4 flex-shrink-0 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+              style={{ color: "#9CA3AF" }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Dropdown */}
+          {profileOpen && (
+            <div
+              className="absolute top-full right-5 mt-1 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50"
+              style={{ top: HEADER_H }}
+            >
+              {/* Header */}
+              <div className="px-5 py-4" style={{ backgroundColor: "#f0f4f1" }}>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
+                    style={{ backgroundColor: "#4CAF50", color: "white" }}
+                  >
+                    {initial}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-800 truncate">{profissional?.full_name ?? "—"}</p>
+                    <p className="text-xs text-gray-500 truncate">{profissional?.email ?? ""}</p>
+                    {profissional?.specialty && (
+                      <p className="text-xs font-medium truncate" style={{ color: "#4CAF50" }}>{profissional.specialty}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="py-1">
+                <Link
+                  href="/terapeuta/configuracoes"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Meu perfil
+                </Link>
+                <Link
+                  href="/terapeuta/configuracoes"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Configurações
+                </Link>
+              </div>
+
+              <div className="border-t" style={{ borderColor: "#E5E7EB" }}>
+                <button
+                  onClick={() => { setProfileOpen(false); handleLogout(); }}
+                  className="flex items-center gap-3 px-5 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sair
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -525,8 +616,8 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
       {/* ── Content wrapper ── */}
       <div
-        className="transition-all duration-300 pt-14 pb-16 md:pb-0"
-        style={{ marginLeft: contentMargin, backgroundColor: "#F9FAFB", minHeight: "100vh" }}
+        className="transition-all duration-300 pb-16 md:pb-0"
+        style={{ marginLeft: contentMargin, backgroundColor: "#F9FAFB", minHeight: "100vh", paddingTop: HEADER_H }}
       >
         {children}
       </div>

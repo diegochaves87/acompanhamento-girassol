@@ -5,7 +5,13 @@ export default async function TerapeutaLayout({ children }: { children: React.Re
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let profissional: { full_name: string | null; profession: string | null; specialty: string | null } | null = null;
+  let profissional: {
+    full_name: string | null;
+    profession: string | null;
+    specialty: string | null;
+    email: string | null;
+    userId: string | null;
+  } | null = null;
 
   if (user) {
     const { data, error } = await supabase
@@ -22,10 +28,12 @@ export default async function TerapeutaLayout({ children }: { children: React.Re
         .eq("id", user.id)
         .maybeSingle();
       profissional = fallback
-        ? { full_name: fallback.full_name, profession: null, specialty: null }
+        ? { full_name: fallback.full_name, profession: null, specialty: null, email: user.email ?? null, userId: user.id }
         : null;
     } else {
-      profissional = data ?? null;
+      profissional = data
+        ? { ...data, email: user.email ?? null, userId: user.id }
+        : null;
     }
   }
 
