@@ -34,31 +34,18 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     if (!content.trim()) return;
     setSaving(true);
     setError("");
-    const supabase = createClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Usuário não autenticado.");
-      setSaving(false);
-      return;
-    }
+    const res = await fetch("/api/notas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: patientId, tenant_id: tenantId, technical_note: content.trim() }),
+    });
 
-    const { data, error: dbError } = await supabase
-      .from("multidisciplinary_notes")
-      .insert({
-        patient_id: patientId,
-        tenant_id: tenantId,
-        author_id: user.id,
-        technical_note: content.trim(),
-        context_type: "nota_interna",
-        visibility: "interno",
-      })
-      .select("id, technical_note, created_at")
-      .single();
-    if (dbError) {
-      setError(dbError.message);
-    } else if (data) {
-      setNotes((prev) => [data as Note, ...prev]);
+    const json = await res.json();
+    if (!res.ok) {
+      setError(json.error ?? "Erro ao salvar nota.");
+    } else {
+      setNotes((prev) => [json as Note, ...prev]);
       setContent("");
     }
     setSaving(false);
