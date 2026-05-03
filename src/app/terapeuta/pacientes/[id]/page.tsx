@@ -128,8 +128,6 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
   if (error || !patient) notFound();
 
-  const now = new Date().toISOString();
-
   const [
     guardianRes,
     agendaRes,
@@ -148,10 +146,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
           .from("sessions")
           .select("id, scheduled_at, status, clinics(name)")
           .eq("patient_id", params.id)
-          .eq("status", "scheduled")
-          .gte("scheduled_at", now)
-          .order("scheduled_at")
-          .limit(5)
+          .order("scheduled_at", { ascending: false })
+          .limit(50)
       : Promise.resolve({ data: [] as AgendaSession[] }),
 
     aba === "evolucoes"
@@ -435,8 +431,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
             {agendaSessions.length === 0 && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-10 text-center">
-                <p className="font-semibold text-gray-600 mb-1">Sem sessões agendadas</p>
-                <p className="text-sm text-gray-400 mb-5">Não há próximas sessões para este paciente.</p>
+                <p className="font-semibold text-gray-600 mb-1">Nenhuma sessão encontrada</p>
+                <p className="text-sm text-gray-400 mb-5">Ainda não há sessões registradas para este paciente.</p>
               </div>
             )}
 

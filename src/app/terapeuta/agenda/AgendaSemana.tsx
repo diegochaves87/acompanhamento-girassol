@@ -1,11 +1,73 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { statusCardClass, statusBadge } from "@/lib/session-status";
 import type { AgendaSession } from "./page";
+
+type SessionGroup = { sessions: AgendaSession[]; timeRange: string };
+
+function buildGroups(allSessions: AgendaSession[]): {
+  sessionGroups: Map<string, SessionGroup>;
+  skippedIds: Set<string>;
+} {
+  const sessionGroups = new Map<string, SessionGroup>();
+  const skippedIds = new Set<string>();
+
+  const byDay = new Map<string, AgendaSession[]>();
+  for (const s of allSessions) {
+    const dayKey = s.scheduled_at.slice(0, 10);
+    if (!byDay.has(dayKey)) byDay.set(dayKey, []);
+    byDay.get(dayKey)!.push(s);
+  }
+
+  for (const daySessions of Array.from(byDay.values())) {
+    const sorted = [...daySessions].sort(
+      (a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
+    );
+
+    type Group = { patientId: string; sessions: AgendaSession[] };
+    const groups: Group[] = [];
+
+    for (const s of sorted) {
+      let added = false;
+      for (const g of groups) {
+        if (g.patientId !== s.patient_id) continue;
+        const last = g.sessions[g.sessions.length - 1];
+        const lastEnd =
+          new Date(last.scheduled_at).getTime() + (last.duration_minutes ?? 30) * 60000;
+        const gap = new Date(s.scheduled_at).getTime() - lastEnd;
+        if (gap <= 15 * 60000) {
+          g.sessions.push(s);
+          skippedIds.add(s.id);
+          added = true;
+          break;
+        }
+      }
+      if (!added) groups.push({ patientId: s.patient_id, sessions: [s] });
+    }
+
+    for (const g of groups) {
+      if (g.sessions.length < 2) continue;
+      const first = g.sessions[0];
+      const last = g.sessions[g.sessions.length - 1];
+      const lastEndMs =
+        new Date(last.scheduled_at).getTime() + (last.duration_minutes ?? 30) * 60000;
+      const lastEndDate = new Date(lastEndMs);
+      const hh = String(lastEndDate.getUTCHours()).padStart(2, "0");
+      const mm = String(lastEndDate.getUTCMinutes()).padStart(2, "0");
+      const firstTime = `${String(new Date(first.scheduled_at).getUTCHours()).padStart(2, "0")}:${String(new Date(first.scheduled_at).getUTCMinutes()).padStart(2, "0")}`;
+      sessionGroups.set(first.id, {
+        sessions: g.sessions,
+        timeRange: `${firstTime} – ${hh}:${mm}`,
+      });
+    }
+  }
+
+  return { sessionGroups, skippedIds };
+}
 
 type Props = {
   tenantId: string;
@@ -79,6 +141,8 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
       slotsMap.get(key)!.push(s);
     }
   }
+
+  const { sessionGroups, skippedIds } = useMemo(() => buildGroups(sessions), [sessions]);
 
   async function navigate(newMonday: string) {
     setLoading(true);
@@ -204,26 +268,40 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                         slot.minute === 0 ? "border-t border-t-gray-100" : ""
                       } ${dayISO === today ? "bg-[#f0f4f1]/40" : dayIdx % 2 === 0 ? "bg-white" : "bg-[#f5f5f3]"}`}
                     >
-                      {slotSessions.map((s) => (
-                        <div
-                          key={s.id}
-                          className={`rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight ${statusCardClass(s.status)}`}
-                        >
-                          <Link
-                            href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
-                            className="truncate block hover:underline cursor-pointer"
-                            title={s.patients?.full_name ?? ""}
-                          >
-                            {s.patients?.full_name ?? "—"}
-                          </Link>
-                          <Link
-                            href={`/terapeuta/agenda/dia/${dayISO}`}
-                            className="block text-[10px] opacity-70 hover:opacity-100"
-                          >
-                            {statusBadge(s.status)}
-                          </Link>
-                        </div>
-                      ))}
+                      {slotSessions
+                        .filter((s) => !skippedIds.has(s.id))
+                        .map((s) => {
+                          const group = sessionGroups.get(s.id);
+                          return (
+                            <div
+                              key={s.id}
+                              className={`rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight ${statusCardClass(s.status)}`}
+                            >
+                              <Link
+                                href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
+                                className="truncate block hover:underline cursor-pointer"
+                                title={s.patients?.full_name ?? ""}
+                              >
+                                {s.patients?.full_name ?? "—"}
+                              </Link>
+                              {group ? (
+                                <Link
+                                  href={`/terapeuta/agenda/dia/${dayISO}`}
+                                  className="block text-[10px] opacity-70 hover:opacity-100"
+                                >
+                                  {group.timeRange} · {group.sessions.length} atend.
+                                </Link>
+                              ) : (
+                                <Link
+                                  href={`/terapeuta/agenda/dia/${dayISO}`}
+                                  className="block text-[10px] opacity-70 hover:opacity-100"
+                                >
+                                  {statusBadge(s.status)}
+                                </Link>
+                              )}
+                            </div>
+                          );
+                        })}
                     </div>
                   );
                 })}

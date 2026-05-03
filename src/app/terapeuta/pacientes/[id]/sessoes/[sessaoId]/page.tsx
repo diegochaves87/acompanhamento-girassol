@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 import CancelarRecorrenciaButton from "./CancelarRecorrenciaButton";
+import ExcluirSessaoButton from "./ExcluirSessaoButton";
 
 type Props = { params: { id: string; sessaoId: string } };
 
@@ -184,6 +185,13 @@ export default async function SessaoPerfilPage({ params }: Props) {
             )}
           </section>
         )}
+
+        {/* Excluir sessão */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-base font-semibold mb-1 text-gray-800">Excluir sessão</h2>
+          <p className="text-sm text-gray-400 mb-4">Remove permanentemente esta sessão do sistema.</p>
+          <ExcluirSessaoButton sessaoId={params.sessaoId} patientId={params.id} />
+        </section>
 
         {/* Cancelar recorrência */}
         {sessao.is_recurring && futurasCount > 1 && sessao.recurrence_id && (
