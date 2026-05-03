@@ -116,6 +116,9 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
               <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 Atendimentos
               </Link>
+              <Link href="/terapeuta/agenda/sessoes" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+                Sessões
+              </Link>
             </div>
           </div>
           <div className="flex items-center justify-between">
