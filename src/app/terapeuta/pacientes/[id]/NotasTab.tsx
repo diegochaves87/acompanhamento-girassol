@@ -35,9 +35,24 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     setSaving(true);
     setError("");
     const supabase = createClient();
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Usuário não autenticado.");
+      setSaving(false);
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("multidisciplinary_notes")
-      .insert({ patient_id: patientId, tenant_id: tenantId, technical_note: content.trim(), visibility: "interno" })
+      .insert({
+        patient_id: patientId,
+        tenant_id: tenantId,
+        author_id: user.id,
+        technical_note: content.trim(),
+        context_type: "nota_interna",
+        visibility: "interno",
+      })
       .select("id, technical_note, created_at")
       .single();
     if (dbError) {
