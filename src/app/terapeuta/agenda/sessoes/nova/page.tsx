@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import BuscaPaciente from "./BuscaPaciente";
 
 export default async function NovaSessaoSelecionarPaciente() {
   const supabase = await createClient();
@@ -19,7 +20,7 @@ export default async function NovaSessaoSelecionarPaciente() {
     .eq("active", true)
     .order("full_name");
 
-  const lista = pacientes ?? [];
+  const lista = (pacientes ?? []) as { id: string; full_name: string }[];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
@@ -64,36 +65,7 @@ export default async function NovaSessaoSelecionarPaciente() {
             </Link>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-              <p className="text-xs font-medium text-gray-500">
-                Selecione o paciente para cadastrar a sessão
-              </p>
-            </div>
-            <ul className="divide-y divide-gray-100">
-              {lista.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    href={`/terapeuta/pacientes/${p.id}/sessoes/nova`}
-                    className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
-                      style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
-                    >
-                      {p.full_name.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="flex-1 text-sm font-medium text-gray-800">
-                      {p.full_name}
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <BuscaPaciente pacientes={lista} />
         )}
       </main>
     </div>

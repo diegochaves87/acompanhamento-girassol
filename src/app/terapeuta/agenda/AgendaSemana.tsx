@@ -116,7 +116,14 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
               <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
                 Atendimentos
               </Link>
-              <Link href="/terapeuta/agenda/sessoes" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+              <Link
+                href="/terapeuta/agenda/sessoes"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#4CAF50" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
                 Sessões
               </Link>
             </div>
@@ -198,15 +205,24 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                       } ${dayISO === today ? "bg-[#f0f4f1]/40" : dayIdx % 2 === 0 ? "bg-white" : "bg-[#f5f5f3]"}`}
                     >
                       {slotSessions.map((s) => (
-                        <Link
+                        <div
                           key={s.id}
-                          href={`/terapeuta/agenda/dia/${dayISO}`}
-                          className={`block rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight truncate ${statusCardClass(s.status)}`}
-                          title={s.patients?.full_name ?? ""}
+                          className={`rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight ${statusCardClass(s.status)}`}
                         >
-                          <span className="truncate block">{s.patients?.full_name ?? "—"}</span>
-                          <span className="text-[10px] opacity-70">{statusBadge(s.status)}</span>
-                        </Link>
+                          <Link
+                            href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
+                            className="truncate block hover:underline cursor-pointer"
+                            title={s.patients?.full_name ?? ""}
+                          >
+                            {s.patients?.full_name ?? "—"}
+                          </Link>
+                          <Link
+                            href={`/terapeuta/agenda/dia/${dayISO}`}
+                            className="block text-[10px] opacity-70 hover:opacity-100"
+                          >
+                            {statusBadge(s.status)}
+                          </Link>
+                        </div>
                       ))}
                     </div>
                   );

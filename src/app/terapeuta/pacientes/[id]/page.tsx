@@ -202,13 +202,13 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
           {/* Back */}
           <Link
-            href="/terapeuta/pacientes"
+            href={aba === "agenda" ? "/terapeuta/agenda" : "/terapeuta/pacientes"}
             className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors mb-5"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Pacientes
+            {aba === "agenda" ? "← Voltar para Agenda" : "Pacientes"}
           </Link>
 
           {/* Avatar + info */}
@@ -288,8 +288,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
                 href={`/terapeuta/pacientes/${params.id}?aba=${a}`}
                 className={`flex-shrink-0 px-4 py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
                   aba === a
-                    ? "text-white border-white"
-                    : "text-white/45 border-transparent hover:text-white/75 hover:border-white/30"
+                    ? "text-white border-[#4CAF50]"
+                    : "text-white/45 border-transparent hover:text-white/75 hover:border-white/20"
                 }`}
               >
                 {ABA_LABELS[a]}

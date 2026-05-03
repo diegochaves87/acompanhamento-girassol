@@ -341,28 +341,14 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           transition: "left 0.3s",
         }}
       >
-        {/* Left: Brand identity */}
+        {/* Left: Logo */}
         <div className="flex items-center">
-          <div>
-            <p
-              className="font-bold leading-none"
-              style={{
-                fontSize: 10,
-                color: "#1D3557",
-                fontFamily: "var(--font-poppins, sans-serif)",
-                letterSpacing: "0.06em",
-              }}
-            >
-              ACOMPANHAMENTO GIRASSOL
-            </p>
-            <p style={{ fontSize: 9, color: "#9CA3AF", lineHeight: 1.4, marginTop: 2 }}>
-              Cuidar, acompanhar, evoluir juntos.
-            </p>
-            <div className="flex items-center gap-1 mt-1">
-              <div style={{ height: 1.5, width: 28, backgroundColor: "#FFBA3D", borderRadius: 1 }} />
-              <span style={{ color: "#FFBA3D", fontSize: 10, lineHeight: 1 }}>♡</span>
-            </div>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/identidade-visual/Logo+Nome+Slogan.png"
+            alt="Acompanhamento Girassol"
+            style={{ height: 52, width: "auto", objectFit: "contain", objectPosition: "left" }}
+          />
         </div>
 
         {/* Center: Page title */}

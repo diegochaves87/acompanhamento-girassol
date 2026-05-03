@@ -115,7 +115,14 @@ export default async function AtendimentosPage({ searchParams }: Props) {
               <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1 rounded-lg text-sm font-semibold text-white bg-white/20">
                 Atendimentos
               </Link>
-              <Link href="/terapeuta/agenda/sessoes" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+              <Link
+                href="/terapeuta/agenda/sessoes"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors hover:opacity-90"
+                style={{ backgroundColor: "#4CAF50" }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
                 Sessões
               </Link>
             </div>
