@@ -95,7 +95,6 @@ function formatSessionDate(iso: string) {
 const REVENUE       = ["completed", "makeup"];
 const FALTAS        = ["missed", "unjustified_absence", "justified_absence"];
 const CANCELAMENTOS = ["cancelled", "canceled_therapist", "cancelled_family"];
-const ABSENCE       = [...FALTAS, ...CANCELAMENTOS];
 
 function calcMetrics(sessions: SessionRow[]) {
   const revenue       = sessions.filter((s) => REVENUE.includes(s.status));

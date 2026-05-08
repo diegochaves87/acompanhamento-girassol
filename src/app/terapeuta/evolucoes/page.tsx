@@ -74,11 +74,13 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       : { data: [] };
     const patientMap = new Map((patientsData ?? []).map((p) => [p.id, p.full_name as string]));
 
-    pendingItems = sessions.map((s) => ({
-      sessionId: s.id,
-      scheduledAt: s.scheduled_at,
-      patientName: patientMap.get(s.patient_id) ?? "—",
-    }));
+    pendingItems = sessions
+      .map((s) => ({
+        sessionId: s.id,
+        scheduledAt: s.scheduled_at,
+        patientName: patientMap.get(s.patient_id) ?? "—",
+      }))
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
   } else {
     const statusFilter = aba === "rascunhos" ? "draft" : "published";
     const { data: evos } = await supabase
@@ -108,13 +110,15 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       (patientsRes.data ?? []).map((p) => [p.id, p.full_name])
     );
 
-    evoItems = evoList.map((e) => ({
-      id: e.id,
-      sessionId: e.session_id,
-      patientName: patientMap.get(e.patient_id) ?? "—",
-      scheduledAt: sessionMap.get(e.session_id) ?? "",
-      status: e.status,
-    }));
+    evoItems = evoList
+      .map((e) => ({
+        id: e.id,
+        sessionId: e.session_id,
+        patientName: patientMap.get(e.patient_id) ?? "—",
+        scheduledAt: sessionMap.get(e.session_id) ?? "",
+        status: e.status,
+      }))
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
   }
 
   const totalCount =
