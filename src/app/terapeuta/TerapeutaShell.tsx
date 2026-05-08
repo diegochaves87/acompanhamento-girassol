@@ -235,7 +235,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             <div className="relative p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/identidade-visual/Logo-Nome-Slogan.png"
+                src="/logo-completa.png"
                 alt="Acompanhamento Girassol"
                 style={{ width: '100%', maxHeight: '72px', objectFit: 'contain', padding: '8px 12px' }}
               />
@@ -259,7 +259,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/identidade-visual/Logo-Girassol.png"
+                src="/logo-icone.png"
                 alt="Girassol"
                 style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', margin: '8px auto', display: 'block' }}
               />
@@ -481,7 +481,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/identidade-visual/Logo-Nome-Slogan.png"
+          src="/logo-completa.png"
           alt="Acompanhamento Girassol"
           style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
         />
@@ -516,7 +516,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/identidade-visual/logo-vetorizada.svg"
+            src="/logo-completa.png"
             alt="Acompanhamento Girassol"
             style={{ height: 44, width: "auto", objectFit: "contain" }}
           />

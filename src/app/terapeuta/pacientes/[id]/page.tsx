@@ -150,7 +150,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
           .from("sessions")
           .select("id, scheduled_at, status, duration_minutes, clinics(name)")
           .eq("patient_id", params.id)
-          .order("scheduled_at", { ascending: false })
+          .order("scheduled_at", { ascending: true })
           .limit(50)
       : Promise.resolve({ data: [] as AgendaSession[] }),
 

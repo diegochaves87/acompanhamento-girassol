@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 import BarChartMensal, { MonthBar } from "./BarChartMensal";
 import ExportarCSV, { CsvRow } from "./ExportarCSV";
-import BotaoImprimir from "./BotaoImprimir";
+import BotaoImprimir, { PrintData } from "./BotaoImprimir";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -113,14 +113,16 @@ function calcMetrics(sessions: SessionRow[]) {
 }
 
 function calcClinicRanking(sessions: SessionRow[]) {
-  const map = new Map<string, { name: string; sessoes: number; receita: number; atend: number; faltas: number }>();
+  const map = new Map<string, { name: string; sessoes: number; receita: number; atend: number; faltas: number; cancelamentos: number; reposicoes: number }>();
   for (const s of sessions) {
     const id   = s.clinic_id ?? "__sem__";
     const name = s.clinics?.name ?? "Sem clínica";
-    if (!map.has(id)) map.set(id, { name, sessoes: 0, receita: 0, atend: 0, faltas: 0 });
+    if (!map.has(id)) map.set(id, { name, sessoes: 0, receita: 0, atend: 0, faltas: 0, cancelamentos: 0, reposicoes: 0 });
     const e = map.get(id)!;
     if (REVENUE.includes(s.status)) { e.sessoes++; e.receita += sessionValue(s); e.atend++; }
     if (ABSENCE.includes(s.status)) { e.faltas++; }
+    if (s.status === "cancelled") { e.cancelamentos++; }
+    if (s.status === "makeup") { e.reposicoes++; }
   }
   return Array.from(map.values())
     .map((e) => ({ ...e, presenca: e.atend + e.faltas > 0 ? Math.round((e.atend / (e.atend + e.faltas)) * 100) : 100 }))
@@ -155,6 +157,35 @@ function calcMonthly(sessions: SessionRow[], months: string[]): MonthBar[] {
   return months.map((ym) => ({ label: monthLabel(ym), value: totals.get(ym) ?? 0 }));
 }
 
+function calcTopAssiduous(sessions: SessionRow[]) {
+  const map = new Map<string, { name: string; sessoes: number; faltas: number }>();
+  for (const s of sessions) {
+    const id = s.patient_id;
+    if (!map.has(id)) map.set(id, { name: s.patients?.full_name ?? "Paciente", sessoes: 0, faltas: 0 });
+    const e = map.get(id)!;
+    if (REVENUE.includes(s.status)) e.sessoes++;
+    if (ABSENCE.includes(s.status)) e.faltas++;
+  }
+  return Array.from(map.values())
+    .filter((e) => e.sessoes + e.faltas >= 2)
+    .map((e) => ({ ...e, presenca: e.sessoes + e.faltas > 0 ? Math.round((e.sessoes / (e.sessoes + e.faltas)) * 100) : 100 }))
+    .sort((a, b) => b.presenca - a.presenca || b.sessoes - a.sessoes)
+    .slice(0, 5);
+}
+
+function calcTopAbsent(sessions: SessionRow[]) {
+  const map = new Map<string, { name: string; faltas: number }>();
+  for (const s of sessions) {
+    if (!ABSENCE.includes(s.status)) continue;
+    const id = s.patient_id;
+    if (!map.has(id)) map.set(id, { name: s.patients?.full_name ?? "Paciente", faltas: 0 });
+    map.get(id)!.faltas++;
+  }
+  return Array.from(map.values())
+    .sort((a, b) => b.faltas - a.faltas)
+    .slice(0, 5);
+}
+
 function calcAlerts(sessions: SessionRow[]) {
   const patientFaltas = new Map<string, { name: string; count: number }>();
   for (const s of sessions) {
@@ -179,8 +210,9 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/terapeuta");
 
-  const { data: userData } = await supabase.from("users").select("tenant_id").eq("id", user.id).maybeSingle();
+  const { data: userData } = await supabase.from("users").select("tenant_id, full_name").eq("id", user.id).maybeSingle();
   const tenantId = userData?.tenant_id ?? "";
+  const terapeutaNome = (userData as { full_name?: string } | null)?.full_name ?? "Terapeuta";
 
   // ── CONTROLE tab ──────────────────────────────────────────────────────────
   if (aba === "controle") {
@@ -377,10 +409,27 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const mesSessions = filtered.filter((s) => s.scheduled_at >= mesStart && s.scheduled_at <= mesEnd);
 
   const metrics = calcMetrics(mesSessions);
+  const ticketMedio = metrics.totalAtend > 0 ? metrics.receita / metrics.totalAtend : 0;
+  const receitaProjetada = mesSessions
+    .filter((s) => ["scheduled", "confirmed"].includes(s.status))
+    .reduce((sum, s) => sum + sessionValue(s), 0);
   const clinicRanking = calcClinicRanking(mesSessions);
   const patientRanking = calcPatientRanking(mesSessions);
+  const topAssiduous = calcTopAssiduous(mesSessions);
+  const topAbsent = calcTopAbsent(mesSessions);
   const monthlyData = calcMonthly(filtered, chartMonths);
   const alerts = calcAlerts(mesSessions);
+
+  const printData: PrintData = {
+    terapeutaNome,
+    periodo: monthFullLabel(selectedYM),
+    metrics,
+    ticketMedio,
+    receitaProjetada,
+    patientRanking,
+    clinicRanking,
+    monthlyData,
+  };
 
   const mesOptions = getLast6Months(currentYearMonth()).reverse();
 
@@ -432,12 +481,12 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             Aplicar
           </button>
           <div className="ml-auto flex gap-2">
-            <BotaoImprimir />
+            <BotaoImprimir data={printData} />
             <ExportarCSV filename={`financeiro-${selectedYM}`} headers={dashCsvHeaders} rows={dashCsvRows} />
           </div>
         </form>
 
-        {/* Cards */}
+        {/* Cards KPI — linha 1 */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Receita realizada"
@@ -446,20 +495,49 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             highlight
           />
           <MetricCard
+            label="Ticket médio"
+            value={formatBRL(ticketMedio)}
+            sub="por sessão realizada"
+            color="#2E7BC1"
+          />
+          <MetricCard
+            label="Presença média"
+            value={`${metrics.presenca}%`}
+            sub={`${metrics.totalAtend} de ${metrics.totalAtend + metrics.totalFalta}`}
+            color="#4CAF50"
+          />
+          <MetricCard
+            label="Receita projetada"
+            value={formatBRL(receitaProjetada)}
+            sub="sessões agendadas"
+            color="#8E6CCF"
+          />
+        </div>
+
+        {/* Cards KPI — linha 2 */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
             label="Perdido por faltas"
             value={formatBRL(metrics.perdido)}
-            sub={`${metrics.totalFalta} falta${metrics.totalFalta !== 1 ? "s" : ""}`}
+            sub={`${metrics.totalFalta} ausência${metrics.totalFalta !== 1 ? "s" : ""}`}
             danger
           />
           <MetricCard
             label="Recuperado (repos.)"
             value={formatBRL(metrics.recuperado)}
             sub="reposições realizadas"
+            color="#F59E0B"
           />
           <MetricCard
-            label="Presença média"
-            value={`${metrics.presenca}%`}
-            sub={`${metrics.totalAtend} de ${metrics.totalAtend + metrics.totalFalta}`}
+            label="Total de faltas"
+            value={String(metrics.totalFalta)}
+            sub="no período selecionado"
+            danger
+          />
+          <MetricCard
+            label="Sessões realizadas"
+            value={String(metrics.totalAtend)}
+            sub="completed + reposições"
           />
         </div>
 
@@ -480,14 +558,20 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             ) : (
               <div className="space-y-2">
                 {clinicRanking.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0 gap-3">
-                    <div className="min-w-0">
+                  <div key={i} className="py-2.5 border-b border-gray-50 last:border-0">
+                    <div className="flex items-center justify-between gap-3 mb-1">
                       <p className="text-sm font-medium text-gray-800 truncate">{c.name}</p>
-                      <p className="text-xs text-gray-400">{c.sessoes} sessões · {c.presenca}% presença</p>
+                      <span className="text-sm font-semibold flex-shrink-0" style={{ color: "#1a4a3a" }}>
+                        {formatBRL(c.receita)}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold flex-shrink-0" style={{ color: "#1a4a3a" }}>
-                      {formatBRL(c.receita)}
-                    </span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                      <span className="text-xs text-gray-400">{c.sessoes} sessões</span>
+                      <span className="text-xs font-medium" style={{ color: "#4CAF50" }}>{c.presenca}% presença</span>
+                      {c.faltas > 0 && <span className="text-xs text-red-400">{c.faltas} falta{c.faltas !== 1 ? "s" : ""}</span>}
+                      {c.cancelamentos > 0 && <span className="text-xs text-amber-500">{c.cancelamentos} cancel.</span>}
+                      {c.reposicoes > 0 && <span className="text-xs text-blue-400">{c.reposicoes} repos.</span>}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -517,6 +601,48 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                     </div>
                     <span className="text-sm font-semibold flex-shrink-0" style={{ color: "#1a4a3a" }}>
                       {formatBRL(p.receita)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
+        {/* Rankings assíduos e mais faltam */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Top 5 mais assíduos</h2>
+            {topAssiduous.length === 0 ? (
+              <p className="text-sm text-gray-400">Sem dados no período.</p>
+            ) : (
+              <div className="space-y-2">
+                {topAssiduous.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{p.name}</p>
+                      <p className="text-xs text-gray-400">{p.sessoes} sessões · {p.faltas} falta{p.faltas !== 1 ? "s" : ""}</p>
+                    </div>
+                    <span className="text-sm font-bold flex-shrink-0 px-2 py-0.5 rounded-full" style={{ backgroundColor: "#F0FFF4", color: "#4CAF50" }}>
+                      {p.presenca}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Top 5 que mais faltam</h2>
+            {topAbsent.length === 0 ? (
+              <p className="text-sm text-gray-400">Nenhuma falta registrada.</p>
+            ) : (
+              <div className="space-y-2">
+                {topAbsent.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 gap-3">
+                    <p className="text-sm font-medium text-gray-800 truncate">{p.name}</p>
+                    <span className="text-sm font-bold flex-shrink-0 px-2 py-0.5 rounded-full" style={{ backgroundColor: "#FEF2F2", color: "#EF4444" }}>
+                      {p.faltas} falta{p.faltas !== 1 ? "s" : ""}
                     </span>
                   </div>
                 ))}
@@ -592,15 +718,15 @@ function Header({ aba }: { aba: string }) {
 }
 
 function MetricCard({
-  label, value, sub, highlight, danger,
+  label, value, sub, highlight, danger, color: colorProp,
 }: {
-  label: string; value: string; sub?: string; highlight?: boolean; danger?: boolean;
+  label: string; value: string; sub?: string; highlight?: boolean; danger?: boolean; color?: string;
 }) {
-  const color = highlight ? "#1a4a3a" : danger ? "#dc2626" : "#374151";
+  const color = colorProp ?? (highlight ? "#1a4a3a" : danger ? "#dc2626" : "#374151");
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
-      <p className="text-xl font-bold leading-tight" style={{ color }}>{value}</p>
+      <p className="text-xl font-bold leading-tight" style={{ color, fontFamily: "var(--font-poppins, sans-serif)" }}>{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
   );

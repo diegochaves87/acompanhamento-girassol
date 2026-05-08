@@ -20,7 +20,7 @@ export default function BarChartMensal({ data }: { data: MonthBar[] }) {
             <div className="flex-1 flex items-end w-full">
               <div
                 className="w-full rounded-t-lg transition-all"
-                style={{ height: `${barH}px`, backgroundColor: d.value > 0 ? "#1a4a3a" : "#e5e7eb" }}
+                style={{ height: `${barH}px`, backgroundColor: d.value > 0 ? "#4CAF50" : "#e5e7eb" }}
               />
             </div>
             <span className="text-[10px] text-gray-400 whitespace-nowrap">{d.label}</span>

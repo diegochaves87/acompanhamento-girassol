@@ -2,7 +2,29 @@
   "permissions": {
     "allow": [
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(gh repo *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git rm *)",
+      "Bash(npm run *)",
+      "Bash(git commit *)",
+      "Bash(npm install *)",
+      "Bash(node \"C:\\\\Users\\\\dccha\\\\Desktop\\\\jornada-terapeutica\\\\scripts\\\\gerar-modelo-pacientes.mjs\")",
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npx supabase *)",
+      "Bash(node -e \"require\\('mammoth'\\); console.log\\('ok'\\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('\\\\n'.join\\(sorted\\(d.get\\('dependencies',{}\\).keys\\(\\)\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('./package.json'\\); console.log\\(Object.keys\\(d.dependencies\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(dir public *)",
+      "Bash(findstr -i \"logo\\\\|png\\\\|svg\")",
+      "Bash(Get-ChildItem -Path public -Recurse -Include \"*.png\",\"*.svg\",\"*.jpg\",\"*.webp\")",
+      "Bash(Select-Object FullName)",
+      "Bash(xargs grep *)"
     ]
   }
 }
