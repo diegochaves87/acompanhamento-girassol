@@ -30,6 +30,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Acompanhamento Girassol",
   description: "Cuidar, acompanhar, evoluir juntos.",
+  icons: {
+    icon: "/identidade-visual/icone-logo-vetorizado.svg",
+    shortcut: "/identidade-visual/icone-logo-vetorizado.svg",
+    apple: "/identidade-visual/icone-logo-vetorizado.svg",
+  },
 };
 
 export default function RootLayout({
