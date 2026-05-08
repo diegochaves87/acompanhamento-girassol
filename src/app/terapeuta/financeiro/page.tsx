@@ -191,6 +191,33 @@ function calcTopAbsent(sessions: SessionRow[]) {
     .slice(0, 5);
 }
 
+function calcClinicPatientRanking(sessions: SessionRow[]) {
+  const clinicMap = new Map<string, { name: string; patients: Map<string, { name: string; receita: number; sessoes: number }> }>();
+  for (const s of sessions) {
+    if (!REVENUE.includes(s.status)) continue;
+    const cid   = s.clinic_id ?? "__sem__";
+    const cname = s.clinics?.name ?? "Sem clínica";
+    const pid   = s.patient_id;
+    const pname = s.patients?.full_name ?? "Paciente";
+    if (!clinicMap.has(cid)) clinicMap.set(cid, { name: cname, patients: new Map() });
+    const clinic = clinicMap.get(cid)!;
+    if (!clinic.patients.has(pid)) clinic.patients.set(pid, { name: pname, receita: 0, sessoes: 0 });
+    const pat = clinic.patients.get(pid)!;
+    pat.receita += sessionValue(s);
+    pat.sessoes++;
+  }
+  return Array.from(clinicMap.values())
+    .map((c) => ({
+      clinicName: c.name,
+      patients: Array.from(c.patients.values()).sort((a, b) => b.receita - a.receita).slice(0, 5),
+    }))
+    .sort((a, b) => {
+      const ra = a.patients.reduce((s, p) => s + p.receita, 0);
+      const rb = b.patients.reduce((s, p) => s + p.receita, 0);
+      return rb - ra;
+    });
+}
+
 function calcAlerts(sessions: SessionRow[]) {
   const patientFaltas = new Map<string, { name: string; count: number }>();
   for (const s of sessions) {
@@ -420,6 +447,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     .reduce((sum, s) => sum + sessionValue(s), 0);
   const clinicRanking = calcClinicRanking(mesSessions);
   const patientRanking = calcPatientRanking(mesSessions);
+  const clinicPatients = calcClinicPatientRanking(mesSessions);
   const topAssiduous = calcTopAssiduous(mesSessions);
   const topAbsent = calcTopAbsent(mesSessions);
   const monthlyData = calcMonthly(filtered, chartMonths);
@@ -440,10 +468,12 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     receitaProjetada,
     patientRanking,
     clinicRanking,
+    clinicPatients,
     monthlyData,
   };
 
   const mesOptions = getLast6Months(currentYearMonth()).reverse();
+  const maxPatientReceita = patientRanking[0]?.receita || 1;
 
   const dashCsvHeaders = [
     { key: "paciente", label: "Paciente" },
@@ -565,6 +595,98 @@ export default async function FinanceiroPage({ searchParams }: Props) {
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Receita — últimos 6 meses</h2>
           <BarChartMensal data={monthlyData} />
+        </section>
+
+        {/* Top 5 Pacientes — ranking geral com barras de progresso */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-sm font-semibold mb-4" style={{ color: "#1D3557" }}>Top 5 Pacientes</h2>
+          {patientRanking.length === 0 ? (
+            <p className="text-sm text-gray-400">Sem dados no período.</p>
+          ) : (
+            <div className="space-y-4">
+              {patientRanking.slice(0, 5).map((p, i) => {
+                const pct = Math.round((p.receita / maxPatientReceita) * 100);
+                return (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                          style={{ backgroundColor: "#1D3557" }}
+                        >{i + 1}</span>
+                        <span className="text-sm font-medium text-gray-800 truncate">{p.name}</span>
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">
+                          {p.tipo === "convenio" ? (p.convenio ?? "Conv.") : "Part."}
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold flex-shrink-0 ml-3" style={{ color: "#4CAF50" }}>
+                        {formatBRL(p.receita)}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-gray-100">
+                      <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#4CAF50" }} />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {p.sessoes} sessão{p.sessoes !== 1 ? "ões" : ""}
+                      {p.faltas > 0 ? ` · ${p.faltas} falta${p.faltas !== 1 ? "s" : ""}` : ""}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Top 5 por Clínica — accordion nativo */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h2 className="text-sm font-semibold mb-4" style={{ color: "#1D3557" }}>Top 5 por Clínica</h2>
+          {clinicPatients.length === 0 ? (
+            <p className="text-sm text-gray-400">Sem dados no período.</p>
+          ) : (
+            <div className="space-y-2">
+              {clinicPatients.map((cp, i) => {
+                const maxClinicRec = cp.patients[0]?.receita || 1;
+                return (
+                  <details key={i} className="rounded-xl border border-gray-100 overflow-hidden group">
+                    <summary className="flex items-center justify-between px-4 py-3 cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors list-none select-none">
+                      <span className="text-sm font-semibold" style={{ color: "#1D3557" }}>{cp.clinicName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-400">{cp.patients.length} paciente{cp.patients.length !== 1 ? "s" : ""}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </summary>
+                    <div className="px-4 py-3 space-y-3">
+                      {cp.patients.map((p, j) => {
+                        const pct = Math.round((p.receita / maxClinicRec) * 100);
+                        return (
+                          <div key={j}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span
+                                  className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                                  style={{ backgroundColor: "#4CAF50" }}
+                                >{j + 1}</span>
+                                <span className="text-sm text-gray-700 truncate">{p.name}</span>
+                              </div>
+                              <span className="text-sm font-semibold flex-shrink-0 ml-3" style={{ color: "#4CAF50" }}>
+                                {formatBRL(p.receita)}
+                              </span>
+                            </div>
+                            <div className="h-1 rounded-full bg-gray-100">
+                              <div className="h-1 rounded-full" style={{ width: `${pct}%`, backgroundColor: "#4CAF50" }} />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-0.5">{p.sessoes} sessão{p.sessoes !== 1 ? "ões" : ""}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         {/* Rankings lado a lado */}

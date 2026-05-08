@@ -29,6 +29,11 @@ export type PrintClinic = {
   reposicoes: number;
 };
 
+export type PrintClinicPatient = {
+  clinicName: string;
+  patients: Array<{ name: string; receita: number; sessoes: number }>;
+};
+
 export type PrintData = {
   terapeutaNome: string;
   periodo: string;
@@ -37,6 +42,7 @@ export type PrintData = {
   receitaProjetada: number;
   patientRanking: PrintPatient[];
   clinicRanking: PrintClinic[];
+  clinicPatients: PrintClinicPatient[];
   monthlyData: Array<{ label: string; value: number }>;
 };
 
@@ -67,6 +73,29 @@ function buildReport(d: PrintData, logoUrl: string): string {
       <td style="padding:8px 12px;text-align:center;color:#EF4444">${p.faltas}</td>
       <td style="padding:8px 12px;text-align:right;font-weight:600;color:#1a4a3a">${brl(p.receita)}</td>
     </tr>`).join("");
+
+  const clinicPatientsSections = d.clinicPatients.map((cp) => {
+    const rows = cp.patients.map((p, i) => `
+      <tr style="border-bottom:1px solid #F3F4F6">
+        <td style="padding:8px 12px;color:#374151">${i + 1}. ${p.name}</td>
+        <td style="padding:8px 12px;text-align:center;color:#6B7280">${p.sessoes}</td>
+        <td style="padding:8px 12px;text-align:right;font-weight:600;color:#1a4a3a">${brl(p.receita)}</td>
+      </tr>`).join("");
+    return `
+  <div class="section">
+    <h2>Top 5 — ${cp.clinicName}</h2>
+    <div class="card">
+      <table>
+        <thead><tr>
+          <th>Paciente</th>
+          <th style="text-align:center">Sessões</th>
+          <th style="text-align:right">Receita</th>
+        </tr></thead>
+        <tbody>${rows || '<tr><td colspan="3" style="padding:16px;text-align:center;color:#9CA3AF">Sem dados</td></tr>'}</tbody>
+      </table>
+    </div>
+  </div>`;
+  }).join("");
 
   const clinics = d.clinicRanking.map((c) => `
     <tr style="border-bottom:1px solid #F3F4F6">
@@ -168,7 +197,7 @@ function buildReport(d: PrintData, logoUrl: string): string {
 </div>
 
 <div class="section">
-  <h2>Top 5 pacientes mais rentáveis</h2>
+  <h2>Top 5 Pacientes</h2>
   <div class="card">
     <table>
       <thead><tr>
@@ -181,6 +210,8 @@ function buildReport(d: PrintData, logoUrl: string): string {
     </table>
   </div>
 </div>
+
+${clinicPatientsSections}
 
 <div class="section">
   <h2>Performance por clínica</h2>
