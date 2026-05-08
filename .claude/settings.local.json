@@ -26,7 +26,10 @@
       "Bash(Select-Object FullName)",
       "Bash(xargs grep *)",
       "Bash(Get-Content *)",
-      "Bash(grep -rn \"sessãoões\\\\|sessãooes\\\\|sessão\\\\${\" src/ --include=\"*.tsx\")"
+      "Bash(grep -rn \"sessãoões\\\\|sessãooes\\\\|sessão\\\\${\" src/ --include=\"*.tsx\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\(Object.keys\\(p.dependencies\\).filter\\(k=>k.includes\\('supabase'\\)\\)\\)\\)\")",
+      "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\dccha\\\\Desktop\\\\jornada-terapeutica\\\\src\\\\app\\\\auth\\\\callback\")",
+      "Bash(Out-Null)"
     ]
   }
 }
