@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rotas públicas (sem autenticação)
-  const publicRoutes = ["/login", "/cadastro"];
+  const publicRoutes = ["/", "/login", "/cadastro"];
   const isPublic = publicRoutes.includes(pathname) || pathname.startsWith("/auth/");
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
