@@ -85,17 +85,6 @@ const NAV_TOP: NavItem[] = [
       </svg>
     ),
   },
-  {
-    label: "Clínicas",
-    href: "/terapeuta/clinicas",
-    color: "#FF5C7A",
-    bgColor: "#FFF0F3",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
-    ),
-  },
 ];
 
 const NAV_BOTTOM: NavItem[] = [
@@ -232,7 +221,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         {/* Logo / toggle block */}
         <div className="flex-shrink-0 border-b" style={{ borderColor: "#E5E7EB" }}>
           {sidebarOpen ? (
-            <div className="relative px-3 pt-2 pb-0">
+            <div className="relative px-3 pt-0 pb-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo-completa.png"
@@ -268,7 +257,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 py-2 overflow-y-auto overflow-x-hidden">
+        <nav className="flex-1 pt-1 pb-2 overflow-y-auto overflow-x-hidden">
           <SidebarLinks items={NAV_TOP} />
         </nav>
 
@@ -283,33 +272,6 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <circle cx="96" cy="10" r="7" fill="#FFC107"/>
               <path d="M85 40c0-6.075 4.925-11 11-11s11 4.925 11 11H85z" fill="#FFC107"/>
             </svg>
-          </div>
-        )}
-
-        {/* Precisa de ajuda card */}
-        {sidebarOpen && (
-          <div className="px-3 pb-2 pt-1">
-            <Link
-              href="/terapeuta/sobre"
-              className="flex items-center gap-2.5 p-3 rounded-xl transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#F3F0FF" }}
-            >
-              <div
-                className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "#E9E4F8", color: "#8E6CCF" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold leading-tight" style={{ color: "#8E6CCF" }}>Precisa de ajuda?</p>
-                <p className="text-[10px] leading-tight" style={{ color: "#8E6CCF", opacity: 0.75 }}>Fale com nossa equipe</p>
-              </div>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} style={{ color: "#8E6CCF" }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
           </div>
         )}
 

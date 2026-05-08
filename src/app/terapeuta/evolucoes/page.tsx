@@ -61,7 +61,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
         .select("id, scheduled_at, patient_id")
         .eq("tenant_id", tenantId)
         .eq("status", "completed")
-        .order("created_at", { ascending: false }),
+        .order("scheduled_at", { ascending: true }),
       supabase.from("evolutions").select("session_id").eq("tenant_id", tenantId),
     ]);
 
@@ -86,7 +86,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       .select("id, session_id, patient_id, status, created_at")
       .eq("tenant_id", tenantId)
       .eq("status", statusFilter)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: true });
 
     const evoList = evos ?? [];
     const sessionIds = Array.from(new Set(evoList.map((e) => e.session_id)));
@@ -108,13 +108,19 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       (patientsRes.data ?? []).map((p) => [p.id, p.full_name])
     );
 
-    evoItems = evoList.map((e) => ({
-      id: e.id,
-      sessionId: e.session_id,
-      patientName: patientMap.get(e.patient_id) ?? "—",
-      scheduledAt: sessionMap.get(e.session_id) ?? "",
-      status: e.status,
-    }));
+    evoItems = evoList
+      .map((e) => ({
+        id: e.id,
+        sessionId: e.session_id,
+        patientName: patientMap.get(e.patient_id) ?? "—",
+        scheduledAt: sessionMap.get(e.session_id) ?? "",
+        status: e.status,
+      }))
+      .sort((a, b) => {
+        const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+        const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+        return ta - tb; // ascendente: mais antigas primeiro
+      });
   }
 
   const totalCount =
