@@ -237,7 +237,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <img
                 src="/logo-completa.png"
                 alt="Acompanhamento Girassol"
-                style={{ width: '100%', maxHeight: '90px', objectFit: 'contain', padding: '8px 12px' }}
+                style={{ width: '100%', maxHeight: '150px', objectFit: 'contain', padding: '8px 12px' }}
               />
               <button
                 onClick={toggleSidebar}
@@ -357,7 +357,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           <img
             src="/identidade-visual/mao.svg"
             alt=""
-            style={{ height: '28px', width: 'auto', mixBlendMode: 'multiply' }}
+            style={{ height: '28px', width: 'auto' }}
           />
           <span style={{ fontFamily: 'var(--font-poppins, sans-serif)', fontWeight: 600, color: '#1D3557', fontSize: '16px', whiteSpace: 'nowrap' }}>
             Jornada de Evolução Terapêutica

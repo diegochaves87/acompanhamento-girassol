@@ -92,24 +92,30 @@ function formatSessionDate(iso: string) {
 
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
-const REVENUE = ["completed", "makeup"];
-const ABSENCE = ["unjustified_absence", "justified_absence", "canceled_therapist", "cancelled_family", "cancelled", "missed"];
+const REVENUE       = ["completed", "makeup"];
+const FALTAS        = ["missed", "unjustified_absence", "justified_absence"];
+const CANCELAMENTOS = ["cancelled", "canceled_therapist", "cancelled_family"];
+const ABSENCE       = [...FALTAS, ...CANCELAMENTOS];
 
 function calcMetrics(sessions: SessionRow[]) {
-  const revenue = sessions.filter((s) => REVENUE.includes(s.status));
-  const makeup  = sessions.filter((s) => s.status === "makeup");
-  const absence = sessions.filter((s) => ABSENCE.includes(s.status));
+  const revenue       = sessions.filter((s) => REVENUE.includes(s.status));
+  const makeup        = sessions.filter((s) => s.status === "makeup");
+  const faltas        = sessions.filter((s) => FALTAS.includes(s.status));
+  const cancelamentos = sessions.filter((s) => CANCELAMENTOS.includes(s.status));
 
-  const receita    = revenue.reduce((sum, s) => sum + sessionValue(s), 0);
-  const perdido    = absence.reduce((sum, s) => sum + sessionValue(s), 0);
-  const recuperado = makeup.reduce((sum, s) => sum + sessionValue(s), 0);
-  const totalAtend = revenue.length;
-  const totalFalta = absence.length;
-  const presenca   = totalAtend + totalFalta > 0
+  const receita              = revenue.reduce((sum, s) => sum + sessionValue(s), 0);
+  const perdidoFaltas        = faltas.reduce((sum, s) => sum + sessionValue(s), 0);
+  const perdidoCancelamentos = cancelamentos.reduce((sum, s) => sum + sessionValue(s), 0);
+  const recuperado           = makeup.reduce((sum, s) => sum + sessionValue(s), 0);
+  const totalAtend           = revenue.length;
+  const totalFalta           = faltas.length;
+  const totalCancelamentos   = cancelamentos.length;
+  const totalReposicoes      = makeup.length;
+  const presenca             = totalAtend + totalFalta > 0
     ? Math.round((totalAtend / (totalAtend + totalFalta)) * 100)
     : 100;
 
-  return { receita, perdido, recuperado, presenca, totalAtend, totalFalta };
+  return { receita, perdidoFaltas, perdidoCancelamentos, recuperado, presenca, totalAtend, totalFalta, totalCancelamentos, totalReposicoes };
 }
 
 function calcClinicRanking(sessions: SessionRow[]) {
@@ -120,8 +126,8 @@ function calcClinicRanking(sessions: SessionRow[]) {
     if (!map.has(id)) map.set(id, { name, sessoes: 0, receita: 0, atend: 0, faltas: 0, cancelamentos: 0, reposicoes: 0 });
     const e = map.get(id)!;
     if (REVENUE.includes(s.status)) { e.sessoes++; e.receita += sessionValue(s); e.atend++; }
-    if (ABSENCE.includes(s.status)) { e.faltas++; }
-    if (["cancelled", "canceled_therapist", "cancelled_family"].includes(s.status)) { e.cancelamentos++; }
+    if (FALTAS.includes(s.status)) { e.faltas++; }
+    if (CANCELAMENTOS.includes(s.status)) { e.cancelamentos++; }
     if (s.status === "makeup") { e.reposicoes++; }
   }
   return Array.from(map.values())
@@ -142,7 +148,7 @@ function calcPatientRanking(sessions: SessionRow[]) {
     });
     const e = map.get(id)!;
     if (REVENUE.includes(s.status)) { e.sessoes++; e.receita += sessionValue(s); }
-    if (ABSENCE.includes(s.status)) { e.faltas++; }
+    if (FALTAS.includes(s.status) || CANCELAMENTOS.includes(s.status)) { e.faltas++; }
   }
   return Array.from(map.values()).sort((a, b) => b.receita - a.receita);
 }
@@ -164,7 +170,7 @@ function calcTopAssiduous(sessions: SessionRow[]) {
     if (!map.has(id)) map.set(id, { name: s.patients?.full_name ?? "Paciente", sessoes: 0, faltas: 0 });
     const e = map.get(id)!;
     if (REVENUE.includes(s.status)) e.sessoes++;
-    if (ABSENCE.includes(s.status)) e.faltas++;
+    if (FALTAS.includes(s.status)) e.faltas++;
   }
   return Array.from(map.values())
     .filter((e) => e.sessoes + e.faltas >= 2)
@@ -176,7 +182,7 @@ function calcTopAssiduous(sessions: SessionRow[]) {
 function calcTopAbsent(sessions: SessionRow[]) {
   const map = new Map<string, { name: string; faltas: number }>();
   for (const s of sessions) {
-    if (!ABSENCE.includes(s.status)) continue;
+    if (!FALTAS.includes(s.status)) continue;
     const id = s.patient_id;
     if (!map.has(id)) map.set(id, { name: s.patients?.full_name ?? "Paciente", faltas: 0 });
     map.get(id)!.faltas++;
@@ -423,7 +429,14 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const printData: PrintData = {
     terapeutaNome,
     periodo: monthFullLabel(selectedYM),
-    metrics,
+    metrics: {
+      receita:    metrics.receita,
+      perdido:    metrics.perdidoFaltas,
+      recuperado: metrics.recuperado,
+      presenca:   metrics.presenca,
+      totalAtend: metrics.totalAtend,
+      totalFalta: metrics.totalFalta,
+    },
     ticketMedio,
     receitaProjetada,
     patientRanking,
@@ -493,24 +506,28 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             value={formatBRL(metrics.receita)}
             sub={`${metrics.totalAtend} sessão${metrics.totalAtend !== 1 ? "ões" : ""}`}
             highlight
+            tooltip="Soma das sessões concluídas (completed) e reposições (makeup) no período."
           />
           <MetricCard
             label="Ticket médio"
             value={formatBRL(ticketMedio)}
             sub="por sessão realizada"
             color="#2E7BC1"
+            tooltip="Receita realizada ÷ número de sessões concluídas + reposições."
           />
           <MetricCard
             label="Presença média"
             value={`${metrics.presenca}%`}
             sub={`${metrics.totalAtend} de ${metrics.totalAtend + metrics.totalFalta}`}
             color="#4CAF50"
+            tooltip="Sessões realizadas ÷ (realizadas + faltas). Cancelamentos não entram neste cálculo."
           />
           <MetricCard
             label="Receita projetada"
             value={formatBRL(receitaProjetada)}
             sub="sessões agendadas"
             color="#8E6CCF"
+            tooltip="Valor estimado das sessões com status 'agendado' ou 'confirmado' no mês."
           />
         </div>
 
@@ -518,26 +535,30 @@ export default async function FinanceiroPage({ searchParams }: Props) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             label="Perdido por faltas"
-            value={formatBRL(metrics.perdido)}
-            sub={`${metrics.totalFalta} ausência${metrics.totalFalta !== 1 ? "s" : ""}`}
+            value={formatBRL(metrics.perdidoFaltas)}
+            sub={`${metrics.totalFalta} falta${metrics.totalFalta !== 1 ? "s" : ""}`}
             danger
+            tooltip="Valor perdido com faltas: missed, falta justificada e injustificada."
+          />
+          <MetricCard
+            label="Perdido por cancelamentos"
+            value={formatBRL(metrics.perdidoCancelamentos)}
+            sub={`${metrics.totalCancelamentos} cancelamento${metrics.totalCancelamentos !== 1 ? "s" : ""}`}
+            danger
+            tooltip="Valor perdido com cancelamentos: pelo paciente, terapeuta ou familiar."
           />
           <MetricCard
             label="Recuperado (repos.)"
             value={formatBRL(metrics.recuperado)}
-            sub="reposições realizadas"
+            sub={`${metrics.totalReposicoes} reposição${metrics.totalReposicoes !== 1 ? "ões" : ""}`}
             color="#F59E0B"
-          />
-          <MetricCard
-            label="Total de faltas"
-            value={String(metrics.totalFalta)}
-            sub="no período selecionado"
-            danger
+            tooltip="Valor recuperado com sessões de reposição (makeup) realizadas no período."
           />
           <MetricCard
             label="Sessões realizadas"
             value={String(metrics.totalAtend)}
             sub="completed + reposições"
+            tooltip="Total de atendimentos concluídos: sessões completas mais reposições."
           />
         </div>
 
@@ -718,14 +739,25 @@ function Header({ aba }: { aba: string }) {
 }
 
 function MetricCard({
-  label, value, sub, highlight, danger, color: colorProp,
+  label, value, sub, highlight, danger, color: colorProp, tooltip,
 }: {
-  label: string; value: string; sub?: string; highlight?: boolean; danger?: boolean; color?: string;
+  label: string; value: string; sub?: string; highlight?: boolean; danger?: boolean; color?: string; tooltip?: string;
 }) {
   const color = colorProp ?? (highlight ? "#1a4a3a" : danger ? "#dc2626" : "#374151");
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-      <p className="text-xs font-medium text-gray-400 mb-1">{label}</p>
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <p className="text-xs font-medium text-gray-400">{label}</p>
+        {tooltip && (
+          <span
+            title={tooltip}
+            className="flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold cursor-help"
+            style={{ backgroundColor: "#F3F4F6", color: "#9CA3AF" }}
+          >
+            ?
+          </span>
+        )}
+      </div>
       <p className="text-xl font-bold leading-tight" style={{ color, fontFamily: "var(--font-poppins, sans-serif)" }}>{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
