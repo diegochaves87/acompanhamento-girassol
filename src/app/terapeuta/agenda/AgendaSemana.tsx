@@ -4,7 +4,7 @@ import { Fragment, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { statusCardClass, statusBadge } from "@/lib/session-status";
+import { statusCardStyle, statusBadge } from "@/lib/session-status";
 import type { AgendaSession } from "./page";
 
 type SessionGroup = { sessions: AgendaSession[]; timeRange: string };
@@ -185,30 +185,30 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
       {/* Header */}
-      <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #E5E7EB" }} className="px-6 py-4">
+      <header style={{ backgroundColor: "#1D3557" }} className="px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           {/* Left: back + icon + title + nav */}
           <div className="flex items-center gap-4 flex-wrap">
-            <Link href="/terapeuta" className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60" style={{ color: "#6B7280" }}>
+            <Link href="/terapeuta" className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60" style={{ color: "rgba(255,255,255,0.65)" }}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                 <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Início
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#2E7BC118", color: "#2E7BC1" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "white" }}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
                   <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth={1.8} />
                   <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
                 </svg>
               </div>
-              <h1 className="font-bold text-lg" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>Agenda</h1>
+              <h1 className="font-bold text-lg" style={{ color: "white", fontFamily: "var(--font-poppins, sans-serif)" }}>Agenda</h1>
             </div>
-            <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "#F3F4F6" }}>
-              <Link href="/terapeuta/agenda" className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#1D3557", color: "#fff" }}>
+            <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "rgba(255,255,255,0.12)" }}>
+              <Link href="/terapeuta/agenda" className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "rgba(255,255,255,0.95)", color: "#1D3557" }}>
                 Semana
               </Link>
-              <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:bg-white" style={{ color: "#6B7280" }}>
+              <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:bg-white/10" style={{ color: "rgba(255,255,255,0.65)" }}>
                 Atendimentos
               </Link>
             </div>
@@ -216,25 +216,25 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
 
           {/* Right: week navigation + new session + petal */}
           <div className="relative flex items-center gap-3 flex-shrink-0">
-            <div className="flex items-center gap-1 rounded-xl border" style={{ borderColor: "#E5E7EB" }}>
+            <div className="flex items-center gap-1 rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.25)" }}>
               <button
                 onClick={() => navigate(addDaysISO(monday, -7))}
                 disabled={loading}
                 className="p-2 transition-opacity hover:opacity-60 disabled:opacity-30"
-                style={{ color: "#6B7280" }}
+                style={{ color: "rgba(255,255,255,0.8)" }}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                   <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              <span className="text-xs font-medium capitalize min-w-[150px] text-center" style={{ color: "#374151" }}>
+              <span className="text-xs font-medium capitalize min-w-[150px] text-center" style={{ color: "white" }}>
                 {formatWeekRange(monday)}
               </span>
               <button
                 onClick={() => navigate(addDaysISO(monday, 7))}
                 disabled={loading}
                 className="p-2 transition-opacity hover:opacity-60 disabled:opacity-30"
-                style={{ color: "#6B7280" }}
+                style={{ color: "rgba(255,255,255,0.8)" }}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
                   <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -252,7 +252,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
               Nova sessão
             </Link>
             {/* Pétala decorativa */}
-            <svg className="absolute opacity-25 pointer-events-none" style={{ top: -6, right: -6 }} width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+            <svg className="absolute opacity-20 pointer-events-none" style={{ top: -6, right: -6 }} width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
               <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(0 26 26)" />
               <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFBA3D" transform="rotate(72 26 26)" />
               <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(144 26 26)" />
@@ -336,12 +336,13 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                 <Link
                   key={s.id}
                   href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
-                  className={`block rounded-xl px-4 py-3 ${statusCardClass(s.status)}`}
+                  className="block rounded-xl px-4 py-3 border-l-4"
+                  style={statusCardStyle(s.status)}
                 >
                   <p className="text-sm font-bold leading-tight" style={{ color: "#1D3557" }}>
                     {s.patients?.full_name ?? "—"}
                   </p>
-                  <p className="text-xs mt-0.5 font-medium" style={{ color: "#1D3557", opacity: 0.7 }}>
+                  <p className="text-xs mt-0.5 font-medium" style={{ color: "#374151", opacity: 0.75 }}>
                     {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)}
                     {" · "}{statusBadge(s.status)}
                   </p>
@@ -411,7 +412,8 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                           return (
                             <div
                               key={s.id}
-                              className={`rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight ${statusCardClass(s.status)}`}
+                              className="rounded px-1.5 py-0.5 mb-0.5 text-[11px] font-medium leading-tight border-l-2"
+                              style={statusCardStyle(s.status)}
                             >
                               <Link
                                 href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}

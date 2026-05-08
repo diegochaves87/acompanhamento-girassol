@@ -109,3 +109,21 @@ export function statusCardClass(status: string): string {
     "bg-gray-50 border-l-2 border-gray-200 text-gray-600"
   );
 }
+
+type CardStyle = { backgroundColor: string; borderLeftColor: string };
+
+const CARD_STYLES: Record<SessionStatus, CardStyle> = {
+  scheduled: { backgroundColor: "#EFF6FF", borderLeftColor: "#2E7BC1" },
+  confirmed: { backgroundColor: "#F0FFF4", borderLeftColor: "#4CAF50" },
+  completed: { backgroundColor: "#F3F4F6", borderLeftColor: "#9CA3AF" },
+  unjustified_absence: { backgroundColor: "#FEF2F2", borderLeftColor: "#DC2626" },
+  justified_absence: { backgroundColor: "#FFF7ED", borderLeftColor: "#F59E0B" },
+  makeup: { backgroundColor: "#F5F3FF", borderLeftColor: "#8B5CF6" },
+  holiday: { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" },
+  canceled_therapist: { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
+  cancelled_family: { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
+};
+
+export function statusCardStyle(status: string): CardStyle {
+  return CARD_STYLES[status as SessionStatus] ?? { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" };
+}

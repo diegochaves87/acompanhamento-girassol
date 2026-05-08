@@ -11,14 +11,15 @@ export default async function TerapeutaLayout({ children }: { children: React.Re
     specialty: string | null;
     email: string | null;
     userId: string | null;
+    foto_url: string | null;
   } | null = null;
 
   if (user) {
-    const { data, error } = await supabase
-      .from("users")
-      .select("full_name, profession, specialty")
-      .eq("id", user.id)
-      .maybeSingle();
+    const [usersRes, profilesRes] = await Promise.all([
+      supabase.from("users").select("full_name, profession, specialty").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("foto_url").eq("id", user.id).maybeSingle(),
+    ]);
+    const { data, error } = usersRes;
 
     if (error) {
       console.error("[TerapeutaLayout] erro ao buscar perfil:", error.message);
@@ -28,11 +29,11 @@ export default async function TerapeutaLayout({ children }: { children: React.Re
         .eq("id", user.id)
         .maybeSingle();
       profissional = fallback
-        ? { full_name: fallback.full_name, profession: null, specialty: null, email: user.email ?? null, userId: user.id }
+        ? { full_name: fallback.full_name, profession: null, specialty: null, email: user.email ?? null, userId: user.id, foto_url: profilesRes.data?.foto_url ?? null }
         : null;
     } else {
       profissional = data
-        ? { ...data, email: user.email ?? null, userId: user.id }
+        ? { ...data, email: user.email ?? null, userId: user.id, foto_url: profilesRes.data?.foto_url ?? null }
         : null;
     }
   }

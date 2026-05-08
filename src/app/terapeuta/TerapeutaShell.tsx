@@ -22,6 +22,7 @@ type Profissional = {
   specialty: string | null;
   email: string | null;
   userId: string | null;
+  foto_url?: string | null;
 };
 
 type Props = {
@@ -352,12 +353,17 @@ export default function TerapeutaShell({ children, profissional }: Props) {
                 {profissional?.full_name ?? "—"}
               </p>
             </div>
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 border-2 border-white shadow-sm"
-              style={{ backgroundColor: "#4CAF50" }}
-            >
-              {initial}
-            </div>
+            {profissional?.foto_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profissional.foto_url} alt={initial} className="w-9 h-9 rounded-full object-cover flex-shrink-0 border-2 border-white shadow-sm" />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 border-2 border-white shadow-sm"
+                style={{ backgroundColor: "#4CAF50" }}
+              >
+                {initial}
+              </div>
+            )}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className={`w-4 h-4 flex-shrink-0 transition-transform ${profileOpen ? "rotate-180" : ""}`}
@@ -377,12 +383,17 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               {/* Header */}
               <div className="px-5 py-4" style={{ backgroundColor: "#f0f4f1" }}>
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
-                    style={{ backgroundColor: "#4CAF50", color: "white" }}
-                  >
-                    {initial}
-                  </div>
+                  {profissional?.foto_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profissional.foto_url} alt={initial} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0"
+                      style={{ backgroundColor: "#4CAF50", color: "white" }}
+                    >
+                      {initial}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-800 truncate">{profissional?.full_name ?? "—"}</p>
                     <p className="text-xs text-gray-500 truncate">{profissional?.email ?? ""}</p>

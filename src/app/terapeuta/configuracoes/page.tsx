@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import PerfilForm from "./PerfilForm";
+import FotoPerfilUpload from "./FotoPerfilUpload";
 import PageHeader from "@/components/PageHeader";
 
 export default async function ConfiguracoesPage() {
@@ -38,18 +39,14 @@ export default async function ConfiguracoesPage() {
       <main className="max-w-2xl mx-auto px-6 py-8 space-y-5">
         {/* Avatar card */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
-            style={{ backgroundColor: "#4CAF50", color: "white" }}
-          >
-            {initial}
-          </div>
+          <FotoPerfilUpload userId={user.id} initial={initial} fotoUrl={profileData?.foto_url ?? null} />
           <div>
             <p className="font-semibold text-gray-800 text-lg">{userData?.full_name ?? "—"}</p>
             <p className="text-sm text-gray-500">{user.email}</p>
             {userData?.specialty && (
               <p className="text-xs font-medium mt-0.5" style={{ color: "#4CAF50" }}>{userData.specialty}</p>
             )}
+            <p className="text-xs text-gray-400 mt-1">Clique na foto para alterar</p>
           </div>
         </section>
 

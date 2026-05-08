@@ -8,12 +8,15 @@ const RELACOES = ["Mãe", "Pai", "Avó", "Avô", "Responsável", "Outro"];
 interface Props {
   patientId: string;
   patientName: string;
+  guardianName?: string | null;
+  guardianEmail?: string | null;
+  guardianPhone?: string | null;
 }
 
-export default function ConvidarFamiliarModal({ patientId, patientName }: Props) {
+export default function ConvidarFamiliarModal({ patientId, patientName, guardianName, guardianEmail, guardianPhone }: Props) {
   const [open, setOpen] = useState(false);
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
+  const [nome, setNome] = useState(guardianName ?? "");
+  const [email, setEmail] = useState(guardianEmail ?? "");
   const [relacao, setRelacao] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ token: string; link: string } | null>(null);
@@ -21,7 +24,7 @@ export default function ConvidarFamiliarModal({ patientId, patientName }: Props)
   const [copied, setCopied] = useState(false);
 
   function reset() {
-    setNome(""); setEmail(""); setRelacao(""); setError(""); setResult(null); setCopied(false);
+    setNome(guardianName ?? ""); setEmail(guardianEmail ?? ""); setRelacao(""); setError(""); setResult(null); setCopied(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,8 +49,13 @@ export default function ConvidarFamiliarModal({ patientId, patientName }: Props)
   }
 
   const waMsg = result
-    ? encodeURIComponent(`Olá, ${nome}! Você foi convidado para acompanhar o desenvolvimento de ${patientName} pelo Acompanhamento Girassol. Acesse o link para criar sua conta: ${result.link}`)
+    ? encodeURIComponent(`Olá, ${nome}! Você foi convidado(a) para acompanhar o desenvolvimento de ${patientName} pelo Acompanhamento Girassol. Acesse o link para criar sua conta: ${result.link}`)
     : "";
+  const waHref = result
+    ? guardianPhone
+      ? `https://wa.me/55${guardianPhone.replace(/\D/g, "")}?text=${waMsg}`
+      : `https://wa.me/?text=${waMsg}`
+    : "#";
 
   const inputCls = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/10 bg-white";
 
@@ -120,7 +128,7 @@ export default function ConvidarFamiliarModal({ patientId, patientName }: Props)
                     )}
                   </button>
                   <a
-                    href={`https://wa.me/?text=${waMsg}`}
+                    href={waHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"

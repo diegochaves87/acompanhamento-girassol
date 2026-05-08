@@ -6,6 +6,7 @@ import InativarPacienteButton from "./InativarPacienteButton";
 import NotasTab from "./NotasTab";
 import ConvidarFamiliarModal from "./ConvidarFamiliarModal";
 import AprovarFamiliarButton from "./AprovarFamiliarButton";
+import PacienteAvatarUpload from "./PacienteAvatarUpload";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
@@ -56,6 +57,21 @@ type EvoItem = {
 };
 
 type Note = { id: string; technical_note: string; created_at: string };
+
+type FeedEvo = {
+  id: string;
+  status: string;
+  updated_at: string | null;
+  session_id: string;
+  sessions: { scheduled_at: string } | null;
+};
+
+type NextSession = {
+  id: string;
+  scheduled_at: string;
+  duration_minutes: number | null;
+  clinics: { name: string } | null;
+};
 
 function diagnosisBadgeClass(d: string): string {
   const key = d.toLowerCase().replace(/\s/g, "");
@@ -144,6 +160,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
   if (error || !patient) notFound();
 
+  const patientTenantId = (patient as Record<string, unknown>).tenant_id as string ?? "";
+
   const [
     guardianRes,
     agendaRes,
@@ -151,6 +169,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     evosRes,
     notasRes,
     familyRes,
+    feedEvosRes,
+    nextSessionRes,
   ] = await Promise.all([
     supabase
       .from("family_patient")
@@ -196,6 +216,27 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
       .select("id, nome, email, relacao, status, created_at")
       .eq("patient_id", params.id)
       .order("created_at", { ascending: false }),
+
+    aba === "familia"
+      ? supabase
+          .from("evolutions")
+          .select("id, status, updated_at, session_id, sessions(scheduled_at)")
+          .eq("patient_id", params.id)
+          .order("updated_at", { ascending: false })
+          .limit(10)
+      : Promise.resolve({ data: [] as FeedEvo[] }),
+
+    aba === "familia"
+      ? supabase
+          .from("sessions")
+          .select("id, scheduled_at, duration_minutes, clinics(name)")
+          .eq("patient_id", params.id)
+          .in("status", ["scheduled", "confirmed"])
+          .gte("scheduled_at", new Date().toISOString())
+          .order("scheduled_at", { ascending: true })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null as NextSession | null }),
   ]);
 
   const guardian = guardianRes.data;
@@ -204,6 +245,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
   const evos = (evosRes.data ?? []) as EvoItem[];
   const notas = (notasRes.data ?? []) as Note[];
   const familyMembers = (familyRes.data ?? []) as FamilyMember[];
+  const feedEvos = (feedEvosRes.data ?? []) as FeedEvo[];
+  const nextSession = nextSessionRes.data as NextSession | null;
 
   const evoBySessionId = new Map(evos.map((e) => [e.session_id, e]));
 
@@ -211,7 +254,8 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
   const diagnoses: string[] = patient.diagnosis ?? [];
   const supportLevel = (patient as Record<string, unknown>).support_level as string | null ?? null;
   const initial = patient.full_name.trim().charAt(0).toUpperCase();
-  const tenantId = (patient as Record<string, unknown>).tenant_id as string ?? "";
+  const tenantId = patientTenantId;
+  const fotoUrl = (patient as Record<string, unknown>).foto_url as string | null ?? null;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
@@ -233,18 +277,19 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
           {/* Avatar + info */}
           <div className="flex items-start gap-5 mb-5">
-            <div
-              className="flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold shadow-lg select-none"
-              style={{ backgroundColor: "#e8f0ec", color: "#1a4a3a" }}
-            >
-              {initial}
-            </div>
+            <PacienteAvatarUpload patientId={params.id} initial={initial} fotoUrl={fotoUrl} />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2 flex-wrap">
                 <h1 className="text-white font-bold text-xl leading-tight">{patient.full_name}</h1>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <ConvidarFamiliarModal patientId={params.id} patientName={patient.full_name} />
+                  <ConvidarFamiliarModal
+                    patientId={params.id}
+                    patientName={patient.full_name}
+                    guardianName={guardian?.guardian_name ?? null}
+                    guardianEmail={guardian?.guardian_email ?? null}
+                    guardianPhone={guardian?.guardian_phone ?? null}
+                  />
                   <Link
                     href={`/terapeuta/pacientes/${params.id}/editar`}
                     className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white border border-white/20 hover:border-white/40 transition-colors"
@@ -560,49 +605,130 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
         {/* ── FAMÍLIA ── */}
         {aba === "familia" && (
           <div className="space-y-4">
-            {familyMembers.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-16 text-center">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F0FFF4" }}>
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
-                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#4CAF50" />
-                  </svg>
+
+            {/* Acessos familiares */}
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Acessos ao portal</h2>
+              {familyMembers.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhum familiar convidado ainda</p>
+                  <p className="text-xs text-gray-400">Use o botão &ldquo;Convidar familiar&rdquo; no topo para enviar o primeiro convite.</p>
                 </div>
-                <p className="font-semibold text-gray-600 mb-1">Nenhum familiar convidado ainda</p>
-                <p className="text-sm text-gray-400">Use o botão &ldquo;Convidar familiar&rdquo; no topo para enviar o primeiro convite.</p>
-              </div>
-            ) : (
-              familyMembers.map((member) => {
-                const statusMap: Record<string, { label: string; color: string; bg: string }> = {
-                  pendente: { label: "Convite enviado", color: "#D97706", bg: "#FFFBEB" },
-                  aguardando_aprovacao: { label: "Aguardando aprovação", color: "#2E7BC1", bg: "#EFF6FF" },
-                  ativo: { label: "Ativo", color: "#166534", bg: "#F0FFF4" },
-                  bloqueado: { label: "Bloqueado", color: "#DC2626", bg: "#FEF2F2" },
-                };
-                const st = statusMap[member.status] ?? statusMap.pendente;
-                return (
-                  <div key={member.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4 flex-wrap">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                        style={{ backgroundColor: "#4CAF50" }}>
-                        {member.nome.charAt(0).toUpperCase()}
+              ) : (
+                <div className="space-y-3">
+                  {familyMembers.map((member) => {
+                    const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+                      pendente: { label: "Convite enviado", color: "#D97706", bg: "#FFFBEB" },
+                      aguardando_aprovacao: { label: "Aguardando aprovação", color: "#2E7BC1", bg: "#EFF6FF" },
+                      ativo: { label: "Ativo", color: "#166534", bg: "#F0FFF4" },
+                      bloqueado: { label: "Bloqueado", color: "#DC2626", bg: "#FEF2F2" },
+                    };
+                    const st = statusMap[member.status] ?? statusMap.pendente;
+                    return (
+                      <div key={member.id} className="flex items-center justify-between gap-4 flex-wrap py-2 border-b border-gray-50 last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ backgroundColor: "#4CAF50" }}>
+                            {member.nome.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800 text-sm">{member.nome}</p>
+                            <p className="text-xs text-gray-400">{member.email}{member.relacao ? ` · ${member.relacao}` : ""}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: st.bg, color: st.color }}>{st.label}</span>
+                          {member.status === "aguardando_aprovacao" && (
+                            <AprovarFamiliarButton accessId={member.id} nome={member.nome} />
+                          )}
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-gray-800 text-sm">{member.nome}</p>
-                        <p className="text-xs text-gray-400">{member.email}{member.relacao ? ` · ${member.relacao}` : ""}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: st.bg, color: st.color }}>
-                        {st.label}
-                      </span>
-                      {member.status === "aguardando_aprovacao" && (
-                        <AprovarFamiliarButton accessId={member.id} nome={member.nome} />
-                      )}
-                    </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            {/* Próxima sessão */}
+            {nextSession && (
+              <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Próxima sessão</h2>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#EFF6FF" }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" style={{ color: "#2E7BC1" }}>
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth={1.8} />
+                      <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+                    </svg>
                   </div>
-                );
-              })
+                  <div>
+                    <p className="font-semibold text-gray-800 text-sm">{formatScheduledAt(nextSession.scheduled_at, nextSession.duration_minutes).weekday} {formatScheduledAt(nextSession.scheduled_at, nextSession.duration_minutes).date} às {formatScheduledAt(nextSession.scheduled_at, nextSession.duration_minutes).time}</p>
+                    {nextSession.clinics && <p className="text-xs text-gray-400 mt-0.5">{(nextSession.clinics as { name: string }).name}</p>}
+                  </div>
+                </div>
+              </section>
             )}
+
+            {/* Feed de evoluções */}
+            <section>
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">Evoluções compartilhadas</h2>
+              {feedEvos.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-10 text-center">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F3F0FF" }}>
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" style={{ color: "#8E6CCF" }}>
+                      <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhuma evolução registrada</p>
+                  <p className="text-xs text-gray-400">As evoluções publicadas aparecerão aqui.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {feedEvos.map((evo) => {
+                    const sessionDate = evo.sessions?.scheduled_at
+                      ? formatScheduledAt(evo.sessions.scheduled_at)
+                      : null;
+                    const isPublished = evo.status === "published";
+                    const href = isPublished
+                      ? `/terapeuta/evolucoes/${evo.id}`
+                      : `/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`;
+                    return (
+                      <div key={evo.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{ backgroundColor: "#F3F0FF", color: "#8E6CCF" }}>
+                            {initial}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-gray-800">Terapeuta</span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                isPublished
+                                  ? "bg-green-50 text-green-700 border-green-100"
+                                  : "bg-amber-50 text-amber-700 border-amber-100"
+                              }`}>
+                                {isPublished ? "PUBLICADA" : "RASCUNHO"}
+                              </span>
+                            </div>
+                            {sessionDate && (
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                Sessão de {sessionDate.weekday} {sessionDate.date} às {sessionDate.time}
+                              </p>
+                            )}
+                            {evo.updated_at && (
+                              <p className="text-xs text-gray-400">Atualizada em {formatUpdatedAt(evo.updated_at)}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                          <a href={href} className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors hover:opacity-80" style={{ backgroundColor: isPublished ? "#F0FFF4" : "#FFF7ED", color: isPublished ? "#166534" : "#92400E" }}>
+                            {isPublished ? "Ver evolução →" : "Continuar rascunho →"}
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
           </div>
         )}
 
