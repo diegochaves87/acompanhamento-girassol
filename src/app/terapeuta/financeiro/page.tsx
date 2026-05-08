@@ -93,7 +93,7 @@ function formatSessionDate(iso: string) {
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
 const REVENUE = ["completed", "makeup"];
-const ABSENCE = ["unjustified_absence", "justified_absence"];
+const ABSENCE = ["unjustified_absence", "justified_absence", "canceled_therapist", "cancelled_family", "cancelled", "missed"];
 
 function calcMetrics(sessions: SessionRow[]) {
   const revenue = sessions.filter((s) => REVENUE.includes(s.status));
@@ -121,7 +121,7 @@ function calcClinicRanking(sessions: SessionRow[]) {
     const e = map.get(id)!;
     if (REVENUE.includes(s.status)) { e.sessoes++; e.receita += sessionValue(s); e.atend++; }
     if (ABSENCE.includes(s.status)) { e.faltas++; }
-    if (s.status === "cancelled") { e.cancelamentos++; }
+    if (["cancelled", "canceled_therapist", "cancelled_family"].includes(s.status)) { e.cancelamentos++; }
     if (s.status === "makeup") { e.reposicoes++; }
   }
   return Array.from(map.values())

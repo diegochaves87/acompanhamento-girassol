@@ -139,6 +139,7 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
   const [monday, setMonday] = useState(initialMonday);
   const [sessions, setSessions] = useState<AgendaSession[]>(initialSessions);
   const [loading, setLoading] = useState(false);
+  const [selectedDayIdx, setSelectedDayIdx] = useState(0);
 
   const today = todayISO();
   const weekDays = Array.from({ length: 5 }, (_, i) => addDaysISO(monday, i));
@@ -154,8 +155,18 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
 
   const { sessionGroups, skippedIds } = useMemo(() => buildGroups(sessions), [sessions]);
 
+  const mobileDayISO = weekDays[selectedDayIdx];
+  const mobileDaySessions = sessions
+    .filter((s) => {
+      const d = new Date(s.scheduled_at);
+      const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+      return iso === mobileDayISO;
+    })
+    .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+
   async function navigate(newMonday: string) {
     setLoading(true);
+    setSelectedDayIdx(0);
     setMonday(newMonday);
     const nextMonday = addDaysISO(newMonday, 7);
     const supabase = createClient();
@@ -233,8 +244,104 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
         </div>
       </header>
 
-      {/* Grid */}
-      <main className="max-w-6xl mx-auto px-4 py-4 overflow-x-auto">
+      {/* ── Mobile day view ── */}
+      <div className="md:hidden">
+        {/* Day pills */}
+        <div className="flex gap-2 px-4 pt-3 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+          {weekDays.map((dayISO, i) => {
+            const isSelected = i === selectedDayIdx;
+            const isToday = dayISO === today;
+            return (
+              <button
+                key={dayISO}
+                onClick={() => setSelectedDayIdx(i)}
+                className="flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl transition-colors"
+                style={{
+                  backgroundColor: isSelected ? "#1a4a3a" : isToday ? "#f0f4f1" : "white",
+                  color: isSelected ? "white" : isToday ? "#1a4a3a" : "#6B7280",
+                  border: isSelected ? "none" : "1px solid #E5E7EB",
+                }}
+              >
+                <span className="text-[11px] font-semibold">{DAY_NAMES[i]}</span>
+                <span className="text-sm font-bold">{formatDayLabel(dayISO)}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Day navigation arrows */}
+        <div className="flex items-center justify-between px-4 pb-3">
+          <button
+            onClick={() => setSelectedDayIdx((p) => Math.max(0, p - 1))}
+            disabled={selectedDayIdx === 0}
+            className="flex items-center gap-1 text-sm font-medium text-gray-500 disabled:opacity-30"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Anterior
+          </button>
+          <span className="text-sm font-semibold" style={{ color: "#1a4a3a" }}>
+            {DAY_NAMES[selectedDayIdx]} · {formatDayLabel(mobileDayISO)}
+          </span>
+          <button
+            onClick={() => setSelectedDayIdx((p) => Math.min(4, p + 1))}
+            disabled={selectedDayIdx === 4}
+            className="flex items-center gap-1 text-sm font-medium text-gray-500 disabled:opacity-30"
+          >
+            Próximo
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Sessions for selected day */}
+        <div className="px-4 pb-6 space-y-2">
+          {loading ? (
+            <p className="text-sm text-gray-400 text-center py-8">Carregando…</p>
+          ) : mobileDaySessions.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+              <p className="text-sm text-gray-400">Nenhuma sessão neste dia</p>
+              <Link
+                href={`/terapeuta/agenda/dia/${mobileDayISO}`}
+                className="mt-3 inline-block text-xs font-semibold px-3 py-1.5 rounded-lg"
+                style={{ backgroundColor: "#f0f4f1", color: "#1a4a3a" }}
+              >
+                Ver dia completo
+              </Link>
+            </div>
+          ) : (
+            <>
+              {mobileDaySessions.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
+                  className={`block rounded-xl px-4 py-3 ${statusCardClass(s.status)}`}
+                >
+                  <p className="text-sm font-bold leading-tight" style={{ color: "#1D3557" }}>
+                    {s.patients?.full_name ?? "—"}
+                  </p>
+                  <p className="text-xs mt-0.5 font-medium" style={{ color: "#1D3557", opacity: 0.7 }}>
+                    {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)}
+                    {" · "}{statusBadge(s.status)}
+                  </p>
+                </Link>
+              ))}
+              <Link
+                href={`/terapeuta/agenda/dia/${mobileDayISO}`}
+                className="block text-center text-xs font-semibold pt-1"
+                style={{ color: "#1a4a3a" }}
+              >
+                Ver dia completo →
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Grid — desktop only */}
+      <main className="hidden md:block max-w-6xl mx-auto px-4 py-4 overflow-x-auto">
         {loading && (
           <div className="text-center py-4 text-sm text-gray-400">Carregando…</div>
         )}
@@ -289,7 +396,8 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                             >
                               <Link
                                 href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
-                                className="truncate block hover:underline cursor-pointer"
+                                className="truncate block hover:underline cursor-pointer font-semibold"
+                                style={{ color: "#1D3557" }}
                                 title={s.patients?.full_name ?? ""}
                               >
                                 {s.patients?.full_name ?? "—"}

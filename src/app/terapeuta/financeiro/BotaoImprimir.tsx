@@ -44,7 +44,7 @@ function brl(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function buildReport(d: PrintData): string {
+function buildReport(d: PrintData, logoUrl: string): string {
   const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   const maxBar = Math.max(...d.monthlyData.map((m) => m.value), 1);
 
@@ -108,10 +108,13 @@ function buildReport(d: PrintData): string {
 </head>
 <body>
 <div class="header-bar">
-  <div>
-    <div style="font-size:10px;color:#4CAF50;font-weight:600;margin-bottom:2px">ACOMPANHAMENTO GIRASSOL</div>
-    <h1>Relatório Financeiro</h1>
-    <div style="font-size:12px;color:#6B7280;margin-top:4px">${d.terapeutaNome} · ${d.periodo}</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <img src="${logoUrl}" alt="Girassol" style="height:48px;width:auto;object-fit:contain" onerror="this.style.display='none'" />
+    <div>
+      <div style="font-size:10px;color:#4CAF50;font-weight:600;margin-bottom:2px">ACOMPANHAMENTO GIRASSOL</div>
+      <h1>Relatório Financeiro</h1>
+      <div style="font-size:12px;color:#6B7280;margin-top:4px">${d.terapeutaNome} · ${d.periodo}</div>
+    </div>
   </div>
   <div style="text-align:right;font-size:11px;color:#9CA3AF">
     Gerado em ${today}<br>
@@ -217,9 +220,10 @@ export default function BotaoImprimir({
       window.print();
       return;
     }
+    const logoUrl = window.location.origin + "/logo-completa.png";
     const w = window.open("", "_blank");
     if (w) {
-      w.document.write(buildReport(data));
+      w.document.write(buildReport(data, logoUrl));
       w.document.close();
     }
   }
