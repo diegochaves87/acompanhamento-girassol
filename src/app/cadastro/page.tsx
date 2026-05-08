@@ -125,6 +125,11 @@ function CadastroForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const filledFormacoes = formacoes.filter((f) => f.value.trim());
+    if (filledFormacoes.length === 0) {
+      setError("Informe pelo menos uma formação acadêmica.");
+      return;
+    }
     setLoading(true);
     setError("");
 

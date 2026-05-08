@@ -223,7 +223,6 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
   return (
     <>
-      <ImpersonationBanner />
       <WelcomePopup saibaMaisHref="/terapeuta/sobre" />
 
       {/* ── Desktop sidebar ── */}
@@ -580,9 +579,10 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
       {/* ── Content wrapper ── */}
       <div
-        className="transition-all duration-300 pb-16 md:pb-0"
+        className="transition-all duration-300 pb-16 md:pb-0 flex flex-col"
         style={{ marginLeft: contentMargin, backgroundColor: "#F9FAFB", minHeight: "100vh", paddingTop: HEADER_H }}
       >
+        <ImpersonationBanner />
         {children}
       </div>
     </>

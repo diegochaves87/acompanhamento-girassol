@@ -78,10 +78,12 @@ const readOnlyCls = "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm 
 
 function initDocItems(
   newData: Array<{ name: string; file_url?: string }> | undefined,
-  legacyText?: string
+  legacyText?: string,
+  defaultEmpty = false
 ): DocItem[] {
   if (newData && newData.length > 0) return newData.map((x) => ({ name: x.name, file_url: x.file_url }));
   if (legacyText) return [{ name: legacyText }];
+  if (defaultEmpty) return [{ name: "" }];
   return [];
 }
 
@@ -110,10 +112,10 @@ export default function PerfilForm({
   const [cepLoading, setCepLoading] = useState(false);
 
   const [formacoes, setFormacoes] = useState<DocItem[]>(
-    initDocItems(profileData.formacoes, profileData.education)
+    initDocItems(profileData.formacoes, profileData.education, true)
   );
   const [especialidades, setEspecialidades] = useState<DocItem[]>(
-    initDocItems(profileData.especialidades, profileData.specialties ?? initialSpecialty)
+    initDocItems(profileData.especialidades, profileData.specialties ?? initialSpecialty, true)
   );
   const [courses, setCourses] = useState<DocItem[]>(
     (profileData.courses ?? []).map((c) => ({ name: c.name, file_url: c.file_url }))

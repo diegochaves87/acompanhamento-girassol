@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
   const match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
   return match ? decodeURIComponent(match[1]) : null;
 }
@@ -13,8 +14,7 @@ export default function ImpersonationBanner() {
   const router = useRouter();
 
   useEffect(() => {
-    const name = getCookie("impersonate_user_name");
-    setUserName(name);
+    setUserName(getCookie("impersonate_user_name"));
   }, []);
 
   function handleExit() {
@@ -30,18 +30,18 @@ export default function ImpersonationBanner() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-between px-5 py-2"
-      style={{ backgroundColor: "#FFBA3D", color: "#1D3557" }}
+      className="w-full flex items-center justify-between px-5 shrink-0"
+      style={{ height: 32, backgroundColor: "#FEF3C7", borderBottom: "1px solid #FDE68A" }}
     >
-      <span className="text-sm font-semibold">
-        Você está visualizando como <strong>{userName}</strong> — modo admin
+      <span className="text-xs font-semibold truncate" style={{ color: "#92400E" }}>
+        Visualizando como <strong>{userName}</strong>
       </span>
       <button
         onClick={handleExit}
-        className="text-xs font-bold px-3 py-1 rounded-lg transition-opacity hover:opacity-75"
-        style={{ backgroundColor: "#1D3557", color: "#ffffff" }}
+        className="flex-shrink-0 text-xs font-bold ml-4 underline underline-offset-2 transition-opacity hover:opacity-70"
+        style={{ color: "#92400E" }}
       >
-        Sair do modo admin
+        Voltar ao meu acesso
       </button>
     </div>
   );
