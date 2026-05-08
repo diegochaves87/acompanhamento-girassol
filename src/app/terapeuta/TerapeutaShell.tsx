@@ -237,7 +237,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <img
                 src="/identidade-visual/logo-vetorizada.svg"
                 alt="Acompanhamento Girassol"
-                style={{ width: '100%', maxHeight: '80px', objectFit: 'contain', padding: '16px' }}
+                style={{ width: '100%', maxHeight: '80px', objectFit: 'contain', padding: '12px 16px' }}
               />
               <button
                 onClick={toggleSidebar}
@@ -261,7 +261,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <img
                 src="/identidade-visual/icone-logo-vetorizado.svg"
                 alt="Girassol"
-                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
+                style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', margin: '8px auto', display: 'block' }}
               />
             </button>
           )}
@@ -352,13 +352,16 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         <div />
 
         {/* Center: brand logo */}
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/identidade-visual/mao.svg"
-            alt="Jornada de Evolução Terapêutica"
-            style={{ height: '32px', width: 'auto' }}
+            alt=""
+            style={{ height: '28px', width: 'auto' }}
           />
+          <span style={{ fontFamily: 'var(--font-poppins, sans-serif)', fontWeight: 600, color: '#1D3557', fontSize: '16px', whiteSpace: 'nowrap' }}>
+            Jornada de Evolução Terapêutica
+          </span>
         </div>
 
         {/* Right: Profile dropdown */}
