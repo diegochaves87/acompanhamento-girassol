@@ -1,73 +1,100 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const poppins = "var(--font-poppins, sans-serif)";
+const inter = "var(--font-inter, sans-serif)";
 
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 
+const NAV_LINKS = [
+  { label: "Início", href: "#inicio" },
+  { label: "Sobre nós", href: "#sobre" },
+  { label: "Funcionalidades", href: "#funcionalidades" },
+  { label: "Como funciona", href: "#como-funciona" },
+  { label: "Para Famílias", href: "#familias" },
+  { label: "Contato", href: "#contato" },
+];
+
 function NavBar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12"
-      style={{ height: 64, backgroundColor: "#FFF7E6", borderBottom: "1px solid #FDE68A" }}
+      className="fixed top-0 left-0 right-0 z-50 transition-shadow duration-300"
+      style={{
+        height: 72,
+        backgroundColor: "#fff",
+        boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.08)" : "none",
+        borderBottom: scrolled ? "none" : "1px solid #F3F4F6",
+        fontFamily: inter,
+      }}
     >
-      {/* Logo */}
-      <Link href="/" className="flex items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Acompanhamento Girassol" style={{ height: 40 }} />
-      </Link>
-
-      {/* Desktop nav */}
-      <nav className="hidden md:flex items-center gap-8">
-        <a href="#como-funciona" className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "#1D3557" }}>Como funciona</a>
-        <a href="#familias" className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "#1D3557" }}>Para famílias</a>
-        <a href="#depoimentos" className="text-sm font-medium hover:opacity-70 transition-opacity" style={{ color: "#1D3557" }}>Depoimentos</a>
-      </nav>
-
-      {/* Desktop CTAs */}
-      <div className="hidden md:flex items-center gap-3">
-        <Link href="/login"
-          className="px-5 py-2 rounded-xl text-sm font-semibold border transition-colors hover:bg-gray-50"
-          style={{ borderColor: "#1D3557", color: "#1D3557" }}>
-          Entrar
+      <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between h-full">
+        <Link href="/" className="flex-shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Acompanhamento Girassol" style={{ height: 64 }} />
         </Link>
-        <Link href="/cadastro"
-          className="px-5 py-2 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#1D3557" }}>
-          Criar conta grátis
-        </Link>
+
+        <nav className="hidden lg:flex items-center gap-7">
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href}
+              className="text-sm font-medium transition-opacity hover:opacity-60"
+              style={{ color: "#374151" }}>
+              {l.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="hidden lg:flex items-center gap-3">
+          <Link href="/login"
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-gray-50"
+            style={{ borderColor: "#1D3557", color: "#1D3557" }}>
+            Entrar
+          </Link>
+          <Link href="/cadastro"
+            className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#1D3557" }}>
+            Começar grátis
+          </Link>
+        </div>
+
+        <button className="lg:hidden p-2 flex flex-col gap-1.5" onClick={() => setOpen(!open)} aria-label="Menu">
+          <span className={`block w-5 h-0.5 transition-all duration-300 origin-center ${open ? "rotate-45 translate-y-2" : ""}`} style={{ backgroundColor: "#1D3557" }} />
+          <span className={`block w-5 h-0.5 transition-all duration-300 ${open ? "opacity-0 scale-x-0" : ""}`} style={{ backgroundColor: "#1D3557" }} />
+          <span className={`block w-5 h-0.5 transition-all duration-300 origin-center ${open ? "-rotate-45 -translate-y-2" : ""}`} style={{ backgroundColor: "#1D3557" }} />
+        </button>
       </div>
 
-      {/* Mobile hamburger */}
-      <button
-        className="md:hidden flex flex-col gap-1.5 p-2"
-        onClick={() => setOpen(!open)}
-        aria-label="Menu"
-      >
-        <span className={`block w-5 h-0.5 transition-all ${open ? "rotate-45 translate-y-2" : ""}`} style={{ backgroundColor: "#1D3557" }} />
-        <span className={`block w-5 h-0.5 transition-all ${open ? "opacity-0" : ""}`} style={{ backgroundColor: "#1D3557" }} />
-        <span className={`block w-5 h-0.5 transition-all ${open ? "-rotate-45 -translate-y-2" : ""}`} style={{ backgroundColor: "#1D3557" }} />
-      </button>
-
-      {/* Mobile drawer */}
       {open && (
-        <div className="absolute top-16 left-0 right-0 flex flex-col gap-1 px-6 py-5 md:hidden shadow-lg z-50"
-          style={{ backgroundColor: "#FFF7E6", borderBottom: "1px solid #FDE68A" }}>
-          <a href="#como-funciona" onClick={() => setOpen(false)} className="py-2 text-sm font-medium" style={{ color: "#1D3557" }}>Como funciona</a>
-          <a href="#familias" onClick={() => setOpen(false)} className="py-2 text-sm font-medium" style={{ color: "#1D3557" }}>Para famílias</a>
-          <a href="#depoimentos" onClick={() => setOpen(false)} className="py-2 text-sm font-medium" style={{ color: "#1D3557" }}>Depoimentos</a>
+        <div className="lg:hidden absolute top-[72px] left-0 right-0 bg-white border-t shadow-xl px-6 py-5 flex flex-col gap-1 z-50"
+          style={{ borderColor: "#F3F4F6", fontFamily: inter }}>
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={() => setOpen(false)}
+              className="py-2.5 text-sm font-medium border-b" style={{ color: "#374151", borderColor: "#F9FAFB" }}>
+              {l.label}
+            </a>
+          ))}
           <div className="flex flex-col gap-2 pt-3">
             <Link href="/login" onClick={() => setOpen(false)}
-              className="py-2.5 rounded-xl text-sm font-semibold text-center border"
+              className="py-3 rounded-xl text-sm font-semibold text-center border"
               style={{ borderColor: "#1D3557", color: "#1D3557" }}>
               Entrar
             </Link>
             <Link href="/cadastro" onClick={() => setOpen(false)}
-              className="py-2.5 rounded-xl text-sm font-bold text-white text-center"
+              className="py-3 rounded-xl text-sm font-bold text-white text-center"
               style={{ backgroundColor: "#1D3557" }}>
-              Criar conta grátis
+              Começar grátis
             </Link>
           </div>
         </div>
@@ -80,140 +107,197 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section
-      id="inicio"
-      className="flex items-center"
-      style={{ backgroundColor: "#FFF7E6", paddingTop: 64, minHeight: "100vh" }}
-    >
-      <div className="w-full max-w-6xl mx-auto px-6 md:px-12 py-16 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-        {/* Text */}
-        <div className="flex flex-col gap-6">
+    <section id="inicio" style={{ backgroundColor: "#FFF7E6", paddingTop: 72, minHeight: "90vh", fontFamily: inter }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center min-h-[calc(90vh-72px)]">
+
+        {/* Left */}
+        <div className="flex flex-col gap-7">
           <span
-            className="inline-flex self-start items-center gap-2 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full"
+            className="inline-flex self-start items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full"
             style={{ backgroundColor: "#4CAF50", color: "#fff" }}
           >
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
             Para terapeutas e clínicas
           </span>
 
-          <h1
-            className="text-4xl md:text-5xl font-bold leading-tight"
-            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-          >
-            Gerencie seus pacientes e encante as famílias, tudo em um só lugar.
+          <h1 style={{ fontFamily: poppins, fontSize: "clamp(36px,4.5vw,52px)", fontWeight: 700, lineHeight: 1.18, color: "#1D3557", margin: 0 }}>
+            Gerencie seus pacientes e encante as famílias,{" "}
+            <span style={{ color: "#8E6CCF" }}>tudo em um só lugar.</span>
           </h1>
 
-          <p className="text-base md:text-lg leading-relaxed" style={{ color: "#4B5563" }}>
+          <p style={{ fontSize: 18, lineHeight: 1.7, color: "#4B5563", maxWidth: 520 }}>
             O Acompanhamento Girassol conecta você às famílias dos seus pacientes com organização, clareza e muito cuidado.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href="/cadastro"
-              className="px-7 py-3.5 rounded-xl text-sm font-bold text-white text-center transition-opacity hover:opacity-90"
+              className="px-8 py-4 rounded-xl text-base font-bold text-white text-center transition-all hover:opacity-90 hover:scale-[1.02]"
               style={{ backgroundColor: "#1D3557" }}>
-              Quero conhecer
+              Começar grátis
             </Link>
-            <Link href="/login"
-              className="px-7 py-3.5 rounded-xl text-sm font-semibold text-center border transition-colors hover:bg-white"
+            <Link href="#como-funciona"
+              className="px-8 py-4 rounded-xl text-base font-semibold text-center border-2 transition-all hover:bg-white"
               style={{ borderColor: "#1D3557", color: "#1D3557" }}>
-              Já tenho conta
+              Ver demonstração
             </Link>
           </div>
 
           {/* Social proof */}
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              {["#8E6CCF", "#4CAF50", "#2E7BC1", "#FFBA3D"].map((c, i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
-                  style={{ backgroundColor: c }}>
-                  {["F", "T", "A", "M"][i]}
+              {[
+                { bg: "#8E6CCF", label: "A" },
+                { bg: "#4CAF50", label: "C" },
+                { bg: "#2E7BC1", label: "R" },
+                { bg: "#FF5C7A", label: "M" },
+                { bg: "#FFBA3D", label: "F" },
+              ].map(({ bg, label }, i) => (
+                <div key={i}
+                  className="w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
+                  style={{ backgroundColor: bg }}>
+                  {label}
                 </div>
               ))}
             </div>
-            <p className="text-sm font-medium" style={{ color: "#6B7280" }}>
-              <span className="font-bold" style={{ color: "#1D3557" }}>+50 terapeutas</span> já usam o Girassol
+            <p style={{ fontSize: 14, color: "#6B7280", fontFamily: inter }}>
+              <strong style={{ color: "#1D3557" }}>+50 terapeutas</strong> já transformam sua prática com o Girassol
             </p>
+          </div>
+
+          {/* Micro-badges */}
+          <div className="flex flex-wrap gap-3">
+            {["30 dias grátis", "Sem cartão", "Cancele quando quiser"].map((txt) => (
+              <span key={txt}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: "#F0FFF4", color: "#166534" }}>
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 16 16">
+                  <path d="M3 8l4 4 6-6" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {txt}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Image */}
-        <div className="flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/identidade-visual/hero-home.png"
-            alt="Terapeuta com paciente"
-            className="w-full max-w-md md:max-w-full rounded-2xl object-cover"
-            style={{ maxHeight: 520 }}
+        {/* Right */}
+        <div className="relative flex items-center justify-center">
+          {/* Semicírculo decorativo */}
+          <div
+            className="absolute right-0 top-1/2 -translate-y-1/2 rounded-l-full"
+            style={{ width: 220, height: 440, backgroundColor: "#1D3557", opacity: 0.08, zIndex: 0 }}
           />
+
+          {/* Pétala SVG decorativa */}
+          <svg className="absolute top-6 left-4 opacity-30" width="60" height="60" viewBox="0 0 60 60" fill="none">
+            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#FFBA3D" transform="rotate(0 30 30)" />
+            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#4CAF50" transform="rotate(60 30 30)" />
+            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#FF5C7A" transform="rotate(120 30 30)" />
+          </svg>
+          <svg className="absolute bottom-10 right-6 opacity-20" width="48" height="48" viewBox="0 0 60 60" fill="none">
+            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#8E6CCF" transform="rotate(45 30 30)" />
+            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#2E7BC1" transform="rotate(105 30 30)" />
+          </svg>
+
+          {/* Hero image */}
+          <div className="relative z-10 w-full max-w-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/identidade-visual/hero-home.png"
+              alt="Terapeuta e família"
+              className="w-full object-cover"
+              style={{ borderRadius: 24, boxShadow: "0 24px 60px rgba(29,53,87,0.18)" }}
+            />
+
+            {/* Floating card */}
+            <div
+              className="absolute bottom-6 left-0 -translate-x-6 flex items-center gap-3 px-4 py-3 rounded-2xl"
+              style={{ backgroundColor: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.12)", minWidth: 220, fontFamily: inter }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: "#F0FFF4" }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M9 12l2 2 4-4" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-bold" style={{ color: "#1D3557" }}>Seguro e confiável</p>
+                <p className="text-xs" style={{ color: "#6B7280" }}>Dados protegidos com criptografia</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  );
+}
+
+// ─── Especialidades ───────────────────────────────────────────────────────────
+
+const SPECIALTIES = [
+  { label: "Fisioterapia", color: "#2E7BC1", bg: "#EFF6FF" },
+  { label: "Fonoaudiologia", color: "#8E6CCF", bg: "#F5F3FF" },
+  { label: "Psicologia", color: "#FF5C7A", bg: "#FFF1F2" },
+  { label: "Terapia Ocupacional", color: "#4CAF50", bg: "#F0FFF4" },
+  { label: "Psicomotricidade", color: "#FFBA3D", bg: "#FFFBEB" },
+  { label: "Neuropsicologia", color: "#1D3557", bg: "#F1F5F9" },
+  { label: "ABA", color: "#E07B29", bg: "#FFF7ED" },
+];
+
+function SpecialtiesBanner() {
+  return (
+    <section style={{ backgroundColor: "#fff", paddingTop: 40, paddingBottom: 40, borderBottom: "1px solid #F3F4F6", fontFamily: inter }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <p className="text-center text-sm font-medium mb-6" style={{ color: "#9CA3AF" }}>
+          Usado por profissionais de diversas especialidades
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {SPECIALTIES.map((s) => (
+            <span key={s.label}
+              className="px-4 py-2 rounded-full text-sm font-semibold"
+              style={{ backgroundColor: s.bg, color: s.color }}>
+              {s.label}
+            </span>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-// ─── Como funciona ────────────────────────────────────────────────────────────
+// ─── Features ─────────────────────────────────────────────────────────────────
 
 const FEATURES = [
-  {
-    icon: "/identidade-visual/agenda.svg",
-    color: "#4CAF50",
-    bg: "#F0FFF4",
-    title: "Agenda inteligente",
-    desc: "Organize seus atendimentos sem confusão. Tudo no lugar certo, sempre.",
-  },
-  {
-    icon: "/identidade-visual/evolucoes.svg",
-    color: "#8E6CCF",
-    bg: "#F5F3FF",
-    title: "Registro de evoluções",
-    desc: "Documente cada sessão de forma rápida e profissional.",
-  },
-  {
-    icon: "/identidade-visual/financeiro.svg",
-    color: "#FFBA3D",
-    bg: "#FFFBEB",
-    title: "Financeiro simplificado",
-    desc: "Controle pagamentos, faltas e receitas sem planilha.",
-  },
-  {
-    icon: "/identidade-visual/mensagem.svg",
-    color: "#2E7BC1",
-    bg: "#EFF6FF",
-    title: "Comunicação com a família",
-    desc: "Envie orientações e atualizações diretamente para os pais.",
-  },
+  { icon: "/identidade-visual/agenda.svg", color: "#2E7BC1", bg: "#EFF6FF", title: "Agenda inteligente", desc: "Organize seus atendimentos sem confusão. Tudo no lugar certo, sempre." },
+  { icon: "/identidade-visual/evolucoes.svg", color: "#4CAF50", bg: "#F0FFF4", title: "Registro de evoluções", desc: "Documente cada sessão de forma rápida e profissional." },
+  { icon: "/identidade-visual/financeiro.svg", color: "#FFBA3D", bg: "#FFFBEB", title: "Financeiro simplificado", desc: "Controle pagamentos, faltas e receitas sem precisar de planilha." },
+  { icon: "/identidade-visual/mensagem.svg", color: "#8E6CCF", bg: "#F5F3FF", title: "Comunicação com família", desc: "Envie orientações e atualizações diretamente para os pais." },
+  { icon: "/identidade-visual/arquivo.svg", color: "#FF5C7A", bg: "#FFF1F2", title: "Relatórios completos", desc: "Gere relatórios profissionais com um clique para laudos e devolutivas." },
+  { icon: "/identidade-visual/clinica.svg", color: "#E07B29", bg: "#FFF7ED", title: "Acesso multi-clínica", desc: "Atenda em várias clínicas e gerencie tudo de um só lugar." },
 ];
 
-function HowItWorksSection() {
+function FeaturesSection() {
   return (
-    <section id="como-funciona" style={{ backgroundColor: "#fff", paddingTop: 80, paddingBottom: 80 }}>
-      <div className="max-w-6xl mx-auto px-6 md:px-12">
-        <div className="text-center mb-14">
-          <h2
-            className="text-3xl md:text-4xl font-bold"
-            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-          >
+    <section id="funcionalidades" style={{ backgroundColor: "#fff", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <div className="text-center mb-16 max-w-2xl mx-auto">
+          <h2 style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#1D3557", marginBottom: 16 }}>
             Tudo que você precisa para uma prática organizada e humanizada
           </h2>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="rounded-2xl p-7 flex flex-col gap-4"
-              style={{ backgroundColor: f.bg }}
-            >
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: f.color + "22" }}
-              >
+            <div key={f.title}
+              className="rounded-2xl p-7 flex flex-col gap-4 group transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              style={{ backgroundColor: f.bg, fontFamily: inter }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: f.color + "18" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={f.icon} alt={f.title} className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>
-                {f.title}
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: "#4B5563" }}>{f.desc}</p>
+              <h3 style={{ fontFamily: poppins, fontWeight: 700, fontSize: 17, color: "#1D3557" }}>{f.title}</h3>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: "#4B5563" }}>{f.desc}</p>
             </div>
           ))}
         </div>
@@ -222,119 +306,273 @@ function HowItWorksSection() {
   );
 }
 
-// ─── Carrossel ────────────────────────────────────────────────────────────────
+// ─── Mobile mockup ────────────────────────────────────────────────────────────
 
-const SLIDES = [
-  {
-    icon: "📋",
-    title: "Evolução após cada sessão",
-    desc: "A família recebe um resumo detalhado do que aconteceu na sessão, celebrando cada pequeno avanço junto com você.",
-  },
-  {
-    icon: "🏠",
-    title: "Atividades para fazer em casa",
-    desc: "Você envia orientações práticas para os pais colocarem em prática no dia a dia, ampliando os resultados da terapia.",
-  },
-  {
-    icon: "💬",
-    title: "Comunicação direta com o terapeuta",
-    desc: "Pais podem tirar dúvidas e compartilhar observações diretamente com você, fortalecendo o vínculo terapêutico.",
-  },
-  {
-    icon: "📈",
-    title: "Histórico completo do desenvolvimento",
-    desc: "Todo o percurso do paciente registrado em um só lugar. Fácil de acompanhar, fácil de compartilhar.",
-  },
-];
-
-function Carousel() {
-  const [current, setCurrent] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function go(idx: number) {
-    setCurrent((idx + SLIDES.length) % SLIDES.length);
-  }
-
-  useEffect(() => {
-    timerRef.current = setTimeout(() => go(current + 1), 4000);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current]);
-
-  const slide = SLIDES[current];
-
+function MobileMockup() {
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {/* Slide */}
+    <div className="flex items-center justify-center">
       <div
-        className="rounded-2xl p-8 md:p-10 flex flex-col gap-5 text-center"
-        style={{ backgroundColor: "#F5F3FF", minHeight: 220 }}
+        className="relative"
+        style={{
+          width: 260,
+          height: 520,
+          backgroundColor: "#1D3557",
+          borderRadius: 36,
+          padding: 10,
+          boxShadow: "0 32px 80px rgba(29,53,87,0.3)",
+        }}
       >
-        <div className="text-5xl">{slide.icon}</div>
-        <h3
-          className="text-xl font-bold"
-          style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-        >
-          {slide.title}
-        </h3>
-        <p className="text-sm md:text-base leading-relaxed" style={{ color: "#4B5563" }}>
-          {slide.desc}
-        </p>
-      </div>
-
-      {/* Dots */}
-      <div className="flex justify-center gap-2 mt-6">
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => go(i)}
-            className="rounded-full transition-all"
-            style={{
-              width: i === current ? 24 : 8,
-              height: 8,
-              backgroundColor: i === current ? "#8E6CCF" : "#D1D5DB",
-            }}
-            aria-label={`Slide ${i + 1}`}
-          />
-        ))}
+        {/* Notch */}
+        <div style={{ position: "absolute", top: 14, left: "50%", transform: "translateX(-50%)", width: 70, height: 22, backgroundColor: "#1D3557", borderRadius: 99, zIndex: 10 }} />
+        {/* Screen */}
+        <div style={{ backgroundColor: "#F8FAFC", borderRadius: 28, height: "100%", overflow: "hidden", display: "flex", flexDirection: "column", fontFamily: inter }}>
+          {/* Status bar */}
+          <div style={{ backgroundColor: "#fff", padding: "28px 16px 10px", borderBottom: "1px solid #F3F4F6" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#1D3557", fontFamily: poppins }}>Girassol Família</p>
+            <p style={{ fontSize: 10, color: "#9CA3AF" }}>Olá, família Silva!</p>
+          </div>
+          {/* Content */}
+          <div style={{ flex: 1, padding: 12, display: "flex", flexDirection: "column", gap: 8, overflowY: "hidden" }}>
+            {/* Evolution card */}
+            <div style={{ backgroundColor: "#fff", borderRadius: 14, padding: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#F0FFF4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 14 }}>📋</span>
+                </div>
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#1D3557" }}>Evolução de hoje</p>
+                  <p style={{ fontSize: 9, color: "#9CA3AF" }}>Fisioterapia · 14h</p>
+                </div>
+                <span style={{ marginLeft: "auto", fontSize: 9, backgroundColor: "#F0FFF4", color: "#4CAF50", fontWeight: 700, padding: "2px 6px", borderRadius: 99 }}>Nova</span>
+              </div>
+              <p style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5 }}>Pedro foi incrível hoje! Conseguiu manter o equilíbrio por mais tempo e adorou as atividades com bola.</p>
+            </div>
+            {/* Activity card */}
+            <div style={{ backgroundColor: "#fff", borderRadius: 14, padding: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#F5F3FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 14 }}>🏠</span>
+                </div>
+                <p style={{ fontSize: 10, fontWeight: 700, color: "#1D3557" }}>Atividade para casa</p>
+              </div>
+              <p style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5 }}>Praticar o equilíbrio em um pé por 30 segundos, 3x ao dia, sempre com supervisão.</p>
+            </div>
+            {/* Message card */}
+            <div style={{ backgroundColor: "#fff", borderRadius: 14, padding: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 14 }}>💬</span>
+                </div>
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#1D3557" }}>Mensagem da terapeuta</p>
+                  <p style={{ fontSize: 9, color: "#9CA3AF" }}>Há 2h</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Bottom nav */}
+          <div style={{ backgroundColor: "#fff", padding: "8px 16px 10px", borderTop: "1px solid #F3F4F6", display: "flex", justifyContent: "space-around" }}>
+            {["🏠", "📋", "💬", "📈"].map((icon, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                <span style={{ fontSize: 16 }}>{icon}</span>
+                <div style={{ width: 4, height: 4, borderRadius: "50%", backgroundColor: i === 0 ? "#4CAF50" : "transparent" }} />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Famílias ─────────────────────────────────────────────────────────────────
+// ─── Diferencial Família ──────────────────────────────────────────────────────
 
-function FamiliesSection() {
+const FAMILY_ITEMS = [
+  "Família recebe resumo de cada sessão em tempo real",
+  "Orientações de atividades para fazer em casa",
+  "Comunicação direta com o terapeuta pelo app",
+  "Histórico completo do desenvolvimento sempre disponível",
+];
+
+function FamilySection() {
   return (
-    <section id="familias" style={{ backgroundColor: "#fff", paddingTop: 80, paddingBottom: 80 }}>
-      <div className="max-w-6xl mx-auto px-6 md:px-12 flex flex-col items-center gap-12">
-        <div className="text-center max-w-2xl">
+    <section id="familias" style={{ backgroundColor: "#F0FFF4", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        {/* Left */}
+        <div className="flex flex-col gap-7" style={{ fontFamily: inter }}>
           <span
-            className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-5"
-            style={{ backgroundColor: "#F5F3FF", color: "#8E6CCF" }}
-          >
-            O diferencial que faz a diferença
+            className="inline-flex self-start text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full"
+            style={{ backgroundColor: "#F5F3FF", color: "#8E6CCF" }}>
+            O diferencial que ninguém mais oferece
           </span>
-          <h2
-            className="text-3xl md:text-4xl font-bold mb-5"
-            style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-          >
+          <h2 style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#1D3557", lineHeight: 1.2 }}>
             Seus pacientes evoluem mais quando a família participa
           </h2>
-          <p className="text-base leading-relaxed" style={{ color: "#4B5563" }}>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: "#4B5563" }}>
             Após cada sessão, a família recebe um resumo completo da evolução, orientações para praticar em casa e pode conversar diretamente com você. Mais vínculo, mais resultado.
           </p>
+          <ul className="flex flex-col gap-4">
+            {FAMILY_ITEMS.map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                  style={{ backgroundColor: "#4CAF50" }}>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 16 16">
+                    <path d="M3 8l4 4 6-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: 15, color: "#374151", lineHeight: 1.6 }}>{item}</span>
+              </li>
+            ))}
+          </ul>
+          <Link href="/cadastro"
+            className="self-start px-7 py-3.5 rounded-xl text-sm font-bold border-2 transition-all hover:bg-white"
+            style={{ borderColor: "#4CAF50", color: "#4CAF50" }}>
+            Ver como a família enxerga
+          </Link>
         </div>
 
-        <Carousel />
+        {/* Right: Mobile mockup */}
+        <div className="flex justify-center">
+          <MobileMockup />
+        </div>
+      </div>
+    </section>
+  );
+}
 
-        <Link
-          href="/cadastro"
-          className="px-8 py-3.5 rounded-xl text-sm font-bold border-2 transition-colors hover:bg-green-50"
-          style={{ borderColor: "#4CAF50", color: "#4CAF50" }}
-        >
-          Indique o Girassol ao seu terapeuta ou clínica
-        </Link>
+// ─── Carrossel de funcionalidades ─────────────────────────────────────────────
+
+const CAROUSEL_SLIDES = [
+  { icon: "📅", color: "#2E7BC1", bg: "#EFF6FF", title: "Agende a sessão", desc: "Crie e gerencie agendamentos com facilidade. O paciente e a família ficam sempre informados sobre data, horário e local." },
+  { icon: "📝", color: "#4CAF50", bg: "#F0FFF4", title: "Registre a evolução", desc: "Após cada sessão, documente os avanços com rapidez. O registro fica seguro e disponível para a família na hora." },
+  { icon: "👨‍👩‍👧", color: "#8E6CCF", bg: "#F5F3FF", title: "Família acompanha", desc: "Os pais recebem uma notificação com o resumo da sessão, atividades para fazer em casa e podem conversar com você." },
+  { icon: "📊", color: "#FFBA3D", bg: "#FFFBEB", title: "Gere o relatório", desc: "Com um clique, exporte um relatório profissional completo para devolutivas, laudos ou encaminhamentos." },
+];
+
+function CarouselSection() {
+  const [current, setCurrent] = useState(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const go = useCallback((idx: number) => {
+    setCurrent((idx + CAROUSEL_SLIDES.length) % CAROUSEL_SLIDES.length);
+  }, []);
+
+  useEffect(() => {
+    timer.current = setTimeout(() => go(current + 1), 5000);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [current, go]);
+
+  const slide = CAROUSEL_SLIDES[current];
+
+  return (
+    <section id="como-funciona" style={{ backgroundColor: "#FFF7E6", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <h2 className="text-center mb-12"
+          style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#1D3557" }}>
+          Uma jornada completa, do primeiro atendimento ao relatório final
+        </h2>
+
+        {/* Step indicators */}
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
+          {CAROUSEL_SLIDES.map((s, i) => (
+            <button key={i} onClick={() => go(i)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300"
+              style={{
+                backgroundColor: i === current ? s.bg : "#fff",
+                color: i === current ? s.color : "#9CA3AF",
+                border: `2px solid ${i === current ? s.color : "#F3F4F6"}`,
+                transform: i === current ? "scale(1.05)" : "scale(1)",
+              }}>
+              <span>{s.icon}</span>
+              {s.title}
+            </button>
+          ))}
+        </div>
+
+        {/* Slide content */}
+        <div
+          className="max-w-2xl mx-auto rounded-3xl p-10 md:p-14 text-center transition-all duration-500"
+          style={{ backgroundColor: slide.bg, minHeight: 220 }}>
+          <div className="text-6xl mb-6">{slide.icon}</div>
+          <h3 style={{ fontFamily: poppins, fontWeight: 700, fontSize: 24, color: "#1D3557", marginBottom: 12 }}>{slide.title}</h3>
+          <p style={{ fontSize: 16, lineHeight: 1.8, color: "#4B5563", fontFamily: inter }}>{slide.desc}</p>
+        </div>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-2 mt-8">
+          {CAROUSEL_SLIDES.map((_, i) => (
+            <button key={i} onClick={() => go(i)}
+              className="rounded-full transition-all duration-300"
+              style={{ height: 8, width: i === current ? 28 : 8, backgroundColor: i === current ? "#1D3557" : "#D1D5DB" }}
+              aria-label={`Slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Indique ao terapeuta ─────────────────────────────────────────────────────
+
+function ReferralSection() {
+  const [copied, setCopied] = useState(false);
+
+  function copyLink() {
+    navigator.clipboard.writeText("https://www.acompanhamentogirassol.com.br").then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  const waMsg = encodeURIComponent(
+    "Oi! Acabei de conhecer o Acompanhamento Girassol e lembrei de você. É uma plataforma incrível para terapeutas organizarem seus pacientes e conectarem as famílias. Vale muito a pena conhecer: www.acompanhamentogirassol.com.br"
+  );
+
+  return (
+    <section id="sobre" style={{ backgroundColor: "#fff", paddingTop: 96, paddingBottom: 96, fontFamily: inter }}>
+      <div className="max-w-3xl mx-auto px-6 md:px-10 text-center flex flex-col items-center gap-8">
+        <div>
+          <h2 style={{ fontFamily: poppins, fontSize: "clamp(26px,2.8vw,36px)", fontWeight: 700, color: "#1D3557", marginBottom: 12 }}>
+            Conhece um terapeuta incrível? Apresente o Girassol a ele.
+          </h2>
+          <p style={{ fontSize: 16, color: "#4B5563", lineHeight: 1.7 }}>
+            Mande uma mensagem rápida e ajude mais famílias a terem esse acompanhamento.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xl">
+          <a
+            href={`https://wa.me/?text=${waMsg}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+            style={{ backgroundColor: "#25D366" }}>
+            <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+            </svg>
+            Indicar pelo WhatsApp
+          </a>
+          <button
+            onClick={copyLink}
+            className="flex-1 flex items-center justify-center gap-3 py-4 rounded-xl text-sm font-bold border-2 transition-all hover:bg-gray-50"
+            style={{ borderColor: copied ? "#4CAF50" : "#1D3557", color: copied ? "#4CAF50" : "#1D3557" }}>
+            {copied ? (
+              <>
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                  <path d="M20 6L9 17l-5-5" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Link copiado!
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Copiar link para indicar
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -343,52 +581,24 @@ function FamiliesSection() {
 // ─── Depoimentos ──────────────────────────────────────────────────────────────
 
 const TESTIMONIALS = [
-  {
-    text: "Antes eu perdia horas em planilha e caderno. Hoje tudo fica registrado em minutos e os pais adoram receber as evoluções.",
-    role: "Fisioterapeuta",
-    color: "#4CAF50",
-    bg: "#F0FFF4",
-    initial: "A",
-  },
-  {
-    text: "A família do meu paciente começou a participar muito mais depois que passou a ver as sessões pelo Girassol. Fez toda a diferença.",
-    role: "Terapeuta Ocupacional",
-    color: "#8E6CCF",
-    bg: "#F5F3FF",
-    initial: "R",
-  },
-  {
-    text: "Nunca pensei que ia conseguir organizar minha agenda, financeiro e evoluções em um só lugar. É simples e bonito.",
-    role: "Psicomotricista",
-    color: "#2E7BC1",
-    bg: "#EFF6FF",
-    initial: "C",
-  },
+  { text: "Antes eu perdia horas em planilha e caderno. Hoje tudo fica registrado em minutos e os pais adoram receber as evoluções.", name: "Ana Paula", role: "Fisioterapeuta", color: "#4CAF50", initial: "A" },
+  { text: "A família do meu paciente começou a participar muito mais depois que passou a ver as sessões pelo Girassol. Fez toda a diferença no resultado.", name: "Carla", role: "Terapeuta Ocupacional", color: "#8E6CCF", initial: "C" },
+  { text: "Nunca pensei que ia conseguir organizar minha agenda, financeiro e evoluções em um só lugar. É simples, bonito e completo.", name: "Rafael", role: "Psicomotricista", color: "#2E7BC1", initial: "R" },
 ];
 
 function TestimonialsSection() {
   return (
-    <section id="depoimentos" style={{ backgroundColor: "#FFF7E6", paddingTop: 80, paddingBottom: 80 }}>
-      <div className="max-w-6xl mx-auto px-6 md:px-12">
-        <h2
-          className="text-3xl md:text-4xl font-bold text-center mb-12"
-          style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-        >
+    <section id="depoimentos" style={{ backgroundColor: "#1D3557", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <h2 className="text-center mb-14"
+          style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#fff" }}>
           Quem usa, não abre mão
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TESTIMONIALS.map((t) => (
-            <div key={t.role} className="rounded-2xl p-7 flex flex-col gap-5" style={{ backgroundColor: t.bg }}>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: t.color }}
-                >
-                  {t.initial}
-                </div>
-                <span className="text-sm font-semibold" style={{ color: "#1D3557" }}>{t.role}</span>
-              </div>
-              {/* Stars */}
+            <div key={t.name}
+              className="rounded-2xl p-8 flex flex-col gap-5 transition-all duration-300 hover:-translate-y-1"
+              style={{ backgroundColor: "#fff", fontFamily: inter }}>
               <div className="flex gap-0.5">
                 {[...Array(5)].map((_, i) => (
                   <svg key={i} className="w-4 h-4" fill="#FFBA3D" viewBox="0 0 20 20">
@@ -396,9 +606,19 @@ function TestimonialsSection() {
                   </svg>
                 ))}
               </div>
-              <p className="text-sm leading-relaxed italic" style={{ color: "#374151" }}>
+              <p style={{ fontSize: 15, lineHeight: 1.75, color: "#374151", flex: 1 }}>
                 &ldquo;{t.text}&rdquo;
               </p>
+              <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "#F3F4F6" }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: t.color }}>
+                  {t.initial}
+                </div>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1D3557" }}>{t.name}</p>
+                  <p style={{ fontSize: 12, color: "#9CA3AF" }}>{t.role}</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -413,26 +633,93 @@ const KPIS = [
   { value: "+1.500", label: "Famílias conectadas" },
   { value: "+50", label: "Terapeutas parceiros" },
   { value: "+10 mil", label: "Sessões acompanhadas" },
-  { value: "+20", label: "Especialidades" },
+  { value: "+20", label: "Especialidades atendidas" },
 ];
 
 function KpisSection() {
   return (
-    <section style={{ backgroundColor: "#1D3557", paddingTop: 64, paddingBottom: 64 }}>
-      <div className="max-w-5xl mx-auto px-6 md:px-12">
+    <section style={{ backgroundColor: "#FFC107", paddingTop: 72, paddingBottom: 72 }}>
+      <div className="max-w-5xl mx-auto px-6 md:px-10">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {KPIS.map((k) => (
             <div key={k.label} className="flex flex-col gap-2">
-              <span
-                className="text-4xl md:text-5xl font-bold"
-                style={{ color: "#FFBA3D", fontFamily: "var(--font-poppins, sans-serif)" }}
-              >
+              <span style={{ fontFamily: poppins, fontWeight: 700, fontSize: "clamp(36px,4vw,48px)", color: "#1D3557" }}>
                 {k.value}
               </span>
-              <span className="text-sm md:text-base font-medium" style={{ color: "#CBD5E1" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#1D3557", opacity: 0.75, fontFamily: inter }}>
                 {k.label}
               </span>
             </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+
+const FAQ_ITEMS = [
+  {
+    q: "O Girassol é para terapeutas ou para famílias?",
+    a: "É uma plataforma para terapeutas e clínicas. As famílias têm acesso gratuito para acompanhar o desenvolvimento do filho.",
+  },
+  {
+    q: "Preciso instalar algum aplicativo?",
+    a: "Não. O Girassol funciona direto no navegador, no celular ou computador, sem instalação.",
+  },
+  {
+    q: "Como funciona o período gratuito?",
+    a: "Você tem 30 dias para testar tudo sem precisar de cartão de crédito. Se gostar, escolhe o plano ideal para sua prática.",
+  },
+  {
+    q: "Meus dados e os dos meus pacientes estão seguros?",
+    a: "Sim. Usamos criptografia e seguimos todas as normas da LGPD para proteger as informações.",
+  },
+  {
+    q: "Posso usar em mais de uma clínica?",
+    a: "Sim. O Girassol permite gerenciar atendimentos em diferentes clínicas dentro de uma única conta.",
+  },
+];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border transition-all duration-200"
+      style={{ borderColor: open ? "#4CAF50" : "#F3F4F6", backgroundColor: "#fff" }}>
+      <button
+        className="w-full flex items-center justify-between gap-4 px-7 py-5 text-left"
+        onClick={() => setOpen(!open)}>
+        <span style={{ fontFamily: poppins, fontWeight: 600, fontSize: 16, color: "#1D3557" }}>{q}</span>
+        <div
+          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300"
+          style={{ backgroundColor: open ? "#4CAF50" : "#F3F4F6", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" stroke={open ? "#fff" : "#4B5563"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </button>
+      <div
+        className="overflow-hidden transition-all duration-300"
+        style={{ maxHeight: open ? 200 : 0 }}>
+        <p className="px-7 pb-6" style={{ fontSize: 15, lineHeight: 1.7, color: "#4B5563", fontFamily: inter }}>{a}</p>
+      </div>
+    </div>
+  );
+}
+
+function FAQSection() {
+  return (
+    <section id="contato" style={{ backgroundColor: "#fff", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-3xl mx-auto px-6 md:px-10">
+        <h2 className="text-center mb-12"
+          style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#1D3557" }}>
+          Perguntas frequentes
+        </h2>
+        <div className="flex flex-col gap-4">
+          {FAQ_ITEMS.map((item) => (
+            <FAQItem key={item.q} {...item} />
           ))}
         </div>
       </div>
@@ -444,25 +731,22 @@ function KpisSection() {
 
 function CTASection() {
   return (
-    <section style={{ backgroundColor: "#FFF7E6", paddingTop: 80, paddingBottom: 80 }}>
-      <div className="max-w-2xl mx-auto px-6 md:px-12 text-center flex flex-col items-center gap-6">
-        <h2
-          className="text-3xl md:text-4xl font-bold"
-          style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}
-        >
+    <section style={{ backgroundColor: "#FFF7E6", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-2xl mx-auto px-6 md:px-10 text-center flex flex-col items-center gap-7">
+        <h2 style={{ fontFamily: poppins, fontSize: "clamp(30px,3.5vw,44px)", fontWeight: 700, color: "#1D3557", lineHeight: 1.2 }}>
           Pronto para transformar sua prática?
         </h2>
-        <p className="text-base md:text-lg" style={{ color: "#4B5563" }}>
+        <p style={{ fontSize: 18, color: "#4B5563", lineHeight: 1.7, fontFamily: inter }}>
           Comece grátis por 30 dias. Sem cartão de crédito, sem complicação.
         </p>
-        <Link
-          href="/cadastro"
-          className="px-10 py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
-          style={{ backgroundColor: "#4CAF50" }}
-        >
+        <Link href="/cadastro"
+          className="px-12 py-4 rounded-xl text-base font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+          style={{ backgroundColor: "#4CAF50" }}>
           Criar minha conta agora
         </Link>
-        <Link href="/login" className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-70" style={{ color: "#6B7280" }}>
+        <Link href="/login"
+          className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-60"
+          style={{ color: "#6B7280", fontFamily: inter }}>
           Já tenho conta. Quero entrar.
         </Link>
       </div>
@@ -472,38 +756,102 @@ function CTASection() {
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
+const FOOTER_COLS = [
+  {
+    title: "Produto",
+    links: [
+      { label: "Funcionalidades", href: "#funcionalidades" },
+      { label: "Como funciona", href: "#como-funciona" },
+      { label: "Para famílias", href: "#familias" },
+      { label: "Preços", href: "#precos" },
+    ],
+  },
+  {
+    title: "Para quem é",
+    links: [
+      { label: "Fisioterapeutas", href: "#" },
+      { label: "Fonoaudiólogos", href: "#" },
+      { label: "Psicólogos", href: "#" },
+      { label: "Clínicas", href: "#" },
+    ],
+  },
+  {
+    title: "Suporte",
+    links: [
+      { label: "Perguntas frequentes", href: "#contato" },
+      { label: "Central de ajuda", href: "#" },
+      { label: "Contato", href: "#contato" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacidade", href: "#" },
+      { label: "Termos de uso", href: "#" },
+      { label: "LGPD", href: "#" },
+    ],
+  },
+];
+
 function Footer() {
   return (
-    <footer style={{ backgroundColor: "#1D3557", paddingTop: 48, paddingBottom: 32 }}>
-      <div className="max-w-6xl mx-auto px-6 md:px-12 flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
-        {/* Logo + tagline */}
-        <div className="flex flex-col items-center md:items-start gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Acompanhamento Girassol" style={{ height: 44, filter: "brightness(0) invert(1)" }} />
-          <p className="text-xs text-center md:text-left" style={{ color: "#94A3B8" }}>
-            Cuidar, acompanhar, evoluir juntos.
+    <footer style={{ backgroundColor: "#1D3557", paddingTop: 64, paddingBottom: 32, fontFamily: inter }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-10 pb-12 border-b" style={{ borderColor: "#2D4A6B" }}>
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1 flex flex-col gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/identidade-visual/Logo-Nome-Slogan.png"
+              alt="Acompanhamento Girassol"
+              style={{ height: 56, filter: "brightness(0) invert(1)", objectFit: "contain", objectPosition: "left" }}
+            />
+            <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6 }}>
+              Cuidar, acompanhar, evoluir juntos.
+            </p>
+            {/* Social icons */}
+            <div className="flex gap-3 mt-1">
+              {[
+                { label: "Instagram", path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" },
+                { label: "LinkedIn", path: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" },
+              ].map((s) => (
+                <a key={s.label} href="#" aria-label={s.label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ backgroundColor: "#2D4A6B" }}>
+                  <svg className="w-4 h-4" fill="#94A3B8" viewBox="0 0 24 24">
+                    <path d={s.path} />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Link columns */}
+          {FOOTER_COLS.map((col) => (
+            <div key={col.title} className="flex flex-col gap-3">
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                {col.title}
+              </span>
+              {col.links.map((l) => (
+                <a key={l.label} href={l.href}
+                  className="transition-opacity hover:opacity-60"
+                  style={{ fontSize: 14, color: "#94A3B8" }}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p style={{ fontSize: 13, color: "#64748B" }}>
+            Acompanhamento Girassol &copy; {new Date().getFullYear()}. Todos os direitos reservados.
           </p>
-        </div>
-
-        {/* Links */}
-        <div className="flex flex-col sm:flex-row gap-8 text-sm">
-          <div className="flex flex-col gap-2 items-center md:items-start">
-            <span className="font-semibold mb-1" style={{ color: "#F1F5F9" }}>Plataforma</span>
-            <Link href="/login" className="hover:opacity-70 transition-opacity" style={{ color: "#94A3B8" }}>Entrar</Link>
-            <Link href="/cadastro" className="hover:opacity-70 transition-opacity" style={{ color: "#94A3B8" }}>Criar conta</Link>
-          </div>
-          <div className="flex flex-col gap-2 items-center md:items-start">
-            <span className="font-semibold mb-1" style={{ color: "#F1F5F9" }}>Empresa</span>
-            <a href="#como-funciona" className="hover:opacity-70 transition-opacity" style={{ color: "#94A3B8" }}>Como funciona</a>
-            <a href="#depoimentos" className="hover:opacity-70 transition-opacity" style={{ color: "#94A3B8" }}>Depoimentos</a>
+          <div className="flex gap-5">
+            <a href="#" className="transition-opacity hover:opacity-60" style={{ fontSize: 13, color: "#64748B" }}>Privacidade</a>
+            <a href="#" className="transition-opacity hover:opacity-60" style={{ fontSize: 13, color: "#64748B" }}>Termos</a>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-6 md:px-12 mt-10 pt-6 border-t" style={{ borderColor: "#334155" }}>
-        <p className="text-center text-xs" style={{ color: "#64748B" }}>
-          Acompanhamento Girassol &copy; {new Date().getFullYear()}. Todos os direitos reservados.
-        </p>
       </div>
     </footer>
   );
@@ -517,10 +865,14 @@ export default function HomePage() {
       <NavBar />
       <main>
         <HeroSection />
-        <HowItWorksSection />
-        <FamiliesSection />
+        <SpecialtiesBanner />
+        <FeaturesSection />
+        <FamilySection />
+        <CarouselSection />
+        <ReferralSection />
         <TestimonialsSection />
         <KpisSection />
+        <FAQSection />
         <CTASection />
       </main>
       <Footer />
