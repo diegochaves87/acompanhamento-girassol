@@ -31,7 +31,8 @@
       "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\dccha\\\\Desktop\\\\jornada-terapeutica\\\\src\\\\app\\\\auth\\\\callback\")",
       "Bash(Out-Null)",
       "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Users\\\\dccha\\\\Desktop\\\\jornada-terapeutica\\\\src\\\\app\\\\convite\\\\[token]\")",
-      "Bash(Write-Host \"ok\")"
+      "Bash(Write-Host \"ok\")",
+      "Bash(node -e \"const p = require\\('./node_modules/react-easy-crop/package.json'\\); console.log\\(p.version\\); console.log\\(Object.keys\\(p.exports || {}\\).slice\\(0,10\\)\\)\")"
     ]
   }
 }
