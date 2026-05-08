@@ -237,7 +237,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <img
                 src="/identidade-visual/logo-vetorizada.svg"
                 alt="Acompanhamento Girassol"
-                style={{ width: "100%", height: "auto", maxHeight: 80, objectFit: "contain", objectPosition: "left" }}
+                style={{ width: '100%', maxHeight: '80px', objectFit: 'contain', padding: '16px' }}
               />
               <button
                 onClick={toggleSidebar}
@@ -261,7 +261,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               <img
                 src="/identidade-visual/icone-logo-vetorizado.svg"
                 alt="Girassol"
-                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover" }}
+                style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover' }}
               />
             </button>
           )}
@@ -356,8 +356,8 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/identidade-visual/mao.svg"
-            alt="mão e Girassol"
-            style={{ height: 64, width: 200, objectFit: "contain" }}
+            alt="Jornada de Evolução Terapêutica"
+            style={{ height: '32px', width: 'auto' }}
           />
         </div>
 
@@ -479,8 +479,8 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/identidade-visual/mao.svg"
-          alt="Acompanhamento Girassol"
-          style={{ height: 36, width: "auto", objectFit: "contain" }}
+          alt="Girassol"
+          style={{ height: '32px', width: 'auto' }}
         />
 
         <button
