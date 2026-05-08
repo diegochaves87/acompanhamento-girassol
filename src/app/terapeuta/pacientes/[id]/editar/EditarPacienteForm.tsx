@@ -11,6 +11,7 @@ type Patient = {
   full_name: string;
   cpf: string | null;
   birth_date: string | null;
+  sexo: string | null;
   diagnosis: string[] | null;
   clinic_id: string | null;
   payment_type: string | null;
@@ -47,6 +48,7 @@ export default function EditarPacienteForm({ patient, clinicas, guardian }: Prop
     full_name: patient.full_name,
     cpf: patient.cpf ? formatCpf(patient.cpf) : "",
     birth_date: patient.birth_date ?? "",
+    sexo: patient.sexo ?? "nao_informado",
     diagnosis: patient.diagnosis?.join(", ") ?? "",
     clinic_id: patient.clinic_id ?? "",
     payment_type: patient.payment_type ?? "particular",
@@ -91,6 +93,7 @@ export default function EditarPacienteForm({ patient, clinicas, guardian }: Prop
         full_name: form.full_name,
         cpf: cpfDigits || null,
         birth_date: form.birth_date || null,
+        sexo: form.sexo,
         diagnosis: form.diagnosis
           ? form.diagnosis.split(",").map((d) => d.trim()).filter(Boolean)
           : [],
@@ -180,6 +183,14 @@ export default function EditarPacienteForm({ patient, clinicas, guardian }: Prop
             <label className={labelClass}>Data de nascimento</label>
             <input type="date" value={form.birth_date}
               onChange={(e) => set("birth_date", e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Sexo</label>
+            <select value={form.sexo} onChange={(e) => set("sexo", e.target.value)} className={selectClass}>
+              <option value="nao_informado">Não informado</option>
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+            </select>
           </div>
           <div className="sm:col-span-2">
             <label className={labelClass}>Diagnóstico</label>

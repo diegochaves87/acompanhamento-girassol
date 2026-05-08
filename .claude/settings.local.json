@@ -25,7 +25,8 @@
       "Bash(Get-ChildItem -Path public -Recurse -Include \"*.png\",\"*.svg\",\"*.jpg\",\"*.webp\")",
       "Bash(Select-Object FullName)",
       "Bash(xargs grep *)",
-      "Bash(Get-Content *)"
+      "Bash(Get-Content *)",
+      "Bash(grep -rn \"sessãoões\\\\|sessãooes\\\\|sessão\\\\${\" src/ --include=\"*.tsx\")"
     ]
   }
 }

@@ -21,6 +21,7 @@ export default function NovoPacienteForm({ clinicas }: Props) {
     full_name: "",
     cpf: "",
     birth_date: "",
+    sexo: "nao_informado",
     diagnosis: "",
     clinic_id: "",
     payment_type: "particular",
@@ -102,6 +103,7 @@ export default function NovoPacienteForm({ clinicas }: Props) {
         full_name: form.full_name,
         cpf: cpfDigits || null,
         birth_date: form.birth_date || null,
+        sexo: form.sexo,
         diagnosis: form.diagnosis
           ? form.diagnosis.split(",").map((d) => d.trim()).filter(Boolean)
           : [],
@@ -193,6 +195,19 @@ export default function NovoPacienteForm({ clinicas }: Props) {
               onChange={(e) => set("birth_date", e.target.value)}
               className={inputClass}
             />
+          </div>
+
+          <div>
+            <label className={labelClass}>Sexo</label>
+            <select
+              value={form.sexo}
+              onChange={(e) => set("sexo", e.target.value)}
+              className={selectClass}
+            >
+              <option value="nao_informado">Não informado</option>
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+            </select>
           </div>
 
           <div>

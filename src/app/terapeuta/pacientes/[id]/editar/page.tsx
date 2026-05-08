@@ -11,7 +11,7 @@ export default async function EditarPacientePage({ params }: Props) {
   const [patientRes, clinicasRes, guardianRes] = await Promise.all([
     supabase
       .from("patients")
-      .select("id, full_name, cpf, birth_date, diagnosis, clinic_id, payment_type, value_per_session_brl, insurance_name, notes")
+      .select("id, full_name, cpf, birth_date, sexo, diagnosis, clinic_id, payment_type, value_per_session_brl, insurance_name, notes")
       .eq("id", params.id)
       .single(),
     supabase.from("clinics").select("id, name, accepted_insurances").order("name"),

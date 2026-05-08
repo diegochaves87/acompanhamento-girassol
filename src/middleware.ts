@@ -36,8 +36,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/terapeuta", request.url));
   }
 
-  // Não autenticado fora do /login → vai para login
-  if (!user && pathname !== "/login") {
+  // Rotas públicas (sem autenticação)
+  const publicRoutes = ["/login", "/cadastro"];
+  if (!user && !publicRoutes.includes(pathname)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

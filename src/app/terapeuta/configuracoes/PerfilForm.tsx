@@ -10,6 +10,7 @@ type Course = { name: string; file?: File; file_url?: string };
 type ProfileData = {
   cpf?: string;
   phone?: string;
+  sexo?: string;
   address_street?: string;
   address_number?: string;
   address_complement?: string;
@@ -88,6 +89,7 @@ export default function PerfilForm({
 
   const [cpf, setCpf] = useState(maskCpf(profileData.cpf ?? ""));
   const [phone, setPhone] = useState(maskPhone(profileData.phone ?? ""));
+  const [sexo, setSexo] = useState(profileData.sexo ?? "nao_informado");
 
   const [zip, setZip] = useState(maskCep(profileData.address_zip ?? ""));
   const [street, setStreet] = useState(profileData.address_street ?? "");
@@ -188,6 +190,7 @@ export default function PerfilForm({
         full_name: nome.trim(),
         cpf: cpf.replace(/\D/g, ""),
         phone: phone.replace(/\D/g, ""),
+        sexo,
         address_street: street,
         address_number: number,
         address_complement: complement,
@@ -307,6 +310,13 @@ export default function PerfilForm({
               placeholder="(00) 00000-0000"
               inputMode="tel"
             />
+          </Field>
+          <Field label="Sexo">
+            <select className={inputCls} value={sexo} onChange={(e) => setSexo(e.target.value)}>
+              <option value="nao_informado">Não informado</option>
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+            </select>
           </Field>
         </div>
       </div>

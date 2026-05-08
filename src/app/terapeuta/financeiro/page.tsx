@@ -533,7 +533,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
           <MetricCard
             label="Receita realizada"
             value={formatBRL(metrics.receita)}
-            sub={`${metrics.totalAtend} sessão${metrics.totalAtend !== 1 ? "ões" : ""}`}
+            sub={`${metrics.totalAtend} ${metrics.totalAtend !== 1 ? "sessões" : "sessão"}`}
             highlight
             tooltip="Soma das sessões concluídas (completed) e reposições (makeup) no período."
           />
@@ -627,7 +627,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                       <div className="h-1.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#4CAF50" }} />
                     </div>
                     <p className="text-xs text-gray-400 mt-1">
-                      {p.sessoes} sessão{p.sessoes !== 1 ? "ões" : ""}
+                      {p.sessoes !== 1 ? `${p.sessoes} sessões` : "1 sessão"}
                       {p.faltas > 0 ? ` · ${p.faltas} falta${p.faltas !== 1 ? "s" : ""}` : ""}
                     </p>
                   </div>
@@ -677,7 +677,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                             <div className="h-1 rounded-full bg-gray-100">
                               <div className="h-1 rounded-full" style={{ width: `${pct}%`, backgroundColor: "#4CAF50" }} />
                             </div>
-                            <p className="text-xs text-gray-400 mt-0.5">{p.sessoes} sessão{p.sessoes !== 1 ? "ões" : ""}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{p.sessoes !== 1 ? `${p.sessoes} sessões` : "1 sessão"}</p>
                           </div>
                         );
                       })}

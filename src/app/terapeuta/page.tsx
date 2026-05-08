@@ -69,13 +69,16 @@ export default async function TerapeutaDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
 
   let nome = "Terapeuta";
+  let saudacao = "Bem-vindo(a) de volta,";
   if (user) {
-    const { data } = await supabase
-      .from("users")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-    nome = data?.full_name ?? "Terapeuta";
+    const [usersRes, profileRes] = await Promise.all([
+      supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("sexo").eq("id", user.id).maybeSingle(),
+    ]);
+    nome = usersRes.data?.full_name ?? "Terapeuta";
+    const sexo = profileRes.data?.sexo ?? "nao_informado";
+    if (sexo === "masculino") saudacao = "Bem-vindo de volta,";
+    else if (sexo === "feminino") saudacao = "Bem-vinda de volta,";
   }
 
   return (
@@ -120,7 +123,7 @@ export default async function TerapeutaDashboard() {
           </div>
 
           <p className="text-sm font-semibold mb-1" style={{ color: "#4CAF50" }}>
-            Bem-vinda de volta,
+            {saudacao}
           </p>
           <div className="flex items-center gap-2">
             <h1
