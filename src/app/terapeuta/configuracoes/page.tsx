@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import PerfilForm from "./PerfilForm";
+import PageHeader from "@/components/PageHeader";
 
 export default async function ConfiguracoesPage() {
   const supabase = await createClient();
@@ -19,20 +19,21 @@ export default async function ConfiguracoesPage() {
   const initial = userData?.full_name?.trim()[0]?.toUpperCase() ?? "U";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Link href="/terapeuta" className="text-white/60 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-white font-semibold leading-tight">Meu Perfil</h1>
-            <p className="text-white/60 text-xs">Dados pessoais, acadêmicos e profissionais</p>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader
+        title="Meu Perfil"
+        subtitle="Dados pessoais, acadêmicos e profissionais"
+        backHref="/terapeuta"
+        backLabel="Início"
+        iconColor="#4CAF50"
+        maxWidth="max-w-2xl"
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth={1.8} />
+          </svg>
+        }
+      />
 
       <main className="max-w-2xl mx-auto px-6 py-8 space-y-5">
         {/* Avatar card */}

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import DespublicarButton from "./DespublicarButton";
+import PageHeader from "@/components/PageHeader";
 
 type Props = {
   searchParams: { aba?: string };
@@ -127,50 +128,38 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
     aba === "pendentes" ? pendingItems.length : evoItems.length;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-3xl mx-auto">
-          <Link
-            href="/terapeuta"
-            className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors mb-3"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Voltar
-          </Link>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-white font-semibold text-lg">Evoluções</h1>
-              <p className="text-white/60 text-xs mt-0.5">
-                {totalCount} registro{totalCount !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-1 bg-white/10 rounded-xl p-1 w-fit">
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader
+        title="Evoluções"
+        subtitle={`${totalCount} registro${totalCount !== 1 ? "s" : ""}`}
+        backHref="/terapeuta"
+        backLabel="Início"
+        iconColor="#8E6CCF"
+        maxWidth="max-w-3xl"
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+        actions={
+          <div className="flex gap-1 rounded-xl p-1 w-fit" style={{ backgroundColor: "#F3F4F6" }}>
             {ABAS.map((a) => (
               <Link
                 key={a}
                 href={`/terapeuta/evolucoes?aba=${a}`}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                  aba === a
-                    ? "text-white bg-white/20"
-                    : "text-white/60 hover:text-white hover:bg-white/10"
-                }`}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                style={{
+                  backgroundColor: aba === a ? "#1D3557" : "transparent",
+                  color: aba === a ? "#fff" : "#6B7280",
+                }}
               >
                 {ABA_LABELS[a]}
               </Link>
             ))}
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="max-w-3xl mx-auto px-6 py-6 space-y-3">
         {aba === "pendentes" && pendingItems.length === 0 && (

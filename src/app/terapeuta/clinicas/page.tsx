@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 type Clinica = {
   id: string;
@@ -28,30 +29,31 @@ export default async function ClinicasPage() {
   const clinicas = await getClinicas();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      {/* Header */}
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/terapeuta" className="text-white/60 hover:text-white transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <h1 className="text-white font-semibold">Clínicas</h1>
-          </div>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader
+        title="Clínicas"
+        backHref="/terapeuta"
+        backLabel="Início"
+        iconColor="#FF5C7A"
+        maxWidth="max-w-4xl"
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+        actions={
           <Link
             href="/terapeuta/clinicas/nova"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-            style={{ backgroundColor: "#ffffff", color: "#1a4a3a" }}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#1D3557" }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <path d="M12 4v16m8-8H4" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
             </svg>
             Nova clínica
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         {clinicas.length === 0 ? (

@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
 import InativarPacienteButton from "./InativarPacienteButton";
 import NotasTab from "./NotasTab";
+import ConvidarFamiliarModal from "./ConvidarFamiliarModal";
+import AprovarFamiliarButton from "./AprovarFamiliarButton";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
 
-const ABAS = ["dados", "anamnese", "agenda", "evolucoes", "notas", "arquivos", "relatorios"] as const;
+const ABAS = ["dados", "anamnese", "agenda", "evolucoes", "notas", "arquivos", "relatorios", "familia"] as const;
 type Aba = (typeof ABAS)[number];
 
 const ABA_LABELS: Record<Aba, string> = {
@@ -19,6 +21,16 @@ const ABA_LABELS: Record<Aba, string> = {
   notas: "Notas",
   arquivos: "Arquivos",
   relatorios: "Relatórios",
+  familia: "Família",
+};
+
+type FamilyMember = {
+  id: string;
+  nome: string;
+  email: string;
+  relacao: string | null;
+  status: string;
+  created_at: string;
 };
 
 
@@ -138,6 +150,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     completedRes,
     evosRes,
     notasRes,
+    familyRes,
   ] = await Promise.all([
     supabase
       .from("family_patient")
@@ -177,6 +190,12 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
           .eq("patient_id", params.id)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as Note[] }),
+
+    supabase
+      .from("family_access")
+      .select("id, nome, email, relacao, status, created_at")
+      .eq("patient_id", params.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const guardian = guardianRes.data;
@@ -184,6 +203,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
   const completedSessions = (completedRes.data ?? []) as CompletedSession[];
   const evos = (evosRes.data ?? []) as EvoItem[];
   const notas = (notasRes.data ?? []) as Note[];
+  const familyMembers = (familyRes.data ?? []) as FamilyMember[];
 
   const evoBySessionId = new Map(evos.map((e) => [e.session_id, e]));
 
@@ -221,17 +241,20 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
                 <h1 className="text-white font-bold text-xl leading-tight">{patient.full_name}</h1>
-                <Link
-                  href={`/terapeuta/pacientes/${params.id}/editar`}
-                  className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white border border-white/20 hover:border-white/40 transition-colors"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Editar cadastro
-                </Link>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <ConvidarFamiliarModal patientId={params.id} patientName={patient.full_name} />
+                  <Link
+                    href={`/terapeuta/pacientes/${params.id}/editar`}
+                    className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-white border border-white/20 hover:border-white/40 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar
+                  </Link>
+                </div>
               </div>
 
               {(diagnoses.length > 0 || supportLevel) && (
@@ -532,6 +555,55 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
         {/* ── RELATÓRIOS ── */}
         {aba === "relatorios" && (
           <PlaceholderTab title="Relatórios" message="Em breve." />
+        )}
+
+        {/* ── FAMÍLIA ── */}
+        {aba === "familia" && (
+          <div className="space-y-4">
+            {familyMembers.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-16 text-center">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F0FFF4" }}>
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#4CAF50" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-gray-600 mb-1">Nenhum familiar convidado ainda</p>
+                <p className="text-sm text-gray-400">Use o botão &ldquo;Convidar familiar&rdquo; no topo para enviar o primeiro convite.</p>
+              </div>
+            ) : (
+              familyMembers.map((member) => {
+                const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+                  pendente: { label: "Convite enviado", color: "#D97706", bg: "#FFFBEB" },
+                  aguardando_aprovacao: { label: "Aguardando aprovação", color: "#2E7BC1", bg: "#EFF6FF" },
+                  ativo: { label: "Ativo", color: "#166534", bg: "#F0FFF4" },
+                  bloqueado: { label: "Bloqueado", color: "#DC2626", bg: "#FEF2F2" },
+                };
+                const st = statusMap[member.status] ?? statusMap.pendente;
+                return (
+                  <div key={member.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                        style={{ backgroundColor: "#4CAF50" }}>
+                        {member.nome.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm">{member.nome}</p>
+                        <p className="text-xs text-gray-400">{member.email}{member.relacao ? ` · ${member.relacao}` : ""}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{ backgroundColor: st.bg, color: st.color }}>
+                        {st.label}
+                      </span>
+                      {member.status === "aguardando_aprovacao" && (
+                        <AprovarFamiliarButton accessId={member.id} nome={member.nome} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         )}
 
       </main>

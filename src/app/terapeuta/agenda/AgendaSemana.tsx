@@ -183,63 +183,82 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
       {/* Header */}
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <Link href="/terapeuta" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+      <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #E5E7EB" }} className="px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          {/* Left: back + icon + title + nav */}
+          <div className="flex items-center gap-4 flex-wrap">
+            <Link href="/terapeuta" className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60" style={{ color: "#6B7280" }}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              Voltar ao menu principal
+              Início
             </Link>
-            <div className="flex gap-1 bg-white/10 rounded-xl p-1">
-              <Link href="/terapeuta/agenda" className="px-3 py-1 rounded-lg text-sm font-semibold text-white bg-white/20">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#2E7BC118", color: "#2E7BC1" }}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" strokeWidth={1.8} />
+                  <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+                </svg>
+              </div>
+              <h1 className="font-bold text-lg" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>Agenda</h1>
+            </div>
+            <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "#F3F4F6" }}>
+              <Link href="/terapeuta/agenda" className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#1D3557", color: "#fff" }}>
                 Semana
               </Link>
-              <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1 rounded-lg text-sm font-semibold text-white/60 hover:text-white hover:bg-white/10 transition-colors">
+              <Link href="/terapeuta/agenda/atendimentos" className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors hover:bg-white" style={{ color: "#6B7280" }}>
                 Atendimentos
-              </Link>
-              <Link
-                href="/terapeuta/agenda/sessoes"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-semibold text-white transition-colors hover:opacity-90"
-                style={{ backgroundColor: "#4CAF50" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Sessões
               </Link>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-white font-semibold text-lg">Agenda</h1>
-            </div>
-            <div className="flex items-center gap-3">
+
+          {/* Right: week navigation + new session + petal */}
+          <div className="relative flex items-center gap-3 flex-shrink-0">
+            <div className="flex items-center gap-1 rounded-xl border" style={{ borderColor: "#E5E7EB" }}>
               <button
                 onClick={() => navigate(addDaysISO(monday, -7))}
                 disabled={loading}
-                className="text-white/70 hover:text-white transition-colors disabled:opacity-40 p-1"
+                className="p-2 transition-opacity hover:opacity-60 disabled:opacity-30"
+                style={{ color: "#6B7280" }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-              <span className="text-white/90 text-sm font-medium capitalize min-w-[180px] text-center">
+              <span className="text-xs font-medium capitalize min-w-[150px] text-center" style={{ color: "#374151" }}>
                 {formatWeekRange(monday)}
               </span>
               <button
                 onClick={() => navigate(addDaysISO(monday, 7))}
                 disabled={loading}
-                className="text-white/70 hover:text-white transition-colors disabled:opacity-40 p-1"
+                className="p-2 transition-opacity hover:opacity-60 disabled:opacity-30"
+                style={{ color: "#6B7280" }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
             </div>
+            <Link
+              href="/terapeuta/agenda/sessoes"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#4CAF50" }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+              </svg>
+              Nova sessão
+            </Link>
+            {/* Pétala decorativa */}
+            <svg className="absolute opacity-25 pointer-events-none" style={{ top: -6, right: -6 }} width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+              <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(0 26 26)" />
+              <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFBA3D" transform="rotate(72 26 26)" />
+              <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(144 26 26)" />
+              <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFBA3D" transform="rotate(216 26 26)" />
+              <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(288 26 26)" />
+            </svg>
           </div>
         </div>
       </header>

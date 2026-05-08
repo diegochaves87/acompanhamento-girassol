@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import ImportarExcelButton, { BaixarModeloButton } from "./ImportarExcelButton";
 import PacientesControles from "./PacientesControles";
+import PageHeader from "@/components/PageHeader";
 
 type Paciente = {
   id: string;
@@ -49,39 +50,37 @@ export default async function PacientesPage({ searchParams }: Props) {
   const showAviso = searchParams.aviso === "responsavel-sem-email";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/terapeuta"
-              className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors text-sm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Voltar ao menu principal
-            </Link>
-          </div>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader
+        title="Pacientes"
+        backHref="/terapeuta"
+        backLabel="Início"
+        iconColor="#4CAF50"
+        maxWidth="max-w-4xl"
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth={1.8} />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+        actions={
           <div className="flex items-center gap-2">
             <BaixarModeloButton />
             <ImportarExcelButton />
             <Link
               href="/terapeuta/pacientes/novo"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#ffffff", color: "#1a4a3a" }}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ backgroundColor: "#1D3557" }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
               </svg>
               Novo paciente
             </Link>
           </div>
-        </div>
-        <div className="max-w-4xl mx-auto mt-3">
-          <h1 className="text-white font-semibold text-lg">Pacientes</h1>
-        </div>
-      </header>
+        }
+      />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <PacientesControles ativos={ativos} inativos={inativos} showAviso={showAviso} />

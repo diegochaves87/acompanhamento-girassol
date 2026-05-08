@@ -1,18 +1,21 @@
-import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 
 export default function SobrePage() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <Link href="/terapeuta" className="text-white/60 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-white font-semibold">Quem Somos</h1>
-        </div>
-      </header>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
+      <PageHeader
+        title="Quem Somos"
+        backHref="/terapeuta"
+        backLabel="Início"
+        iconColor="#1D3557"
+        maxWidth="max-w-3xl"
+        icon={
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+      />
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-6">
 

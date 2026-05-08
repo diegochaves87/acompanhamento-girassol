@@ -297,7 +297,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     ];
 
     return (
-      <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
+      <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
         <Header aba={aba} />
 
         <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
@@ -491,7 +491,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   }));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
       <Header aba={aba} />
 
       <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
@@ -824,38 +824,54 @@ export default async function FinanceiroPage({ searchParams }: Props) {
 
 function Header({ aba }: { aba: string }) {
   return (
-    <div style={{ backgroundColor: "#1a4a3a" }}>
-      <div className="max-w-5xl mx-auto px-6 pt-4 pb-0">
-        <Link
-          href="/terapeuta"
-          className="inline-flex items-center gap-1.5 text-white/50 hover:text-white text-sm transition-colors mb-4"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    <header style={{ backgroundColor: "#fff", borderBottom: "1px solid #E5E7EB" }} className="px-6 py-4">
+      <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/terapeuta"
+            className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-60"
+            style={{ color: "#6B7280" }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Início
+          </Link>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#FFBA3D18", color: "#FFBA3D" }}>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={1.8} />
+              <path d="M12 6v2m0 8v2M9.5 9.5A2.5 2.5 0 0 1 12 8h.5a2 2 0 0 1 0 4h-1a2 2 0 0 0 0 4h.5A2.5 2.5 0 0 0 14.5 14" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" />
+            </svg>
+          </div>
+          <h1 className="font-bold text-lg" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>Financeiro</h1>
+          <div className="flex gap-1 rounded-xl p-1" style={{ backgroundColor: "#F3F4F6" }}>
+            {(["dashboard", "controle"] as const).map((a) => (
+              <Link
+                key={a}
+                href={`/terapeuta/financeiro?aba=${a}`}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap"
+                style={{
+                  backgroundColor: aba === a ? "#1D3557" : "transparent",
+                  color: aba === a ? "#fff" : "#6B7280",
+                }}
+              >
+                {a === "dashboard" ? "Dashboard" : "Controle"}
+              </Link>
+            ))}
+          </div>
+        </div>
+        {/* Pétala decorativa */}
+        <div className="relative flex-shrink-0">
+          <svg className="opacity-25 pointer-events-none" style={{ marginRight: -6, marginTop: -6 }} width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+            <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(0 26 26)" />
+            <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFBA3D" transform="rotate(72 26 26)" />
+            <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(144 26 26)" />
+            <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFBA3D" transform="rotate(216 26 26)" />
+            <ellipse cx="26" cy="13" rx="8" ry="13" fill="#FFC107" transform="rotate(288 26 26)" />
           </svg>
-          Início
-        </Link>
-        <h1 className="text-white font-bold text-xl mb-4">Financeiro</h1>
-        <div
-          className="flex overflow-x-auto border-b border-white/10 -mx-6 px-6"
-          style={{ scrollbarWidth: "none" } as React.CSSProperties}
-        >
-          {(["dashboard", "controle"] as const).map((a) => (
-            <Link
-              key={a}
-              href={`/terapeuta/financeiro?aba=${a}`}
-              className={`flex-shrink-0 px-4 py-3 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${
-                aba === a
-                  ? "text-white border-white"
-                  : "text-white/45 border-transparent hover:text-white/75"
-              }`}
-            >
-              {a === "dashboard" ? "Dashboard" : "Controle de Pagamento"}
-            </Link>
-          ))}
         </div>
       </div>
-    </div>
+    </header>
   );
 }
 
