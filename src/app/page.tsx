@@ -180,38 +180,76 @@ function HeroSection() {
         </div>
 
         {/* Right */}
-        <div className="relative flex items-center justify-center">
-          {/* Semicírculo decorativo */}
+        <div className="relative flex items-center justify-center" style={{ minHeight: 520 }}>
+
+          {/* Semicírculo azul escuro — canto inferior direito, atrás da imagem */}
           <div
-            className="absolute right-0 top-1/2 -translate-y-1/2 rounded-l-full"
-            style={{ width: 220, height: 440, backgroundColor: "#1D3557", opacity: 0.08, zIndex: 0 }}
+            className="absolute rounded-tl-full rounded-bl-full"
+            style={{ width: 260, height: 480, backgroundColor: "#1D3557", right: -20, bottom: -20, zIndex: 1, opacity: 0.12 }}
           />
 
-          {/* Pétala SVG decorativa */}
-          <svg className="absolute top-6 left-4 opacity-30" width="60" height="60" viewBox="0 0 60 60" fill="none">
-            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#FFBA3D" transform="rotate(0 30 30)" />
-            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#4CAF50" transform="rotate(60 30 30)" />
-            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#FF5C7A" transform="rotate(120 30 30)" />
+          {/* 3 pétalas amarelas — canto superior direito */}
+          <svg className="absolute" style={{ top: 0, right: 8, zIndex: 3 }} width="80" height="90" viewBox="0 0 80 90" fill="none">
+            <ellipse cx="60" cy="18" rx="9" ry="17" fill="#FFC107" transform="rotate(-20 60 18)" opacity="0.9" />
+            <ellipse cx="72" cy="38" rx="9" ry="17" fill="#FFC107" transform="rotate(20 72 38)" opacity="0.75" />
+            <ellipse cx="52" cy="42" rx="9" ry="17" fill="#FFBA3D" transform="rotate(-55 52 42)" opacity="0.6" />
           </svg>
-          <svg className="absolute bottom-10 right-6 opacity-20" width="48" height="48" viewBox="0 0 60 60" fill="none">
-            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#8E6CCF" transform="rotate(45 30 30)" />
-            <ellipse cx="30" cy="15" rx="10" ry="15" fill="#2E7BC1" transform="rotate(105 30 30)" />
+
+          {/* Folhas verdes — lado direito */}
+          <svg className="absolute" style={{ right: -10, top: "38%", zIndex: 3 }} width="48" height="100" viewBox="0 0 48 100" fill="none">
+            <path d="M36 10 Q48 30 30 50 Q20 35 36 10Z" fill="#4CAF50" opacity="0.7" />
+            <path d="M40 50 Q52 70 28 82 Q22 65 40 50Z" fill="#4CAF50" opacity="0.5" />
+          </svg>
+
+          {/* Coração outline amarelo — canto superior esquerdo da imagem */}
+          <svg className="absolute" style={{ top: 24, left: 24, zIndex: 4 }} width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              stroke="#FFBA3D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+
+          {/* Linha tracejada curva roxa — canto superior direito */}
+          <svg className="absolute" style={{ top: 30, right: 30, zIndex: 3 }} width="90" height="60" viewBox="0 0 90 60" fill="none">
+            <path d="M5 55 Q30 5 85 10" stroke="#8E6CCF" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" fill="none" opacity="0.7" />
+          </svg>
+
+          {/* Quebra-cabeça azul — superior esquerdo */}
+          <svg className="absolute" style={{ top: 70, left: 0, zIndex: 4 }} width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
+              fill="#1D3557" opacity="0.7" />
+          </svg>
+
+          {/* Quebra-cabeça verde — inferior direito */}
+          <svg className="absolute" style={{ bottom: 80, right: 0, zIndex: 4 }} width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
+              fill="#4CAF50" opacity="0.75" />
+          </svg>
+
+          {/* Quebra-cabeça roxo — superior direito baixo */}
+          <svg className="absolute" style={{ top: 120, right: -4, zIndex: 4 }} width="24" height="24" viewBox="0 0 32 32" fill="none">
+            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
+              fill="#8E6CCF" opacity="0.65" />
+          </svg>
+
+          {/* Quebra-cabeça vermelho — inferior esquerdo */}
+          <svg className="absolute" style={{ bottom: 120, left: 4, zIndex: 4 }} width="22" height="22" viewBox="0 0 32 32" fill="none">
+            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
+              fill="#FF5C7A" opacity="0.65" />
           </svg>
 
           {/* Hero image */}
-          <div className="relative z-10 w-full max-w-lg">
+          <div className="relative w-full max-w-lg" style={{ zIndex: 2 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/identidade-visual/hero-home.png"
+              src="/identidade-visual/hero-home2.png"
               alt="Terapeuta e família"
-              className="w-full object-cover"
-              style={{ borderRadius: 24, boxShadow: "0 24px 60px rgba(29,53,87,0.18)" }}
+              className="w-full object-contain"
+              style={{ borderRadius: 24 }}
             />
 
             {/* Floating card */}
             <div
               className="absolute bottom-6 left-0 -translate-x-6 flex items-center gap-3 px-4 py-3 rounded-2xl"
-              style={{ backgroundColor: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.12)", minWidth: 220, fontFamily: inter }}
+              style={{ backgroundColor: "#fff", boxShadow: "0 8px 32px rgba(0,0,0,0.12)", minWidth: 220, fontFamily: inter, zIndex: 5 }}
             >
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: "#F0FFF4" }}>
