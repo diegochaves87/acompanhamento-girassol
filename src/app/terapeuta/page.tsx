@@ -39,7 +39,7 @@ const cards = [
     ),
   },
   {
-    title: "Evoluções pendentes",
+    title: "Evoluções",
     description: "Analise, registre e publique as evoluções dos atendimentos",
     href: "/terapeuta/evolucoes",
     color: "#8E6CCF",
