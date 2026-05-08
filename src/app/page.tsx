@@ -33,7 +33,7 @@ function NavBar() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-shadow duration-300"
       style={{
-        height: 72,
+        height: 144,
         backgroundColor: "#fff",
         boxShadow: scrolled ? "0 2px 16px rgba(0,0,0,0.08)" : "none",
         borderBottom: scrolled ? "none" : "1px solid #F3F4F6",
@@ -43,7 +43,7 @@ function NavBar() {
       <div className="max-w-7xl mx-auto px-6 md:px-10 flex items-center justify-between h-full">
         <Link href="/" className="flex-shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Acompanhamento Girassol" style={{ height: 64 }} />
+          <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Acompanhamento Girassol" style={{ height: 128 }} />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">
@@ -77,8 +77,8 @@ function NavBar() {
       </div>
 
       {open && (
-        <div className="lg:hidden absolute top-[72px] left-0 right-0 bg-white border-t shadow-xl px-6 py-5 flex flex-col gap-1 z-50"
-          style={{ borderColor: "#F3F4F6", fontFamily: inter }}>
+        <div className="lg:hidden absolute left-0 right-0 bg-white border-t shadow-xl px-6 py-5 flex flex-col gap-1 z-50"
+          style={{ top: 144, borderColor: "#F3F4F6", fontFamily: inter }}>
           {NAV_LINKS.map((l) => (
             <a key={l.href} href={l.href} onClick={() => setOpen(false)}
               className="py-2.5 text-sm font-medium border-b" style={{ color: "#374151", borderColor: "#F9FAFB" }}>
@@ -107,8 +107,8 @@ function NavBar() {
 
 function HeroSection() {
   return (
-    <section id="inicio" style={{ backgroundColor: "#FFF7E6", paddingTop: 72, minHeight: "90vh", fontFamily: inter }}>
-      <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center min-h-[calc(90vh-72px)]">
+    <section id="inicio" style={{ backgroundColor: "#FFF7E6", paddingTop: 144, minHeight: "90vh", fontFamily: inter }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center min-h-[calc(90vh-144px)]">
 
         {/* Left */}
         <div className="flex flex-col gap-7">
@@ -212,32 +212,32 @@ function HeroSection() {
             <path d="M5 55 Q30 5 85 10" stroke="#8E6CCF" strokeWidth="2.5" strokeDasharray="5 5" strokeLinecap="round" fill="none" opacity="0.7" />
           </svg>
 
-          {/* Quebra-cabeça azul — superior esquerdo */}
-          <svg className="absolute" style={{ top: 70, left: 0, zIndex: 4 }} width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
-              fill="#1D3557" opacity="0.7" />
+          {/* Quebra-cabeça azul — canto superior direito, rotação 15deg */}
+          <svg className="absolute" style={{ top: 60, right: 10, zIndex: 4, transform: "rotate(15deg)" }} width="40" height="40" viewBox="0 0 80 80" fill="none">
+            <path d="M10,10 L10,35 Q15,35 15,40 Q15,45 10,45 L10,70 L35,70 Q35,65 40,65 Q45,65 45,70 L70,70 L70,45 Q65,45 65,40 Q65,35 70,35 L70,10 L45,10 Q45,15 40,15 Q35,15 35,10 Z"
+              fill="#2E7BC1" opacity="0.8" />
           </svg>
 
-          {/* Quebra-cabeça verde — inferior direito */}
-          <svg className="absolute" style={{ bottom: 80, right: 0, zIndex: 4 }} width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
+          {/* Quebra-cabeça verde — lado direito, rotação -10deg */}
+          <svg className="absolute" style={{ top: "42%", right: -8, zIndex: 4, transform: "rotate(-10deg)" }} width="35" height="35" viewBox="0 0 80 80" fill="none">
+            <path d="M10,10 L10,35 Q15,35 15,40 Q15,45 10,45 L10,70 L35,70 Q35,65 40,65 Q45,65 45,70 L70,70 L70,45 Q65,45 65,40 Q65,35 70,35 L70,10 L45,10 Q45,15 40,15 Q35,15 35,10 Z"
               fill="#4CAF50" opacity="0.75" />
           </svg>
 
-          {/* Quebra-cabeça roxo — superior direito baixo */}
-          <svg className="absolute" style={{ top: 120, right: -4, zIndex: 4 }} width="24" height="24" viewBox="0 0 32 32" fill="none">
-            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
-              fill="#8E6CCF" opacity="0.65" />
+          {/* Quebra-cabeça roxo — canto inferior direito, rotação 25deg */}
+          <svg className="absolute" style={{ bottom: 70, right: 4, zIndex: 4, transform: "rotate(25deg)" }} width="38" height="38" viewBox="0 0 80 80" fill="none">
+            <path d="M10,10 L10,35 Q15,35 15,40 Q15,45 10,45 L10,70 L35,70 Q35,65 40,65 Q45,65 45,70 L70,70 L70,45 Q65,45 65,40 Q65,35 70,35 L70,10 L45,10 Q45,15 40,15 Q35,15 35,10 Z"
+              fill="#8E6CCF" opacity="0.7" />
           </svg>
 
-          {/* Quebra-cabeça vermelho — inferior esquerdo */}
-          <svg className="absolute" style={{ bottom: 120, left: 4, zIndex: 4 }} width="22" height="22" viewBox="0 0 32 32" fill="none">
-            <path d="M4 4h10v3a3 3 0 0 0 6 0V4h8v10h-3a3 3 0 0 0 0 6h3v8H18v-3a3 3 0 0 0-6 0v3H4V18h3a3 3 0 0 0 0-6H4V4Z"
-              fill="#FF5C7A" opacity="0.65" />
+          {/* Quebra-cabeça rosa — lado direito superior, rotação -20deg */}
+          <svg className="absolute" style={{ top: 160, right: -4, zIndex: 4, transform: "rotate(-20deg)" }} width="32" height="32" viewBox="0 0 80 80" fill="none">
+            <path d="M10,10 L10,35 Q15,35 15,40 Q15,45 10,45 L10,70 L35,70 Q35,65 40,65 Q45,65 45,70 L70,70 L70,45 Q65,45 65,40 Q65,35 70,35 L70,10 L45,10 Q45,15 40,15 Q35,15 35,10 Z"
+              fill="#FF5C7A" opacity="0.7" />
           </svg>
 
           {/* Hero image */}
-          <div className="relative w-full max-w-lg" style={{ zIndex: 2 }}>
+          <div className="relative w-full" style={{ zIndex: 2, maxWidth: 640 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/identidade-visual/hero-home2.png"
