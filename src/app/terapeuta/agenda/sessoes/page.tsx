@@ -143,9 +143,12 @@ export default async function AgendaSessoesPage({ searchParams }: Props) {
               <option value="scheduled">Agendada</option>
               <option value="confirmed">Confirmada</option>
               <option value="completed">Concluída</option>
-              <option value="cancelled_family">Cancelada</option>
+              <option value="canceled_therapist">Cancelada pelo Terapeuta</option>
+              <option value="cancelled_family">Cancelada pela Família</option>
               <option value="unjustified_absence">Falta injustificada</option>
               <option value="justified_absence">Falta justificada</option>
+              <option value="makeup">Reposição</option>
+              <option value="holiday">Feriado</option>
             </select>
           </div>
           <div className="flex gap-2">

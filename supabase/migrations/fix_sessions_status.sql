@@ -7,9 +7,12 @@ ALTER TABLE sessions ADD CONSTRAINT sessions_status_check
     'confirmed',
     'completed',
     'cancelled',
+    'canceled_therapist',
+    'cancelled_family',
     'missed',
     'makeup',
     'justified_absence',
     'unjustified_absence',
-    'rescheduled'
+    'rescheduled',
+    'holiday'
   ));
