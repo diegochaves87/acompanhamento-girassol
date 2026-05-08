@@ -61,7 +61,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
         .select("id, scheduled_at, patient_id")
         .eq("tenant_id", tenantId)
         .eq("status", "completed")
-        .order("scheduled_at", { ascending: false }),
+        .order("created_at", { ascending: false }),
       supabase.from("evolutions").select("session_id").eq("tenant_id", tenantId),
     ]);
 
@@ -74,21 +74,19 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       : { data: [] };
     const patientMap = new Map((patientsData ?? []).map((p) => [p.id, p.full_name as string]));
 
-    pendingItems = sessions
-      .map((s) => ({
-        sessionId: s.id,
-        scheduledAt: s.scheduled_at,
-        patientName: patientMap.get(s.patient_id) ?? "—",
-      }))
-      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+    pendingItems = sessions.map((s) => ({
+      sessionId: s.id,
+      scheduledAt: s.scheduled_at,
+      patientName: patientMap.get(s.patient_id) ?? "—",
+    }));
   } else {
     const statusFilter = aba === "rascunhos" ? "draft" : "published";
     const { data: evos } = await supabase
       .from("evolutions")
-      .select("id, session_id, patient_id, status, updated_at")
+      .select("id, session_id, patient_id, status, created_at")
       .eq("tenant_id", tenantId)
       .eq("status", statusFilter)
-      .order("updated_at", { ascending: false });
+      .order("created_at", { ascending: false });
 
     const evoList = evos ?? [];
     const sessionIds = Array.from(new Set(evoList.map((e) => e.session_id)));
@@ -110,15 +108,13 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       (patientsRes.data ?? []).map((p) => [p.id, p.full_name])
     );
 
-    evoItems = evoList
-      .map((e) => ({
-        id: e.id,
-        sessionId: e.session_id,
-        patientName: patientMap.get(e.patient_id) ?? "—",
-        scheduledAt: sessionMap.get(e.session_id) ?? "",
-        status: e.status,
-      }))
-      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+    evoItems = evoList.map((e) => ({
+      id: e.id,
+      sessionId: e.session_id,
+      patientName: patientMap.get(e.patient_id) ?? "—",
+      scheduledAt: sessionMap.get(e.session_id) ?? "",
+      status: e.status,
+    }));
   }
 
   const totalCount =

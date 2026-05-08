@@ -232,12 +232,12 @@ export default function TerapeutaShell({ children, profissional }: Props) {
         {/* Logo / toggle block */}
         <div className="flex-shrink-0 border-b" style={{ borderColor: "#E5E7EB" }}>
           {sidebarOpen ? (
-            <div className="relative p-4">
+            <div className="relative px-3 pt-2 pb-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/logo-completa.png"
                 alt="Acompanhamento Girassol"
-                style={{ width: '100%', maxHeight: '150px', objectFit: 'contain', padding: '8px 12px' }}
+                style={{ width: '100%', maxHeight: '150px', objectFit: 'contain', padding: '4px 8px' }}
               />
               <button
                 onClick={toggleSidebar}
@@ -338,7 +338,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
 
       {/* ── Desktop top header bar ── */}
       <header
-        className="hidden md:grid grid-cols-3 fixed top-0 z-30 items-center px-5 border-b"
+        className="hidden md:flex fixed top-0 z-30 items-center px-5 border-b"
         style={{
           backgroundColor: "white",
           borderColor: "#E5E7EB",
@@ -348,11 +348,8 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           transition: "left 0.3s",
         }}
       >
-        {/* Left: empty (sidebar is outside the header) */}
-        <div />
-
-        {/* Center: brand logo */}
-        <div className="flex items-center justify-center gap-2">
+        {/* Left: brand logo — colado ao lado da sidebar */}
+        <div className="flex items-center gap-2 pl-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/identidade-visual/mao.svg"
@@ -364,8 +361,8 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </span>
         </div>
 
-        {/* Right: Profile dropdown */}
-        <div className="flex items-center justify-end" ref={profileRef}>
+        {/* Right: Profile dropdown — empurrado para a direita */}
+        <div className="flex items-center justify-end ml-auto" ref={profileRef}>
           <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-50"
