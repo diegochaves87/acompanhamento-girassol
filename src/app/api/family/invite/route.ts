@@ -33,10 +33,14 @@ const TITULO_MAP: Record<string, Trio> = {
 function tituloProf(formacao: string | null, sexoTerapeuta: string): string | null {
   if (!formacao) return null;
   const entry = TITULO_MAP[formacao.trim().toLowerCase()];
-  if (!entry) return formacao;
+  if (!entry) return formacao.toLowerCase();
   if (sexoTerapeuta === "masculino") return entry[0];
   if (sexoTerapeuta === "feminino") return entry[1];
   return entry[2];
+}
+
+function toTitleCase(str: string): string {
+  return str.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function evolucaoRef(relacao: string | null | undefined, sexo: string, primeiroNome: string): string {
@@ -129,7 +133,7 @@ export async function POST(request: NextRequest) {
   const especialidades = profileRes.data?.especialidades as Array<{ name: string }> | null;
   const sexoTerapeuta = (profileRes.data?.sexo as string | null) ?? "nao_informado";
   const clinicaData = sessionRes.data as { clinics?: { name: string } | null } | null;
-  const clinicaNome = clinicaData?.clinics?.name ?? null;
+  const clinicaNome = clinicaData?.clinics?.name ? toTitleCase(clinicaData.clinics.name) : null;
 
   const terapeutaPN = terapeutaFullName ? primeiroUltimo(terapeutaFullName) : "seu terapeuta";
   const pacienteFullName = (patient as { full_name?: string }).full_name ?? "paciente";
