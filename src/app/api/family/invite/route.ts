@@ -14,6 +14,31 @@ function artigoPaciente(sexo: string): string {
   return "de";
 }
 
+type Trio = [string, string, string]; // [masc, fem, neutro]
+
+const TITULO_MAP: Record<string, Trio> = {
+  "fisioterapia":        ["fisioterapeuta",        "fisioterapeuta",         "fisioterapeuta"],
+  "fonoaudiologia":      ["fonoaudiólogo",          "fonoaudióloga",          "fonoaudiólogo(a)"],
+  "psicologia":          ["psicólogo",              "psicóloga",              "psicólogo(a)"],
+  "terapia ocupacional": ["terapeuta ocupacional",  "terapeuta ocupacional",  "terapeuta ocupacional"],
+  "psiquiatria":         ["psiquiatra",             "psiquiatra",             "psiquiatra"],
+  "neuropsicologia":     ["neuropsicólogo",         "neuropsicóloga",         "neuropsicólogo(a)"],
+  "psicopedagogia":      ["psicopedagogo",          "psicopedagoga",          "psicopedagogo(a)"],
+  "educação física":     ["educador físico",        "educadora física",       "educador(a) físico(a)"],
+  "nutrição":            ["nutricionista",          "nutricionista",          "nutricionista"],
+  "pedagogia":           ["pedagogo",               "pedagoga",               "pedagogo(a)"],
+  "medicina":            ["médico",                 "médica",                 "médico(a)"],
+};
+
+function tituloProf(formacao: string | null, sexoTerapeuta: string): string | null {
+  if (!formacao) return null;
+  const entry = TITULO_MAP[formacao.trim().toLowerCase()];
+  if (!entry) return formacao;
+  if (sexoTerapeuta === "masculino") return entry[0];
+  if (sexoTerapeuta === "feminino") return entry[1];
+  return entry[2];
+}
+
 function evolucaoRef(relacao: string | null | undefined, sexo: string, primeiroNome: string): string {
   const rel = relacao?.toLowerCase().trim() ?? "";
   const masc = sexo === "masculino";
@@ -22,21 +47,20 @@ function evolucaoRef(relacao: string | null | undefined, sexo: string, primeiroN
   if (rel === "mãe" || rel === "mae" || rel === "pai") {
     if (masc) return `do seu filho ${primeiroNome}`;
     if (fem) return `da sua filha ${primeiroNome}`;
-    return `do(a) seu(a) filho(a) ${primeiroNome}`;
+    return `do(a) seu(ua) filho(a) ${primeiroNome}`;
   }
   if (rel === "avó" || rel === "avo" || rel === "avô") {
     if (masc) return `do seu neto ${primeiroNome}`;
     if (fem) return `da sua neta ${primeiroNome}`;
-    return `do(a) seu(a) neto(a) ${primeiroNome}`;
+    return `do(a) seu(ua) neto(a) ${primeiroNome}`;
   }
   if (rel === "irmão" || rel === "irmao" || rel === "irmã" || rel === "irma") {
     if (masc) return `do seu irmão ${primeiroNome}`;
     if (fem) return `da sua irmã ${primeiroNome}`;
-    return `do(a) seu(a) irmão(ã) ${primeiroNome}`;
+    return `do(a) seu(ua) irmão(ã) ${primeiroNome}`;
   }
 
-  const artigo = artigoPaciente(sexo);
-  return `${artigo} ${primeiroNome}`;
+  return `${artigoPaciente(sexo)} ${primeiroNome}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -89,7 +113,7 @@ export async function POST(request: NextRequest) {
 
   const [terapeutaRes, profileRes, sessionRes] = await Promise.all([
     supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
-    supabase.from("profiles").select("formacoes, especialidades").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("formacoes, especialidades, sexo").eq("id", user.id).maybeSingle(),
     supabase
       .from("sessions")
       .select("clinics(name)")
@@ -103,6 +127,7 @@ export async function POST(request: NextRequest) {
   const terapeutaFullName = terapeutaRes.data?.full_name ?? "";
   const formacoes = profileRes.data?.formacoes as Array<{ name: string }> | null;
   const especialidades = profileRes.data?.especialidades as Array<{ name: string }> | null;
+  const sexoTerapeuta = (profileRes.data?.sexo as string | null) ?? "nao_informado";
   const clinicaData = sessionRes.data as { clinics?: { name: string } | null } | null;
   const clinicaNome = clinicaData?.clinics?.name ?? null;
 
@@ -110,26 +135,27 @@ export async function POST(request: NextRequest) {
   const pacienteFullName = (patient as { full_name?: string }).full_name ?? "paciente";
   const pacientePN = primeiroUltimo(pacienteFullName);
   const primeiroPaciente = pacienteFullName.trim().split(/\s+/)[0];
-  const sexo = (patient as { sexo?: string }).sexo ?? "nao_informado";
+  const sexoPaciente = (patient as { sexo?: string }).sexo ?? "nao_informado";
   const primeiroFamiliar = nome.trim().split(/\s+/)[0];
 
-  const formacao = formacoes?.[0]?.name ?? null;
+  const titulo = tituloProf(formacoes?.[0]?.name ?? null, sexoTerapeuta);
   const especialidade = especialidades?.[0]?.name ?? null;
-  const artigo = artigoPaciente(sexo);
-  const evolucao = evolucaoRef(relacao, sexo, primeiroPaciente);
+  const artigo = artigoPaciente(sexoPaciente);
+  const evolucao = evolucaoRef(relacao, sexoPaciente, primeiroPaciente);
 
-  // "Sou [nome][, [formacao] [artigo] [paciente]][, responsável pelos atendimentos[ em [especialidade]] realizados na [clinica]]."
-  const formacaoPart = formacao ? `, ${formacao} ${artigo} ${pacientePN}` : "";
+  const tituloPart = titulo ? `, ${titulo} ${artigo} ${pacientePN}` : "";
   const especialidadePart = especialidade ? ` em ${especialidade}` : "";
   const clinicaPart = clinicaNome
-    ? `${formacaoPart}, responsável pelos atendimentos${especialidadePart} realizados na ${clinicaNome}`
-    : formacaoPart;
+    ? `${tituloPart}, responsável pelos atendimentos${especialidadePart} realizados na ${clinicaNome}`
+    : tituloPart;
   const primeiraSentenca = `Sou ${terapeutaPN}${clinicaPart}.`;
 
   const wa_message_template =
-    `Olá, ${primeiroFamiliar}! ${primeiraSentenca}\n\n` +
+    `Olá, ${primeiroFamiliar}, tudo bem contigo? Espero que sim.\n\n` +
+    `${primeiraSentenca}\n\n` +
     `Quero te convidar para acompanhar a evolução ${evolucao} pelo *Acompanhamento Girassol*, uma plataforma gratuita que te mantém sempre por dentro de cada sessão.\n\n` +
-    `Acesse pelo link: {link}`;
+    `Acesse pelo link e saiba mais: {link}\n\n` +
+    `Qualquer dúvida estou por aqui.\nAbraço!`;
 
   return Response.json({ ...data, wa_message_template });
 }
