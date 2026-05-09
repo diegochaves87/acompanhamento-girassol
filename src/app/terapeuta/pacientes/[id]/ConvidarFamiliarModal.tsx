@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 const RELACOES = ["Mãe", "Pai", "Avó", "Avô", "Responsável", "Outro"];
 
@@ -15,7 +14,6 @@ interface Props {
 
 export default function ConvidarFamiliarModal({
   patientId,
-  patientName,
   guardianName,
   guardianEmail,
   guardianPhone,
@@ -25,10 +23,9 @@ export default function ConvidarFamiliarModal({
   const [email, setEmail] = useState(guardianEmail ?? "");
   const [relacao, setRelacao] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{ token: string; link: string } | null>(null);
+  const [result, setResult] = useState<{ token: string; link: string; waMsg: string } | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  const [terapeutaNome, setTerapeutaNome] = useState<string | null>(null);
 
   function reset() {
     setNome(guardianName ?? "");
@@ -39,15 +36,9 @@ export default function ConvidarFamiliarModal({
     setCopied(false);
   }
 
-  async function handleOpen() {
+  function handleOpen() {
     reset();
     setOpen(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data } = await supabase.from("users").select("full_name").eq("id", user.id).maybeSingle();
-      setTerapeutaNome(data?.full_name ?? null);
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -70,7 +61,7 @@ export default function ConvidarFamiliarModal({
       }),
     });
 
-    const json = await res.json() as { invite_token?: string; error?: string };
+    const json = await res.json() as { invite_token?: string; wa_message_template?: string; error?: string };
     setLoading(false);
 
     if (!res.ok || !json.invite_token) {
@@ -79,7 +70,8 @@ export default function ConvidarFamiliarModal({
     }
 
     const link = `${window.location.origin}/convite/${json.invite_token}`;
-    setResult({ token: json.invite_token, link });
+    const waMsg = (json.wa_message_template ?? "").replace("{link}", link);
+    setResult({ token: json.invite_token, link, waMsg });
   }
 
   function copyLink() {
@@ -90,16 +82,10 @@ export default function ConvidarFamiliarModal({
     });
   }
 
-  const waMsg = result
-    ? encodeURIComponent(
-        `Olá, ${nome}! Sou ${terapeutaNome ?? "sua terapeuta"} e quero te convidar para acompanhar a evolução de ${patientName} pelo Acompanhamento Girassol. É gratuito e vai te manter sempre por dentro de cada sessão. Acesse: ${result.link}`
-      )
-    : "";
-
   const waHref = result
     ? guardianPhone
-      ? `https://wa.me/55${guardianPhone.replace(/\D/g, "")}?text=${waMsg}`
-      : `https://wa.me/?text=${waMsg}`
+      ? `https://wa.me/55${guardianPhone.replace(/\D/g, "")}?text=${encodeURIComponent(result.waMsg)}`
+      : `https://wa.me/?text=${encodeURIComponent(result.waMsg)}`
     : "#";
 
   const inputCls =
