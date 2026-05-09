@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
   const [terapeutaRes, profileRes, sessionRes] = await Promise.all([
     supabase.from("users").select("full_name").eq("id", user.id).maybeSingle(),
-    supabase.from("profiles").select("especialidades").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("formacoes, especialidades").eq("id", user.id).maybeSingle(),
     supabase
       .from("sessions")
       .select("clinics(name)")
@@ -101,6 +101,7 @@ export async function POST(request: NextRequest) {
   ]);
 
   const terapeutaFullName = terapeutaRes.data?.full_name ?? "";
+  const formacoes = profileRes.data?.formacoes as Array<{ name: string }> | null;
   const especialidades = profileRes.data?.especialidades as Array<{ name: string }> | null;
   const clinicaData = sessionRes.data as { clinics?: { name: string } | null } | null;
   const clinicaNome = clinicaData?.clinics?.name ?? null;
@@ -112,13 +113,21 @@ export async function POST(request: NextRequest) {
   const sexo = (patient as { sexo?: string }).sexo ?? "nao_informado";
   const primeiroFamiliar = nome.trim().split(/\s+/)[0];
 
-  const especialidade = especialidades?.[0]?.name ?? "terapeuta";
+  const formacao = formacoes?.[0]?.name ?? null;
+  const especialidade = especialidades?.[0]?.name ?? null;
   const artigo = artigoPaciente(sexo);
-  const clinicaPart = clinicaNome ? `, responsável pelos atendimentos realizados na ${clinicaNome}` : "";
   const evolucao = evolucaoRef(relacao, sexo, primeiroPaciente);
 
+  // "Sou [nome][, [formacao] [artigo] [paciente]][, responsável pelos atendimentos[ em [especialidade]] realizados na [clinica]]."
+  const formacaoPart = formacao ? `, ${formacao} ${artigo} ${pacientePN}` : "";
+  const especialidadePart = especialidade ? ` em ${especialidade}` : "";
+  const clinicaPart = clinicaNome
+    ? `${formacaoPart}, responsável pelos atendimentos${especialidadePart} realizados na ${clinicaNome}`
+    : formacaoPart;
+  const primeiraSentenca = `Sou ${terapeutaPN}${clinicaPart}.`;
+
   const wa_message_template =
-    `Olá, ${primeiroFamiliar}! Sou ${terapeutaPN}, ${especialidade} ${artigo} ${pacientePN}${clinicaPart}.\n\n` +
+    `Olá, ${primeiroFamiliar}! ${primeiraSentenca}\n\n` +
     `Quero te convidar para acompanhar a evolução ${evolucao} pelo *Acompanhamento Girassol*, uma plataforma gratuita que te mantém sempre por dentro de cada sessão.\n\n` +
     `Acesse pelo link: {link}`;
 

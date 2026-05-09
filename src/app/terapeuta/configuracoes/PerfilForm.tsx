@@ -87,6 +87,81 @@ function initDocItems(
   return [];
 }
 
+function addItem(setter: React.Dispatch<React.SetStateAction<DocItem[]>>) {
+  setter((prev) => [...prev, { name: "" }]);
+}
+function removeItem(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number) {
+  setter((prev) => prev.filter((_, idx) => idx !== i));
+}
+function updateName(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number, name: string) {
+  setter((prev) => prev.map((x, idx) => (idx === i ? { ...x, name } : x)));
+}
+function updateFile(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number, file: File) {
+  setter((prev) => prev.map((x, idx) => (idx === i ? { ...x, file } : x)));
+}
+
+function DynamicList({
+  items,
+  setter,
+  addLabel,
+  placeholder,
+  attachLabel,
+}: {
+  items: DocItem[];
+  setter: React.Dispatch<React.SetStateAction<DocItem[]>>;
+  addLabel: string;
+  placeholder: string;
+  attachLabel: string;
+}) {
+  return (
+    <div className="space-y-3">
+      {items.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-2">
+          Clique em &ldquo;{addLabel}&rdquo; para adicionar.
+        </p>
+      )}
+      {items.map((item, i) => (
+        <div key={i} className="flex flex-col gap-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-2">
+            <input
+              className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 outline-none focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/10 bg-white"
+              value={item.name}
+              onChange={(e) => updateName(setter, i, e.target.value)}
+              placeholder={placeholder}
+            />
+            <button
+              type="button"
+              onClick={() => removeItem(setter, i)}
+              className="p-1.5 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
+              style={{ color: "#EF4444" }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <DocFileRow
+            label={attachLabel}
+            existingUrl={item.file_url}
+            currentFile={item.file}
+            onFile={(f) => updateFile(setter, i, f)}
+          />
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => addItem(setter)}
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors w-full justify-center"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        {addLabel}
+      </button>
+    </div>
+  );
+}
+
 export default function PerfilForm({
   userId,
   email,
@@ -210,82 +285,6 @@ export default function PerfilForm({
     if (error) setErro(error.message);
     else setSuccess(true);
     setSaving(false);
-  }
-
-  // --- Dynamic list helpers ---
-  function addItem(setter: React.Dispatch<React.SetStateAction<DocItem[]>>) {
-    setter((prev) => [...prev, { name: "" }]);
-  }
-  function removeItem(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number) {
-    setter((prev) => prev.filter((_, idx) => idx !== i));
-  }
-  function updateName(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number, name: string) {
-    setter((prev) => prev.map((x, idx) => (idx === i ? { ...x, name } : x)));
-  }
-  function updateFile(setter: React.Dispatch<React.SetStateAction<DocItem[]>>, i: number, file: File) {
-    setter((prev) => prev.map((x, idx) => (idx === i ? { ...x, file } : x)));
-  }
-
-  function DynamicList({
-    items,
-    setter,
-    addLabel,
-    placeholder,
-    attachLabel,
-  }: {
-    items: DocItem[];
-    setter: React.Dispatch<React.SetStateAction<DocItem[]>>;
-    addLabel: string;
-    placeholder: string;
-    attachLabel: string;
-  }) {
-    return (
-      <div className="space-y-3">
-        {items.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-2">
-            Clique em &ldquo;{addLabel}&rdquo; para adicionar.
-          </p>
-        )}
-        {items.map((item, i) => (
-          <div key={i} className="flex flex-col gap-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
-            <div className="flex items-center gap-2">
-              <input
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 outline-none focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/10 bg-white"
-                value={item.name}
-                onChange={(e) => updateName(setter, i, e.target.value)}
-                placeholder={placeholder}
-              />
-              <button
-                type="button"
-                onClick={() => removeItem(setter, i)}
-                className="p-1.5 rounded-lg hover:bg-red-50 transition-colors flex-shrink-0"
-                style={{ color: "#EF4444" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <DocFileRow
-              label={attachLabel}
-              existingUrl={item.file_url}
-              currentFile={item.file}
-              onFile={(f) => updateFile(setter, i, f)}
-            />
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() => addItem(setter)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-dashed border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors w-full justify-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          {addLabel}
-        </button>
-      </div>
-    );
   }
 
   return (
