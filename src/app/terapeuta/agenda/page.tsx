@@ -33,13 +33,28 @@ export default async function AgendaPage({ searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: userData } = await supabase
+  const { data: userData, error: userErr } = await supabase
     .from("users")
     .select("tenant_id")
     .eq("id", user.id)
-    .maybeSingle();
+    .single();
 
-  const tenantId = userData?.tenant_id ?? "";
+  if (userErr) console.error("[AgendaPage] erro ao buscar tenant_id:", userErr.message, "user.id:", user.id);
+
+  const tenantId = userData?.tenant_id ?? null;
+
+  if (!tenantId) {
+    console.error("[AgendaPage] tenant_id não encontrado para:", user.id);
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#F9FAFB" }}>
+        <div className="bg-white rounded-2xl shadow p-8 max-w-sm w-full text-center">
+          <p className="font-bold text-base mb-2" style={{ color: "#1D3557" }}>Configuração pendente</p>
+          <p className="text-sm text-gray-500">Não foi possível identificar seu consultório. Verifique se seu cadastro está completo ou contate o suporte.</p>
+          <p className="text-xs text-gray-400 mt-3 font-mono">{user.id}</p>
+        </div>
+      </div>
+    );
+  }
   const monday = getMondayISO(searchParams.semana);
   const nextMonday = addDaysISO(monday, 7);
 
