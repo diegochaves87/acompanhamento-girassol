@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const patientRes = await supabase
     .from("patients")
-    .select("full_name, diagnosis, birth_date, support_level")
+    .select("full_name, diagnosis, birth_date")
     .eq("id", patient_id)
     .maybeSingle();
 
@@ -99,7 +99,6 @@ export async function POST(req: NextRequest) {
 Paciente: ${patient.full_name}
 Data de nascimento: ${patient.birth_date ? new Date(patient.birth_date + "T00:00:00").toLocaleDateString("pt-BR") : "N/A"}
 Diagnóstico: ${(patient.diagnosis as string[] | null)?.join(", ") ?? "N/A"}
-Nível de suporte: ${(patient as Record<string, unknown>).support_level ?? "N/A"}
 Período do relatório: ${new Date(periodo_inicio + "T00:00:00").toLocaleDateString("pt-BR")} a ${new Date(periodo_fim + "T00:00:00").toLocaleDateString("pt-BR")}
 
 Sessões no período (${sessoes.length} total):

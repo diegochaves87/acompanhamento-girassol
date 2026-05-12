@@ -225,8 +225,8 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
             </div>
           </div>
 
-          {/* Right: week navigation + new session + petal */}
-          <div className="relative flex items-center gap-3 flex-shrink-0">
+          {/* Right: week navigation (desktop only) + petal */}
+          <div className="relative hidden md:flex items-center gap-3 flex-shrink-0">
             <div className="flex items-center gap-1 rounded-xl border" style={{ borderColor: "rgba(255,255,255,0.25)" }}>
               <button
                 onClick={() => navigate(addDaysISO(monday, -7))}
@@ -277,8 +277,37 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
 
       {/* ── Mobile day view ── */}
       <div className="md:hidden">
+        {/* Mobile week navigation */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-1">
+          <button
+            onClick={() => navigate(addDaysISO(monday, -7))}
+            disabled={loading}
+            className="flex items-center gap-1 text-sm font-medium disabled:opacity-30"
+            style={{ color: "#1a4a3a" }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Anterior
+          </button>
+          <span className="text-xs font-semibold" style={{ color: "#1a4a3a" }}>
+            {formatWeekRange(monday)}
+          </span>
+          <button
+            onClick={() => navigate(addDaysISO(monday, 7))}
+            disabled={loading}
+            className="flex items-center gap-1 text-sm font-medium disabled:opacity-30"
+            style={{ color: "#1a4a3a" }}
+          >
+            Próxima
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
+
         {/* Day pills */}
-        <div className="flex gap-2 px-4 pt-3 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
+        <div className="flex gap-2 px-4 pt-2 pb-2 overflow-x-auto" style={{ scrollbarWidth: "none" } as React.CSSProperties}>
           {weekDays.map((dayISO, i) => {
             const isSelected = i === selectedDayIdx;
             const isToday = dayISO === today;
