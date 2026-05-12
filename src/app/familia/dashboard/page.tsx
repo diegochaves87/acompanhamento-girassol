@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin-client";
 import { redirect } from "next/navigation";
 import FamiliaDashboard, { type FamilySession, type FeedItem } from "./FamiliaDashboard";
 
@@ -48,19 +49,39 @@ export default async function FamiliaDashboardPage() {
 
   const isDev = user.email === "dcchaves25@gmail.com";
 
-  // Dev: busca qualquer registro ativo; usuário comum: filtra por email
-  const { data: access } = await (isDev
-    ? supabase
+  let access: { id: string; nome: string; patient_id: string; relacao: string | null; descricao_paciente: string | null; status: string } | null = null;
+
+  if (isDev) {
+    // Admin client ignora RLS — busca primeiro registro com status ativo
+    const admin = createAdminClient();
+    const { data: devAccess, error: devErr } = await admin
+      .from("family_access")
+      .select("id, nome, patient_id, relacao, descricao_paciente, status")
+      .eq("status", "ativo")
+      .limit(1)
+      .maybeSingle();
+    console.log("[DEV] family_access query:", { devAccess, devErr });
+
+    // Fallback: qualquer registro, independente de status
+    if (!devAccess) {
+      const { data: fallback, error: fbErr } = await admin
         .from("family_access")
         .select("id, nome, patient_id, relacao, descricao_paciente, status")
-        .eq("status", "ativo")
         .limit(1)
-        .maybeSingle()
-    : supabase
-        .from("family_access")
-        .select("id, nome, patient_id, relacao, descricao_paciente, status")
-        .eq("email", user.email!)
-        .maybeSingle());
+        .maybeSingle();
+      console.log("[DEV] family_access fallback:", { fallback, fbErr });
+      access = fallback;
+    } else {
+      access = devAccess;
+    }
+  } else {
+    const { data } = await supabase
+      .from("family_access")
+      .select("id, nome, patient_id, relacao, descricao_paciente, status")
+      .eq("email", user.email!)
+      .maybeSingle();
+    access = data;
+  }
 
   if (!access) {
     if (isDev) {
@@ -68,7 +89,7 @@ export default async function FamiliaDashboardPage() {
         <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#FFF7E6" }}>
           <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
             <p className="font-bold text-lg mb-2" style={{ color: "#1D3557" }}>Modo desenvolvedor</p>
-            <p className="text-sm text-gray-500">Nenhum registro ativo em family_access. Crie ao menos um paciente e um acesso familiar para testar.</p>
+            <p className="text-sm text-gray-500">Nenhum registro encontrado em family_access. Verifique os logs do servidor e execute o SQL de inserção no Supabase.</p>
           </div>
         </div>
       );
