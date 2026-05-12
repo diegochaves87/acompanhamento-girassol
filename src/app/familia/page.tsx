@@ -77,7 +77,7 @@ export default function FamiliaLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
-              href="/familia"
+              href="/familia/login"
               className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: "#1D3557" }}
             >
