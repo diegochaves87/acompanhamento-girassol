@@ -67,6 +67,21 @@ export default async function AgendaPage({ searchParams }: Props) {
 
   console.log("[DEBUG] sessoes:", sessoes?.length, "error:", error?.message, "monday:", monday);
 
+  if (error) {
+    return <div style={{ padding: "20px", color: "red" }}>ERRO: {error.message}</div>;
+  }
+
+  if (!sessoes || sessoes.length === 0) {
+    return (
+      <div style={{ padding: "20px", fontFamily: "monospace" }}>
+        <p>Nenhuma sessão encontrada</p>
+        <p>tenant_id: {tenantId}</p>
+        <p>monday: {monday}</p>
+        <p>user_id: {user.id}</p>
+      </div>
+    );
+  }
+
   const sessions = (sessoes ?? []) as unknown as AgendaSession[];
 
   return (
