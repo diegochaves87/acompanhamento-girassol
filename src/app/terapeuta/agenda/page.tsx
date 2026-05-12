@@ -61,12 +61,11 @@ export default async function AgendaPage({ searchParams }: Props) {
   const { data: sessoes, error } = await supabase
     .from("sessions")
     .select("id, scheduled_at, status, duration_minutes, patient_id, patients(id, full_name), clinics(name)")
-    .eq("tenant_id", tenantId)
     .gte("scheduled_at", monday + "T00:00:00")
     .lt("scheduled_at", nextMonday + "T00:00:00")
     .order("scheduled_at");
 
-  if (error) console.error("[AgendaPage]", error.message);
+  console.log("[DEBUG] sessoes:", sessoes?.length, "error:", error?.message, "monday:", monday);
 
   const sessions = (sessoes ?? []) as unknown as AgendaSession[];
 
