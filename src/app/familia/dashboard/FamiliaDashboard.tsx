@@ -143,16 +143,12 @@ function waHref(phone: string | null | undefined, msg: string) {
 
 function SessionCard({
   session,
-  familiarNome,
-  patientNome,
   therapistNome,
   therapistEspec,
   onConfirm,
   onCancel,
 }: {
   session: FamilySession;
-  familiarNome: string;
-  patientNome: string;
   therapistNome: string;
   therapistEspec: string | null;
   onConfirm: (s: FamilySession) => void;
@@ -732,8 +728,6 @@ export default function FamiliaDashboard({
                     <SessionCard
                       key={s.id}
                       session={s}
-                      familiarNome={familiarNome}
-                      patientNome={patientNome}
                       therapistNome={therapistNome}
                       therapistEspec={therapistEspec}
                       onConfirm={handleConfirmClick}
@@ -825,8 +819,6 @@ export default function FamiliaDashboard({
                 <SessionCard
                   key={s.id}
                   session={s}
-                  familiarNome={familiarNome}
-                  patientNome={patientNome}
                   therapistNome={therapistNome}
                   therapistEspec={therapistEspec}
                   onConfirm={handleConfirmClick}

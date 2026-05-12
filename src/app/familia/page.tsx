@@ -202,7 +202,7 @@ export default function FamiliaLanding() {
             ))}
           </div>
           <p className="text-gray-700 leading-relaxed text-base italic mb-6">
-            "Antes eu ficava ansiosa não sabendo o que acontecia nas sessões. Agora recebo um resumo logo depois e consigo continuar o trabalho do terapeuta em casa. Fez toda a diferença na evolução do meu filho."
+            &quot;Antes eu ficava ansiosa não sabendo o que acontecia nas sessões. Agora recebo um resumo logo depois e consigo continuar o trabalho do terapeuta em casa. Fez toda a diferença na evolução do meu filho.&quot;
           </p>
           <div className="flex items-center gap-3">
             <div
