@@ -46,14 +46,35 @@ export default async function FamiliaDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/familia/login");
 
-  // Registro ativo
-  const { data: access } = await supabase
-    .from("family_access")
-    .select("id, nome, patient_id, relacao, descricao_paciente, status")
-    .eq("email", user.email!)
-    .maybeSingle();
+  const isDev = user.email === "dcchaves25@gmail.com";
 
-  if (!access) redirect("/familia");
+  // Dev: busca qualquer registro ativo; usuário comum: filtra por email
+  const { data: access } = await (isDev
+    ? supabase
+        .from("family_access")
+        .select("id, nome, patient_id, relacao, descricao_paciente, status")
+        .eq("status", "ativo")
+        .limit(1)
+        .maybeSingle()
+    : supabase
+        .from("family_access")
+        .select("id, nome, patient_id, relacao, descricao_paciente, status")
+        .eq("email", user.email!)
+        .maybeSingle());
+
+  if (!access) {
+    if (isDev) {
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "#FFF7E6" }}>
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+            <p className="font-bold text-lg mb-2" style={{ color: "#1D3557" }}>Modo desenvolvedor</p>
+            <p className="text-sm text-gray-500">Nenhum registro ativo em family_access. Crie ao menos um paciente e um acesso familiar para testar.</p>
+          </div>
+        </div>
+      );
+    }
+    redirect("/familia");
+  }
 
   if (access.status !== "ativo") {
     return <PendingScreen nome={access.nome} />;

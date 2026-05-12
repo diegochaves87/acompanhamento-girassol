@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
@@ -20,6 +20,13 @@ export default function FamiliaLogin() {
   const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isDevUser, setIsDevUser] = useState(false);
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user?.email === "dcchaves25@gmail.com") setIsDevUser(true);
+    });
+  }, []);
 
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -72,6 +79,23 @@ export default function FamiliaLogin() {
           Gratuito para você, sempre.
         </p>
       </div>
+
+      {/* Dev banner */}
+      {isDevUser && (
+        <div className="w-full max-w-sm mb-4 rounded-2xl px-5 py-4 flex items-center justify-between gap-3" style={{ backgroundColor: "#1D3557" }}>
+          <div>
+            <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-0.5">Modo desenvolvedor</p>
+            <p className="text-sm font-semibold text-white">Você já está autenticado</p>
+          </div>
+          <a
+            href="/familia/dashboard"
+            className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-opacity hover:opacity-90"
+            style={{ backgroundColor: "#8E6CCF", color: "#fff" }}
+          >
+            Acessar portal
+          </a>
+        </div>
+      )}
 
       {/* Card */}
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-sm">

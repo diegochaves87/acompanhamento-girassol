@@ -31,6 +31,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Dev bypass: acesso livre a todas as rotas /familia/*
+  if (user?.email === "dcchaves25@gmail.com" && pathname.startsWith("/familia/")) {
+    return supabaseResponse;
+  }
+
   // Autenticado em / → dashboard do terapeuta
   if (user && pathname === "/") {
     return NextResponse.redirect(new URL("/terapeuta", request.url));
