@@ -209,11 +209,12 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
     const supabase = createClient();
     const { data: familiarData } = await supabase
       .from("family_access")
-      .select("nome, relacao")
+      .select("nome, relacao, status")
       .eq("patient_id", patientId)
-      .eq("status", "ativo")
       .limit(1)
       .maybeSingle();
+
+    console.log("family_access result:", familiarData);
 
     const familiar_nome = familiarData?.nome ?? "família";
     const familiar_parentesco = familiarData?.relacao ?? "responsável";
