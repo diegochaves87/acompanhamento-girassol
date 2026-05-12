@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Note = {
@@ -28,12 +27,21 @@ function formatNoteDate(iso: string) {
 }
 
 export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
-  const router = useRouter();
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  const fetchNotes = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("multidisciplinary_notes")
+      .select("id, technical_note, created_at, profiles!author_id(full_name)")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    if (data) setNotes(data as unknown as Note[]);
+  }, [patientId]);
 
   async function handleSave() {
     if (!content.trim()) return;
@@ -50,8 +58,8 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     if (!res.ok) {
       setError(json.error ?? "Erro ao salvar nota.");
     } else {
-      setNotes((prev) => [json as Note, ...prev]);
       setContent("");
+      await fetchNotes();
     }
     setSaving(false);
   }
@@ -62,7 +70,6 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     await supabase.from("multidisciplinary_notes").delete().eq("id", id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
     setDeletingId(null);
-    router.refresh();
   }
 
   return (
