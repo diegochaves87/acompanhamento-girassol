@@ -25,9 +25,16 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}/terapeuta`);
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.user) {
+      // Therapist users exist in the `users` table; family members do not
+      const { data: therapistRow } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      const next = therapistRow ? "/terapeuta" : "/familia/dashboard";
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 

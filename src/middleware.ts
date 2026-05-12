@@ -37,10 +37,22 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rotas públicas (sem autenticação)
-  const publicRoutes = ["/", "/login", "/cadastro"];
-  const isPublic = publicRoutes.includes(pathname) || pathname.startsWith("/auth/") || pathname.startsWith("/convite/");
+  const publicRoutes = ["/", "/login", "/cadastro", "/familia", "/familia/login"];
+  const isPublic =
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/convite/");
+
   if (!user && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const dest = pathname.startsWith("/familia/")
+      ? "/familia/login"
+      : "/login";
+    return NextResponse.redirect(new URL(dest, request.url));
+  }
+
+  // Usuário autenticado em /familia/login → dashboard família
+  if (user && pathname === "/familia/login") {
+    return NextResponse.redirect(new URL("/familia/dashboard", request.url));
   }
 
   return supabaseResponse;
