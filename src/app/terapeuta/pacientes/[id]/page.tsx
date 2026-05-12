@@ -4,9 +4,12 @@ import { notFound } from "next/navigation";
 import LiberarAcessoButton from "./LiberarAcessoButton";
 import InativarPacienteButton from "./InativarPacienteButton";
 import NotasTab from "./NotasTab";
+import ArquivosTab from "./ArquivosTab";
+import RelatoriosTab from "./RelatoriosTab";
 import ConvidarFamiliarModal from "./ConvidarFamiliarModal";
 import AprovarFamiliarButton from "./AprovarFamiliarButton";
 import PacienteAvatarUpload from "./PacienteAvatarUpload";
+import PublicarNotaToggle from "./PublicarNotaToggle";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
@@ -58,12 +61,12 @@ type EvoItem = {
 
 type Note = { id: string; technical_note: string; created_at: string };
 
-type FeedEvo = {
+type FamiliaNota = {
   id: string;
-  status: string;
-  updated_at: string | null;
-  session_id: string;
-  sessions: { scheduled_at: string } | null;
+  technical_note: string;
+  created_at: string;
+  context_type: string | null;
+  published_to_family: boolean | null;
 };
 
 type NextSession = {
@@ -219,12 +222,12 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
     aba === "familia"
       ? supabase
-          .from("evolutions")
-          .select("id, status, updated_at, session_id, sessions(scheduled_at)")
+          .from("multidisciplinary_notes")
+          .select("id, technical_note, created_at, context_type, published_to_family")
           .eq("patient_id", params.id)
-          .order("updated_at", { ascending: false })
-          .limit(10)
-      : Promise.resolve({ data: [] as FeedEvo[] }),
+          .order("created_at", { ascending: false })
+          .limit(30)
+      : Promise.resolve({ data: [] as FamiliaNota[] }),
 
     aba === "familia"
       ? supabase
@@ -245,7 +248,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
   const evos = (evosRes.data ?? []) as EvoItem[];
   const notas = (notasRes.data ?? []) as Note[];
   const familyMembers = (familyRes.data ?? []) as FamilyMember[];
-  const feedEvos = (feedEvosRes.data ?? []) as FeedEvo[];
+  const familiaNotes = (feedEvosRes.data ?? []) as FamiliaNota[];
   const nextSession = nextSessionRes.data as NextSession | null;
 
   const evoBySessionId = new Map(evos.map((e) => [e.session_id, e]));
@@ -594,12 +597,12 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
         {/* ── ARQUIVOS ── */}
         {aba === "arquivos" && (
-          <PlaceholderTab title="Arquivos" message="Em breve." />
+          <ArquivosTab patientId={params.id} />
         )}
 
         {/* ── RELATÓRIOS ── */}
         {aba === "relatorios" && (
-          <PlaceholderTab title="Relatórios" message="Em breve." />
+          <RelatoriosTab patientId={params.id} />
         )}
 
         {/* ── FAMÍLIA ── */}
@@ -667,61 +670,49 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
               </section>
             )}
 
-            {/* Feed de evoluções */}
+            {/* Notas para a família */}
             <section>
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 px-1">Evoluções compartilhadas</h2>
-              {feedEvos.length === 0 ? (
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Notas para a família</h2>
+                <Link
+                  href={`/terapeuta/pacientes/${params.id}?aba=notas`}
+                  className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  + Escrever nota
+                </Link>
+              </div>
+              {familiaNotes.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-10 text-center">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F3F0FF" }}>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" style={{ color: "#8E6CCF" }}>
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhuma evolução registrada</p>
-                  <p className="text-xs text-gray-400">As evoluções publicadas aparecerão aqui.</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhuma nota registrada</p>
+                  <p className="text-xs text-gray-400">Vá para a aba Notas para criar notas e publicá-las para a família.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {feedEvos.map((evo) => {
-                    const sessionDate = evo.sessions?.scheduled_at
-                      ? formatScheduledAt(evo.sessions.scheduled_at)
-                      : null;
-                    const isPublished = evo.status === "published";
-                    const href = isPublished
-                      ? `/terapeuta/evolucoes/${evo.id}`
-                      : `/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`;
+                  {familiaNotes.map((nota) => {
+                    const publicado = nota.published_to_family ?? false;
                     return (
-                      <div key={evo.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{ backgroundColor: "#F3F0FF", color: "#8E6CCF" }}>
-                            {initial}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-semibold text-gray-800">Terapeuta</span>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                isPublished
-                                  ? "bg-green-50 text-green-700 border-green-100"
-                                  : "bg-amber-50 text-amber-700 border-amber-100"
-                              }`}>
-                                {isPublished ? "PUBLICADA" : "RASCUNHO"}
-                              </span>
-                            </div>
-                            {sessionDate && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                Sessão de {sessionDate.weekday} {sessionDate.date} às {sessionDate.time}
-                              </p>
-                            )}
-                            {evo.updated_at && (
-                              <p className="text-xs text-gray-400">Atualizada em {formatUpdatedAt(evo.updated_at)}</p>
-                            )}
-                          </div>
+                      <div key={nota.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap flex-1 line-clamp-3">
+                            {nota.technical_note}
+                          </p>
+                          <PublicarNotaToggle
+                            noteId={nota.id}
+                            publicado={publicado}
+                            patientId={params.id}
+                          />
                         </div>
-                        <div className="mt-3 flex justify-end">
-                          <a href={href} className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors hover:opacity-80" style={{ backgroundColor: isPublished ? "#F0FFF4" : "#FFF7ED", color: isPublished ? "#166534" : "#92400E" }}>
-                            {isPublished ? "Ver evolução →" : "Continuar rascunho →"}
-                          </a>
-                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(nota.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                          {publicado && (
+                            <span className="ml-2 text-green-600 font-medium">· Visível no portal</span>
+                          )}
+                        </p>
                       </div>
                     );
                   })}

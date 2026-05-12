@@ -9,7 +9,9 @@ type Props = { variant?: Variant };
 type PlanilhaRow = {
   nome_completo: string;
   data_nascimento: string;
+  sexo: string;
   diagnostico: string;
+  nivel_suporte: string;
   nome_responsavel: string;
   telefone_responsavel: string;
   email_responsavel: string;
@@ -45,8 +47,13 @@ const COLUMN_MAP: Record<string, keyof Omit<PlanilhaRow, "_linha">> = {
   "data de nascimento": "data_nascimento",
   "data nascimento": "data_nascimento",
   "nascimento": "data_nascimento",
+  "sexo": "sexo",
+  "genero": "sexo",
   "diagnostico": "diagnostico",
   "diagnosticos": "diagnostico",
+  "nivel de suporte": "nivel_suporte",
+  "nivel suporte": "nivel_suporte",
+  "suporte": "nivel_suporte",
   "nome do responsavel": "nome_responsavel",
   "nome responsavel": "nome_responsavel",
   "responsavel": "nome_responsavel",
@@ -97,15 +104,54 @@ export function BaixarModeloButton({ variant = "ghost" }: Props) {
   const base =
     "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-80";
 
+  function baixar() {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      [
+        "Nome Completo",
+        "Data de Nascimento",
+        "Sexo",
+        "Diagnóstico",
+        "Nível de Suporte",
+        "CPF",
+        "Nome do Responsável",
+        "Telefone do Responsável",
+        "Email do Responsável",
+        "Parentesco",
+        "Clínica",
+        "Convênio",
+        "Valor por Sessão (R$)",
+        "Observações",
+      ],
+      [
+        "Ana Silva",
+        "15/03/2018",
+        "F",
+        "TEA",
+        "Nível 2",
+        "123.456.789-00",
+        "Maria Silva",
+        "11987654321",
+        "maria@email.com",
+        "mãe",
+        "Clínica ABC",
+        "",
+        "150",
+        "",
+      ],
+    ]);
+    XLSX.utils.book_append_sheet(wb, ws, "Pacientes");
+    XLSX.writeFile(wb, "modelo-pacientes.xlsx");
+  }
+
   return (
-    <a
-      href="/modelo-pacientes.xlsx"
-      download="modelo-pacientes.xlsx"
+    <button
+      onClick={baixar}
       className={variant === "outline" ? `${base} border-2` : base}
       style={
         variant === "outline"
           ? { borderColor: "#1a4a3a", color: "#1a4a3a" }
-          : { backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }
+          : { backgroundColor: "#F3F4F6", color: "#374151" }
       }
     >
       <svg
@@ -123,7 +169,7 @@ export function BaixarModeloButton({ variant = "ghost" }: Props) {
         />
       </svg>
       Baixar modelo
-    </a>
+    </button>
   );
 }
 
@@ -169,7 +215,9 @@ export default function ImportarExcelButton({ variant = "ghost" }: Props) {
             const row: PlanilhaRow = {
               nome_completo: "",
               data_nascimento: "",
+              sexo: "",
               diagnostico: "",
+              nivel_suporte: "",
               nome_responsavel: "",
               telefone_responsavel: "",
               email_responsavel: "",
@@ -262,7 +310,7 @@ export default function ImportarExcelButton({ variant = "ghost" }: Props) {
         style={
           variant === "outline"
             ? { borderColor: "#1a4a3a", color: "#1a4a3a" }
-            : { backgroundColor: "rgba(255,255,255,0.15)", color: "#ffffff" }
+            : { backgroundColor: "#F3F4F6", color: "#374151" }
         }
       >
         <svg

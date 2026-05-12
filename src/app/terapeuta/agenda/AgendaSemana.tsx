@@ -360,6 +360,20 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
         </div>
       </div>
 
+      {/* Mobile FAB */}
+      <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <Link
+          href="/terapeuta/agenda/sessoes/nova"
+          className="flex items-center gap-2 px-4 py-3.5 rounded-2xl text-sm font-bold text-white shadow-2xl active:scale-95 transition-transform"
+          style={{ backgroundColor: "#4CAF50" }}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <path d="M12 4v16m8-8H4" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+          </svg>
+          Nova sessão
+        </Link>
+      </div>
+
       {/* Grid — desktop only */}
       <main className="hidden md:block max-w-6xl mx-auto px-4 py-4 overflow-x-auto">
         {loading && (

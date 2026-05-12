@@ -59,9 +59,6 @@ export default async function AtendimentosPage({ searchParams }: Props) {
   if (searchParams.de) query = query.gte("scheduled_at", searchParams.de + "T00:00:00");
   if (searchParams.ate) query = query.lte("scheduled_at", searchParams.ate + "T23:59:59");
   if (searchParams.paciente) query = query.eq("patient_id", searchParams.paciente);
-  if (searchParams.evolucao === "sim") query = query.eq("has_evolution", true);
-  if (searchParams.evolucao === "nao")
-    query = query.or("has_evolution.is.null,has_evolution.eq.false");
   if (searchParams.status) query = query.eq("status", searchParams.status);
 
   const { data: sessoes, error } = await query;
@@ -75,6 +72,12 @@ export default async function AtendimentosPage({ searchParams }: Props) {
     : { data: [] as { id: string; session_id: string }[] };
   const evoBySession = new Map((evoData ?? []).map((e) => [e.session_id, e.id]));
   const evolvedSessionIds = new Set(evoBySession.keys());
+
+  if (searchParams.evolucao === "sim") {
+    lista = lista.filter((s) => evolvedSessionIds.has(s.id));
+  } else if (searchParams.evolucao === "nao") {
+    lista = lista.filter((s) => !evolvedSessionIds.has(s.id));
+  }
 
   if (searchParams.convenio) {
     lista = lista.filter((s) => s.patients?.insurance_name === searchParams.convenio);
