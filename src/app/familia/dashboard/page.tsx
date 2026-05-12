@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin-client";
 import { redirect } from "next/navigation";
 import FamiliaDashboard, { type FamilySession, type FeedItem } from "./FamiliaDashboard";
 
@@ -49,39 +48,17 @@ export default async function FamiliaDashboardPage() {
 
   const isDev = user.email === "dcchaves25@gmail.com";
 
-  let access: { id: string; nome: string; patient_id: string; relacao: string | null; descricao_paciente: string | null; status: string } | null = null;
+  // Dev: policy "dev_full_access" no Supabase permite SELECT sem filtro de email.
+  // Usuário comum: RLS filtra por email automaticamente.
+  const baseQuery = supabase
+    .from("family_access")
+    .select("id, nome, patient_id, relacao, descricao_paciente, status");
 
-  if (isDev) {
-    // Admin client ignora RLS — busca primeiro registro com status ativo
-    const admin = createAdminClient();
-    const { data: devAccess, error: devErr } = await admin
-      .from("family_access")
-      .select("id, nome, patient_id, relacao, descricao_paciente, status")
-      .eq("status", "ativo")
-      .limit(1)
-      .maybeSingle();
-    console.log("[DEV] family_access query:", { devAccess, devErr });
+  const { data: access, error: accessErr } = await (isDev
+    ? baseQuery.eq("status", "ativo").limit(1).maybeSingle()
+    : baseQuery.eq("email", user.email!).maybeSingle());
 
-    // Fallback: qualquer registro, independente de status
-    if (!devAccess) {
-      const { data: fallback, error: fbErr } = await admin
-        .from("family_access")
-        .select("id, nome, patient_id, relacao, descricao_paciente, status")
-        .limit(1)
-        .maybeSingle();
-      console.log("[DEV] family_access fallback:", { fallback, fbErr });
-      access = fallback;
-    } else {
-      access = devAccess;
-    }
-  } else {
-    const { data } = await supabase
-      .from("family_access")
-      .select("id, nome, patient_id, relacao, descricao_paciente, status")
-      .eq("email", user.email!)
-      .maybeSingle();
-    access = data;
-  }
+  if (isDev) console.log("[DEV] family_access:", { access, accessErr });
 
   if (!access) {
     if (isDev) {
