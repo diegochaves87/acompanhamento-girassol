@@ -205,17 +205,29 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
   async function handleHumanizar(relatorio: Relatorio) {
     setHumanizando(relatorio.id);
     setActionError("");
+
+    const supabase = createClient();
+    const { data: familiarData } = await supabase
+      .from("family_access")
+      .select("nome, relacao")
+      .eq("patient_id", patientId)
+      .eq("status", "ativo")
+      .limit(1)
+      .maybeSingle();
+
+    const familiar_nome = familiarData?.nome ?? "família";
+    const familiar_parentesco = familiarData?.relacao ?? "responsável";
+
     const res = await fetch("/api/relatorio/humanizar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conteudo: relatorio.conteudo }),
+      body: JSON.stringify({ conteudo: relatorio.conteudo, familiar_nome, familiar_parentesco }),
     });
     const json = await res.json();
     if (!res.ok) {
       setActionError(json.error ?? "Erro ao gerar versão família.");
     } else {
       const humanizado: string = json.texto ?? "";
-      const supabase = createClient();
       await supabase
         .from("relatorios")
         .update({ conteudo_humanizado: humanizado, updated_at: new Date().toISOString() })

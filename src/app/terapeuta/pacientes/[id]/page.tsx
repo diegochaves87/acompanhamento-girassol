@@ -60,7 +60,12 @@ type EvoItem = {
   session_id: string;
 };
 
-type Note = { id: string; technical_note: string; created_at: string };
+type Note = {
+  id: string;
+  technical_note: string;
+  created_at: string;
+  profiles?: { full_name: string } | null;
+};
 
 type FamiliaEvo = {
   id: string;
@@ -211,7 +216,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
     aba === "notas"
       ? supabase
           .from("multidisciplinary_notes")
-          .select("id, technical_note, created_at")
+          .select("id, technical_note, created_at, profiles!author_id(full_name)")
           .eq("patient_id", params.id)
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as Note[] }),

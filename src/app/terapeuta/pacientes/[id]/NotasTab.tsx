@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Note = { id: string; technical_note: string; created_at: string };
+type Note = {
+  id: string;
+  technical_note: string;
+  created_at: string;
+  profiles?: { full_name: string } | null;
+};
 
 type Props = {
   patientId: string;
@@ -118,7 +123,10 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
                   </svg>
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-2">{formatNoteDate(note.created_at)}</p>
+              <p className="text-xs text-gray-400 mt-2">
+                {formatNoteDate(note.created_at)}
+                {note.profiles?.full_name && ` · ${note.profiles.full_name}`}
+              </p>
             </div>
           ))}
         </div>
