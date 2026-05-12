@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import FamiliaDashboard, { type FamilySession, type FeedItem } from "./FamiliaDashboard";
 
@@ -52,14 +53,21 @@ export default async function FamiliaDashboardPage() {
   let access: AccessRow | null = null;
 
   if (isDev) {
-    const { data, error } = await supabase
+    console.log("[DEV] SUPABASE_SERVICE_ROLE_KEY defined:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+    const adminClient = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data, error } = await adminClient
       .from("family_access")
-      .select("id, nome, patient_id, relacao, descricao_paciente, status")
+      .select("*")
+      .eq("email", "dcchaves25@gmail.com")
       .eq("status", "ativo")
-      .limit(1)
       .maybeSingle();
 
-    console.log("[DEV] family_access result:", data, error);
+    console.log("[DEV] resultado:", JSON.stringify(data), JSON.stringify(error));
     access = data as AccessRow | null;
   } else {
     const { data } = await supabase
