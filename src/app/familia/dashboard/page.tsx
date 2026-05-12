@@ -48,17 +48,27 @@ export default async function FamiliaDashboardPage() {
 
   const isDev = user.email === "dcchaves25@gmail.com";
 
-  // Dev: policy "dev_full_access" no Supabase permite SELECT sem filtro de email.
-  // Usuário comum: RLS filtra por email automaticamente.
-  const baseQuery = supabase
-    .from("family_access")
-    .select("id, nome, patient_id, relacao, descricao_paciente, status");
+  type AccessRow = { id: string; nome: string; patient_id: string; relacao: string | null; descricao_paciente: string | null; status: string };
+  let access: AccessRow | null = null;
 
-  const { data: access, error: accessErr } = await (isDev
-    ? baseQuery.eq("status", "ativo").limit(1).maybeSingle()
-    : baseQuery.eq("email", user.email!).maybeSingle());
+  if (isDev) {
+    const { data, error } = await supabase
+      .from("family_access")
+      .select("id, nome, patient_id, relacao, descricao_paciente, status")
+      .eq("status", "ativo")
+      .limit(1)
+      .maybeSingle();
 
-  if (isDev) console.log("[DEV] family_access:", { access, accessErr });
+    console.log("[DEV] family_access result:", data, error);
+    access = data as AccessRow | null;
+  } else {
+    const { data } = await supabase
+      .from("family_access")
+      .select("id, nome, patient_id, relacao, descricao_paciente, status")
+      .eq("email", user.email!)
+      .maybeSingle();
+    access = data as AccessRow | null;
+  }
 
   if (!access) {
     if (isDev) {
