@@ -22,7 +22,7 @@ const ABA_LABELS: Record<Aba, string> = {
   anamnese: "Anamnese",
   agenda: "Agenda",
   evolucoes: "Evoluções",
-  notas: "Notas",
+  notas: "Anotações",
   arquivos: "Arquivos",
   relatorios: "Relatórios",
   familia: "Família",
@@ -61,12 +61,13 @@ type EvoItem = {
 
 type Note = { id: string; technical_note: string; created_at: string };
 
-type FamiliaNota = {
+type FamiliaEvo = {
   id: string;
-  technical_note: string;
-  created_at: string;
-  context_type: string | null;
+  status: string;
+  updated_at: string | null;
+  session_id: string;
   published_to_family: boolean | null;
+  sessions: { scheduled_at: string } | null;
 };
 
 type NextSession = {
@@ -222,12 +223,12 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
     aba === "familia"
       ? supabase
-          .from("multidisciplinary_notes")
-          .select("id, technical_note, created_at, context_type, published_to_family")
+          .from("evolutions")
+          .select("id, status, updated_at, session_id, published_to_family, sessions(scheduled_at)")
           .eq("patient_id", params.id)
-          .order("created_at", { ascending: false })
-          .limit(30)
-      : Promise.resolve({ data: [] as FamiliaNota[] }),
+          .order("updated_at", { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [] as FamiliaEvo[] }),
 
     aba === "familia"
       ? supabase
@@ -248,7 +249,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
   const evos = (evosRes.data ?? []) as EvoItem[];
   const notas = (notasRes.data ?? []) as Note[];
   const familyMembers = (familyRes.data ?? []) as FamilyMember[];
-  const familiaNotes = (feedEvosRes.data ?? []) as FamiliaNota[];
+  const familiaEvos = (feedEvosRes.data ?? []) as FamiliaEvo[];
   const nextSession = nextSessionRes.data as NextSession | null;
 
   const evoBySessionId = new Map(evos.map((e) => [e.session_id, e]));
@@ -670,49 +671,76 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
               </section>
             )}
 
-            {/* Notas para a família */}
+            {/* Evoluções para a família */}
             <section>
               <div className="flex items-center justify-between mb-3 px-1">
-                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Notas para a família</h2>
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Evoluções publicadas</h2>
                 <Link
-                  href={`/terapeuta/pacientes/${params.id}?aba=notas`}
+                  href={`/terapeuta/pacientes/${params.id}?aba=evolucoes`}
                   className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  + Escrever nota
+                  Ver evoluções →
                 </Link>
               </div>
-              {familiaNotes.length === 0 ? (
+              {familiaEvos.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-10 text-center">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F3F0FF" }}>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" style={{ color: "#8E6CCF" }}>
                       <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhuma nota registrada</p>
-                  <p className="text-xs text-gray-400">Vá para a aba Notas para criar notas e publicá-las para a família.</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Nenhuma evolução publicada para a família ainda.</p>
+                  <p className="text-xs text-gray-400">Use o toggle &ldquo;Publicar&rdquo; em cada evolução para torná-la visível no portal da família.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {familiaNotes.map((nota) => {
-                    const publicado = nota.published_to_family ?? false;
+                  {familiaEvos.map((evo) => {
+                    const publicado = evo.published_to_family ?? false;
+                    const sessionDate = evo.sessions?.scheduled_at
+                      ? formatScheduledAt(evo.sessions.scheduled_at)
+                      : null;
+                    const isPublished = evo.status === "published";
+                    const href = isPublished
+                      ? `/terapeuta/evolucoes/${evo.id}`
+                      : `/terapeuta/evolucoes/nova?sessao=${evo.session_id}&evolution=${evo.id}`;
                     return (
-                      <div key={nota.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                      <div key={evo.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap flex-1 line-clamp-3">
-                            {nota.technical_note}
-                          </p>
-                          <PublicarNotaToggle
-                            noteId={nota.id}
-                            publicado={publicado}
-                            patientId={params.id}
-                          />
+                          <div className="flex-1 min-w-0">
+                            {sessionDate && (
+                              <p className="text-sm font-medium text-gray-800">
+                                Sessão de {sessionDate.weekday} {sessionDate.date} às {sessionDate.time}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                isPublished
+                                  ? "bg-green-50 text-green-700 border-green-100"
+                                  : "bg-amber-50 text-amber-700 border-amber-100"
+                              }`}>
+                                {isPublished ? "PUBLICADA" : "RASCUNHO"}
+                              </span>
+                              {evo.updated_at && (
+                                <span className="text-xs text-gray-400">
+                                  {formatUpdatedAt(evo.updated_at)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <PublicarNotaToggle
+                              noteId={evo.id}
+                              publicado={publicado}
+                              patientId={params.id}
+                            />
+                            <a href={href} className="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                              Ver →
+                            </a>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">
-                          {new Date(nota.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
-                          {publicado && (
-                            <span className="ml-2 text-green-600 font-medium">· Visível no portal</span>
-                          )}
-                        </p>
+                        {publicado && (
+                          <p className="text-xs text-green-600 font-medium mt-2">· Visível no portal da família</p>
+                        )}
                       </div>
                     );
                   })}

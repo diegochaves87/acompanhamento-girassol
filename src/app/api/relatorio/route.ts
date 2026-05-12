@@ -25,16 +25,30 @@ export async function POST(req: NextRequest) {
     periodo_fim: string;
   };
 
+  console.log("[/api/relatorio] patient_id recebido:", patient_id, "tipo:", tipo);
+
   if (!patient_id || !tipo || !periodo_inicio || !periodo_fim) {
     return Response.json({ error: "Parâmetros incompletos." }, { status: 400 });
   }
 
-  const [patientRes, sessoesRes, notasRes] = await Promise.all([
-    supabase
-      .from("patients")
-      .select("full_name, diagnosis, birth_date, support_level")
-      .eq("id", patient_id)
-      .single(),
+  const patientRes = await supabase
+    .from("patients")
+    .select("full_name, diagnosis, birth_date, support_level")
+    .eq("id", patient_id)
+    .maybeSingle();
+
+  if (patientRes.error) {
+    console.error("[/api/relatorio] Erro ao buscar paciente:", JSON.stringify(patientRes.error));
+    return Response.json({ error: `Erro ao buscar paciente: ${patientRes.error.message}` }, { status: 500 });
+  }
+
+  const patient = patientRes.data;
+  if (!patient) {
+    console.error("[/api/relatorio] Paciente não encontrado para id:", patient_id);
+    return Response.json({ error: "Paciente não encontrado. Verifique se o id está correto e se o usuário tem acesso a esse paciente." }, { status: 404 });
+  }
+
+  const [sessoesRes, notasRes] = await Promise.all([
     supabase
       .from("sessions")
       .select("scheduled_at, status, duration_minutes")
@@ -51,11 +65,8 @@ export async function POST(req: NextRequest) {
       .order("created_at"),
   ]);
 
-  const patient = patientRes.data;
   const sessoes = sessoesRes.data ?? [];
   const notas = notasRes.data ?? [];
-
-  if (!patient) return Response.json({ error: "Paciente não encontrado." }, { status: 404 });
 
   const statusLabel: Record<string, string> = {
     scheduled: "Agendada",
@@ -94,8 +105,8 @@ Período do relatório: ${new Date(periodo_inicio + "T00:00:00").toLocaleDateStr
 Sessões no período (${sessoes.length} total):
 ${diasSessao || "  Nenhuma sessão registrada no período."}
 
-Notas clínicas do terapeuta:
-${notasTexto || "  Nenhuma nota registrada no período."}
+Anotações clínicas do terapeuta:
+${notasTexto || "  Nenhuma anotação registrada no período."}
 `.trim();
 
   const systemPrompt = TIPO_PROMPTS[tipo] ?? TIPO_PROMPTS.evolucao;
@@ -122,6 +133,7 @@ ${notasTexto || "  Nenhuma nota registrada no período."}
     return Response.json({ texto: block.text });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro desconhecido";
+    console.error("[/api/relatorio] Anthropic error:", msg);
     return Response.json({ error: msg }, { status: 500 });
   }
 }
