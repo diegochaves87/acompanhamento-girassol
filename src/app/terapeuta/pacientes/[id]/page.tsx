@@ -604,7 +604,7 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
         {/* ── RELATÓRIOS ── */}
         {aba === "relatorios" && (
-          <RelatoriosTab patientId={params.id} />
+          <RelatoriosTab patientId={params.id} tenantId={tenantId} patientName={patient.full_name} />
         )}
 
         {/* ── FAMÍLIA ── */}

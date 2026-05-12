@@ -154,30 +154,33 @@ export default function FamiliaPreviewModal({ patientName, initial, fotoUrl, dia
               </div>
 
               {/* Last evolution */}
-              {lastPublished ? (
-                <div className="rounded-xl border border-gray-100 p-4">
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Última evolução</p>
-                  {lastPublished.sessions?.scheduled_at && (
-                    <p className="text-xs text-gray-500 mb-1">
-                      Sessão de {formatEvoDate(lastPublished.sessions.scheduled_at)}
+              <div className="rounded-xl border border-gray-100 p-4">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Última evolução</p>
+                {lastPublished ? (
+                  <>
+                    {lastPublished.sessions?.scheduled_at && (
+                      <p className="text-xs text-gray-500 mb-1">
+                        Sessão de {formatEvoDate(lastPublished.sessions.scheduled_at)}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Relatório de evolução terapêutica disponível para leitura completa.
                     </p>
-                  )}
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Relatório de evolução terapêutica disponível para leitura completa.
-                  </p>
-                  <button
-                    disabled
-                    className="mt-3 w-full py-2 rounded-xl text-xs font-semibold text-white cursor-default"
-                    style={{ backgroundColor: "#1a4a3a", opacity: 0.65 }}
-                  >
-                    Ver evolução completa
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-gray-100 p-4 text-center">
+                  </>
+                ) : (
                   <p className="text-sm text-gray-400">Nenhuma evolução publicada ainda.</p>
-                </div>
-              )}
+                )}
+                <button
+                  disabled
+                  className="w-full mt-3 py-2 rounded-lg text-sm font-medium text-white cursor-not-allowed"
+                  style={{ background: "#1D3557", opacity: 0.7 }}
+                >
+                  Ver evolução completa
+                </button>
+                <p className="text-center text-xs text-gray-400 mt-1">
+                  (disponível no portal da família)
+                </p>
+              </div>
             </div>
 
             {/* Footer */}
