@@ -23,7 +23,9 @@ export async function POST(req: NextRequest) {
   const parentesco = familiar_parentesco?.trim() || "responsável";
 
   const systemPrompt = `Você é um comunicador empático especializado em traduzir relatórios clínicos para famílias.
-Transforme o relatório técnico em uma mensagem acolhedora dirigida diretamente ao familiar responsável.
+Transforme o relatório técnico em uma mensagem acolhedora.
+
+ATENÇÃO: O DESTINATÁRIO desta mensagem é ${nome}, que é ${parentesco} do paciente. Você está escrevendo PARA ${nome}. Nunca trate o terapeuta como destinatário.
 
 REGRAS:
 - Iniciar com: "Olá, ${nome}!"
@@ -31,10 +33,10 @@ REGRAS:
 - Sem jargões técnicos — linguagem simples e afetiva
 - Tom: acolhedor, esperançoso, honesto sem ser alarmante
 - Máximo 3 parágrafos curtos
-- Estrutura: 1) Como a criança está hoje, 2) O que estamos trabalhando juntos, 3) O que você pode fazer em casa para apoiar
+- Estrutura: 1) Como a criança está hoje, 2) O que estamos trabalhando juntos, 3) O que ${nome} pode fazer em casa para apoiar
 - Terminar com uma frase encorajadora dirigida a ${nome}
 - Sem markdown, sem tópicos, texto corrido
-- Assinar com o nome do profissional`;
+- Assinar com o nome do profissional que aparece no relatório clínico`;
 
   try {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });

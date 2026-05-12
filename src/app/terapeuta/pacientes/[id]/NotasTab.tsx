@@ -37,7 +37,7 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     const supabase = createClient();
     const { data } = await supabase
       .from("multidisciplinary_notes")
-      .select("id, technical_note, created_at, profiles!author_id(full_name)")
+      .select("id, technical_note, created_at")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false });
     if (data) setNotes(data as unknown as Note[]);
@@ -58,8 +58,11 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     if (!res.ok) {
       setError(json.error ?? "Erro ao salvar nota.");
     } else {
+      setNotes((prev) => [
+        { id: json.id, technical_note: content.trim(), created_at: json.created_at },
+        ...prev,
+      ]);
       setContent("");
-      await fetchNotes();
     }
     setSaving(false);
   }
