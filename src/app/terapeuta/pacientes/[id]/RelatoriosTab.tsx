@@ -63,8 +63,12 @@ export default function RelatoriosTab({ patientId }: Props) {
     if (!win) return;
     win.document.write(`
       <html><head><title>Relatório</title>
-      <style>body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;line-height:1.7;color:#222}h1{font-size:18px}pre{white-space:pre-wrap;font-family:inherit}</style>
-      </head><body><pre>${texto.replace(/</g, "&lt;")}</pre></body></html>
+      <style>
+        body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; line-height: 1.8; color: #1a1a1a; font-size: 14px; padding: 0 24px; }
+        div { white-space: pre-wrap; }
+        @media print { body { margin: 20px; padding: 0; } }
+      </style>
+      </head><body><div>${texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div></body></html>
     `);
     win.document.close();
     win.print();
@@ -173,9 +177,17 @@ export default function RelatoriosTab({ patientId }: Props) {
             </div>
           </div>
           <div className="px-6 py-5">
-            <pre className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">
+            <div
+              style={{
+                whiteSpace: "pre-wrap",
+                fontFamily: "Georgia, serif",
+                fontSize: "14px",
+                lineHeight: "1.8",
+                color: "#1a1a1a",
+              }}
+            >
               {texto}
-            </pre>
+            </div>
           </div>
         </div>
       )}

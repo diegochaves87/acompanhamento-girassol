@@ -10,6 +10,7 @@ import ConvidarFamiliarModal from "./ConvidarFamiliarModal";
 import AprovarFamiliarButton from "./AprovarFamiliarButton";
 import PacienteAvatarUpload from "./PacienteAvatarUpload";
 import PublicarNotaToggle from "./PublicarNotaToggle";
+import FamiliaPreviewModal from "./FamiliaPreviewModal";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 
 type Props = { params: { id: string }; searchParams: { aba?: string } };
@@ -612,7 +613,17 @@ export default async function PacientePerfilPage({ params, searchParams }: Props
 
             {/* Acessos familiares */}
             <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-4">Acessos ao portal</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Acessos ao portal</h2>
+                <FamiliaPreviewModal
+                  patientName={patient.full_name}
+                  initial={initial}
+                  fotoUrl={fotoUrl}
+                  diagnoses={diagnoses}
+                  nextSession={nextSession}
+                  familiaEvos={familiaEvos}
+                />
+              </div>
               {familyMembers.length === 0 ? (
                 <div className="text-center py-6">
                   <p className="text-sm font-medium text-gray-500 mb-1">Nenhum familiar convidado ainda</p>

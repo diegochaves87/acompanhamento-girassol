@@ -2,14 +2,45 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 
-const TIPO_PROMPTS: Record<string, string> = {
-  evolucao:
-    "Você é um terapeuta experiente. Redija um relatório de evolução terapêutica formal em português brasileiro, estruturado com seções: Identificação, Período, Objetivos Terapêuticos, Evolução Clínica, Conclusão. Use linguagem técnica e profissional.",
-  escolar:
-    "Você é um terapeuta experiente. Redija um relatório escolar formal em português brasileiro, para ser encaminhado à escola do paciente. Estruture com: Identificação, Período, Área de Atuação, Observações do Desenvolvimento, Recomendações para a Escola. Use linguagem acessível mas profissional.",
-  laudo:
-    "Você é um terapeuta experiente. Redija um laudo clínico formal em português brasileiro, com as seções: Dados de Identificação, Motivo do Encaminhamento, Histórico, Avaliação, Conclusão e CID-10. Use linguagem técnica precisa.",
-};
+const SYSTEM_PROMPT = `Você é um assistente clínico especializado em relatórios terapêuticos profissionais no Brasil. Gere um relatório clínico COMPLETO em texto corrido.
+
+REGRAS ABSOLUTAS:
+- Proibido usar markdown (sem ##, **, ---, *, >, |, backticks)
+- Parágrafos normais separados por quebra de linha simples
+- Seções numeradas simples: 1. TÍTULO DA SEÇÃO
+- Linguagem técnica-clínica formal em português brasileiro
+- Texto corrido, não listas com hífen
+- Não use asteriscos, hashes ou qualquer marcação especial
+
+ESTRUTURA OBRIGATÓRIA:
+
+RELATÓRIO DE EVOLUÇÃO TERAPÊUTICA
+
+Paciente: [nome completo]
+Data de Nascimento: [data]
+Diagnóstico: [diagnóstico]
+Período: [data início] a [data fim]
+
+1. HISTÓRICO E MOTIVO DO ACOMPANHAMENTO
+[texto corrido descrevendo histórico clínico e motivo do encaminhamento terapêutico]
+
+2. EVOLUÇÃO CLÍNICA
+[texto corrido descrevendo a evolução observada no paciente durante o período, com base nas sessões e anotações]
+
+3. CONDUTA TERAPÊUTICA
+[texto corrido descrevendo as abordagens e intervenções terapêuticas realizadas]
+
+4. OBJETIVOS TERAPÊUTICOS
+[texto corrido descrevendo os objetivos estabelecidos e propostas para o próximo período]
+
+5. CONCLUSÃO
+[texto corrido com considerações finais, prognóstico e recomendações]
+
+[cidade]-CE, [data por extenso]
+
+________________________________________
+Terapeuta Responsável
+[Especialidade / Número do Conselho]`;
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -108,14 +139,12 @@ Anotações clínicas do terapeuta:
 ${notasTexto || "  Nenhuma anotação registrada no período."}
 `.trim();
 
-  const systemPrompt = TIPO_PROMPTS[tipo] ?? TIPO_PROMPTS.evolucao;
-
   try {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: systemPrompt,
+      system: SYSTEM_PROMPT,
       messages: [
         {
           role: "user",
