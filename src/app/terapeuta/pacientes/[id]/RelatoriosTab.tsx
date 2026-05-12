@@ -207,17 +207,17 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
     setActionError("");
 
     const supabase = createClient();
-    const { data: familiarData } = await supabase
-      .from("family_access")
-      .select("nome, relacao, status")
-      .eq("patient_id", patientId)
-      .limit(1)
-      .maybeSingle();
+    const [{ data: fa1 }, { data: fa2 }, { data: fa3 }] = await Promise.all([
+      supabase.from("family_access").select("*").limit(5),
+      supabase.from("family_members").select("*").limit(5),
+      supabase.from("familias").select("*").limit(5),
+    ]);
+    console.log("family_access:", fa1);
+    console.log("family_members:", fa2);
+    console.log("familias:", fa3);
 
-    console.log("family_access result:", familiarData);
-
-    const familiar_nome = familiarData?.nome ?? "família";
-    const familiar_parentesco = familiarData?.relacao ?? "responsável";
+    const familiar_nome = "família";
+    const familiar_parentesco = "responsável";
 
     const res = await fetch("/api/relatorio/humanizar", {
       method: "POST",
