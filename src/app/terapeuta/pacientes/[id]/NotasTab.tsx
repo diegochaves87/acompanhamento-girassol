@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Note = {
   id: string;
   technical_note: string;
   created_at: string;
-  profiles?: { full_name: string } | null;
 };
 
 type Props = {
@@ -33,35 +32,37 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  const fetchNotes = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("multidisciplinary_notes")
-      .select("id, technical_note, created_at")
-      .eq("patient_id", patientId)
-      .order("created_at", { ascending: false });
-    if (data) setNotes(data as unknown as Note[]);
-  }, [patientId]);
-
   async function handleSave() {
     if (!content.trim()) return;
     setSaving(true);
     setError("");
 
-    const res = await fetch("/api/notas", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patient_id: patientId, tenant_id: tenantId, technical_note: content.trim() }),
-    });
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Sessão expirada. Recarregue a página.");
+      setSaving(false);
+      return;
+    }
 
-    const json = await res.json();
-    if (!res.ok) {
-      setError(json.error ?? "Erro ao salvar nota.");
-    } else {
-      setNotes((prev) => [
-        { id: json.id, technical_note: content.trim(), created_at: json.created_at },
-        ...prev,
-      ]);
+    const payload: Record<string, unknown> = {
+      patient_id: patientId,
+      author_id: user.id,
+      technical_note: content.trim(),
+      context_type: "nota_interna",
+    };
+    if (tenantId) payload.tenant_id = tenantId;
+
+    const { data, error: dbError } = await supabase
+      .from("multidisciplinary_notes")
+      .insert(payload)
+      .select("id, technical_note, created_at")
+      .single();
+
+    if (dbError) {
+      setError(dbError.message);
+    } else if (data) {
+      setNotes((prev) => [data as Note, ...prev]);
       setContent("");
     }
     setSaving(false);
@@ -135,7 +136,6 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
               </div>
               <p className="text-xs text-gray-400 mt-2">
                 {formatNoteDate(note.created_at)}
-                {note.profiles?.full_name && ` · ${note.profiles.full_name}`}
               </p>
             </div>
           ))}
