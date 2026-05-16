@@ -5,21 +5,21 @@ import { createClient } from "@/lib/supabase/client";
 
 type Notif = {
   id: string;
-  type: string;
-  message: string;
+  tipo: string;
+  titulo: string | null;
+  mensagem: string;
+  lida: boolean;
   action_url: string | null;
   created_at: string;
-  resolved: boolean;
-  resolved_at: string | null;
   patient_id: string | null;
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  cpf_missing: "CPF ausente",
+  cpf_missing:       "CPF ausente",
   evolution_pending: "Evolução pendente",
-  invite_accepted: "Convite aceito",
-  invite_pending: "Convite pendente",
-  collab_request: "Colaboração",
+  invite_accepted:   "Convite aceito",
+  invite_pending:    "Convite pendente",
+  collab_request:    "Colaboração",
 };
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -30,11 +30,11 @@ const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> 
   collab_request:    { bg: "#F3E5F5", text: "#8E6CCF", border: "#CE93D8" },
 };
 
-function TypeBadge({ type }: { type: string }) {
-  const c = TYPE_COLORS[type] ?? { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
+function TypeBadge({ tipo }: { tipo: string }) {
+  const c = TYPE_COLORS[tipo] ?? { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" };
   return (
     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border" style={{ backgroundColor: c.bg, color: c.text, borderColor: c.border }}>
-      {TYPE_LABELS[type] ?? type}
+      {TYPE_LABELS[tipo] ?? tipo}
     </span>
   );
 }
@@ -69,11 +69,11 @@ export default function NotificacoesPage() {
 
     const { data } = await supabase
       .from("notifications")
-      .select("id, type, message, action_url, created_at, resolved, resolved_at, patient_id")
+      .select("id, tipo, titulo, mensagem, lida, action_url, created_at, patient_id")
       .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(100);
-    if (data) setNotifs(data);
+    if (data) setNotifs(data as unknown as Notif[]);
     setLoading(false);
   }, []);
 
@@ -82,29 +82,29 @@ export default function NotificacoesPage() {
   async function handleResolve(id: string) {
     setResolvingId(id);
     const supabase = createClient();
-    await supabase.from("notifications").update({ resolved: true, resolved_at: new Date().toISOString() }).eq("id", id);
-    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, resolved: true, resolved_at: new Date().toISOString() } : n));
+    await supabase.from("notifications").update({ lida: true }).eq("id", id);
+    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, lida: true } : n));
     setResolvingId(null);
   }
 
   async function handleResolveAll() {
     setResolvingAll(true);
     const supabase = createClient();
-    const pendingIds = displayed.filter((n) => !n.resolved).map((n) => n.id);
+    const pendingIds = displayed.filter((n) => !n.lida).map((n) => n.id);
     if (pendingIds.length > 0) {
-      await supabase.from("notifications").update({ resolved: true, resolved_at: new Date().toISOString() }).in("id", pendingIds);
-      setNotifs((prev) => prev.map((n) => pendingIds.includes(n.id) ? { ...n, resolved: true, resolved_at: new Date().toISOString() } : n));
+      await supabase.from("notifications").update({ lida: true }).in("id", pendingIds);
+      setNotifs((prev) => prev.map((n) => pendingIds.includes(n.id) ? { ...n, lida: true } : n));
     }
     setResolvingAll(false);
   }
 
   const filtered = notifs.filter((n) =>
-    (tab === "pendentes" ? !n.resolved : n.resolved) &&
-    (filterType === "todos" || n.type === filterType)
+    (tab === "pendentes" ? !n.lida : n.lida) &&
+    (filterType === "todos" || n.tipo === filterType)
   );
 
   const displayed = filtered;
-  const pendingCount = notifs.filter((n) => !n.resolved).length;
+  const pendingCount = notifs.filter((n) => !n.lida).length;
 
   return (
     <div className="px-4 md:px-8 py-6 max-w-3xl mx-auto space-y-5">
@@ -134,7 +134,7 @@ export default function NotificacoesPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors capitalize ${
+            className={`px-5 py-2.5 text-sm font-semibold border-b-2 transition-colors ${
               tab === t ? "text-[#1a4a3a] border-[#1a4a3a]" : "text-gray-400 border-transparent hover:text-gray-600"
             }`}
           >
@@ -180,17 +180,18 @@ export default function NotificacoesPage() {
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <TypeBadge type={n.type} />
-                    {n.resolved && (
+                    <TypeBadge tipo={n.tipo} />
+                    {n.lida && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                        {n.resolved_at && n.resolved_at !== n.created_at ? "Resolvido automaticamente" : "Resolvido"}
+                        Resolvido
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 leading-snug">{n.message}</p>
+                  {n.titulo && <p className="text-xs font-semibold text-gray-600">{n.titulo}</p>}
+                  <p className="text-sm text-gray-700 leading-snug">{n.mensagem}</p>
                   <p className="text-xs text-gray-400">{formatDate(n.created_at)}</p>
                 </div>
-                {!n.resolved && (
+                {!n.lida && (
                   <button
                     onClick={() => handleResolve(n.id)}
                     disabled={resolvingId === n.id}

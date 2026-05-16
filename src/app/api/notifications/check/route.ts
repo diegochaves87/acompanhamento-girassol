@@ -17,8 +17,6 @@ export async function GET() {
     console.log("[notifications/check] tenant_id encontrado:", tenantId);
     if (!tenantId) return NextResponse.json({ inserted: 0 });
 
-    // Busca todos os pacientes do tenant e filtra sem CPF no código
-    // (evita problemas com a sintaxe do .or() para string vazia)
     const { data: patients } = await supabase
       .from("patients")
       .select("id, full_name, cpf")
@@ -38,18 +36,25 @@ export async function GET() {
         .from("notifications")
         .select("id")
         .eq("patient_id", patient.id)
-        .eq("type", "cpf_missing")
-        .eq("resolved", false)
+        .eq("tipo", "cpf_missing")
+        .eq("lida", false)
         .maybeSingle();
 
       if (!existing) {
+        const msg = `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`;
         const { data: insertedData, error: insertError } = await supabase
           .from("notifications")
           .insert({
             tenant_id: tenantId,
+            tipo: "cpf_missing",
             type: "cpf_missing",
+            titulo: "CPF ausente",
             patient_id: patient.id,
-            message: `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`,
+            mensagem: msg,
+            message: msg,
+            action_url: `/terapeuta/pacientes/${patient.id}?aba=dados`,
+            lida: false,
+            resolved: false,
           })
           .select();
         console.log("INSERT result:", insertedData, "INSERT error:", insertError);
