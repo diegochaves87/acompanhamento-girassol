@@ -215,13 +215,17 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
       .not("status", "eq", "pendente")
       .maybeSingle();
 
-    const { data: guardian } = await supabase
+    const { data: guardian, error: guardianError } = await supabase
       .from("family_patient")
       .select("guardian_name, guardian_relationship")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
+
+    console.log("patientId usado:", patientId);
+    console.log("guardian result:", guardian);
+    console.log("guardian error:", guardianError);
 
     const familiar_nome = (familiarPortal as { nome?: string } | null)?.nome || (guardian as { guardian_name?: string } | null)?.guardian_name || "família";
     const familiar_parentesco = (familiarPortal as { relacao?: string } | null)?.relacao || (guardian as { guardian_relationship?: string } | null)?.guardian_relationship || "responsável";

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Note = {
   id: string;
   technical_note: string;
   created_at: string;
+  context_type?: string;
+  profiles?: { full_name: string } | null;
 };
 
 type Props = {
@@ -32,6 +34,18 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  const fetchNotes = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("multidisciplinary_notes")
+      .select("id, technical_note, created_at, context_type, profiles!author_id(full_name)")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    if (data) setNotes(data as unknown as Note[]);
+  }, [patientId]);
+
+  useEffect(() => { fetchNotes(); }, [fetchNotes]);
+
   async function handleSave() {
     if (!content.trim()) return;
     setSaving(true);
@@ -56,7 +70,7 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
     const { data, error: dbError } = await supabase
       .from("multidisciplinary_notes")
       .insert(payload)
-      .select("id, technical_note, created_at")
+      .select("id, technical_note, created_at, context_type")
       .single();
 
     if (dbError) {
@@ -136,6 +150,7 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
               </div>
               <p className="text-xs text-gray-400 mt-2">
                 {formatNoteDate(note.created_at)}
+                {note.profiles?.full_name && ` · ${note.profiles.full_name}`}
               </p>
             </div>
           ))}
