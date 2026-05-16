@@ -61,6 +61,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
     guardians.map((g) => [g.patient_id, g])
   );
   const sessionDateMap = new Map(sessions.map((s) => [s.id, s.scheduled_at]));
+  const sessionDataMap = new Map(sessions.map((s) => [s.id, s]));
 
   const [cardStates, setCardStates] = useState<Record<string, SessionCardState>>(
     () =>
@@ -84,6 +85,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
 
   async function saveStatus(sessionId: string) {
     const state = cardStates[sessionId];
+    const session = sessionDataMap.get(sessionId);
 
     const scheduledAt = sessionDateMap.get(sessionId);
     if (scheduledAt && new Date(scheduledAt).getTime() > Date.now() && FUTURE_FORBIDDEN.includes(state.status)) {
@@ -102,10 +104,24 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
       .eq("id", sessionId);
     if (error) {
       updateCard(sessionId, { saving: false, erro: error.message });
-    } else {
-      updateCard(sessionId, { saving: false, saved: true });
-      setTimeout(() => updateCard(sessionId, { saved: false }), 3000);
+      return;
     }
+
+    // When a makeup session is marked as completed, mark the linked lost session as 'reposta'
+    if (state.status === "makeup_completed" && session?.reposition_session_id) {
+      const { data: orig } = await supabase
+        .from("sessions")
+        .select("status")
+        .eq("id", session.reposition_session_id)
+        .single();
+      await supabase
+        .from("sessions")
+        .update({ status: "reposta", original_status: orig?.status ?? null })
+        .eq("id", session.reposition_session_id);
+    }
+
+    updateCard(sessionId, { saving: false, saved: true });
+    setTimeout(() => updateCard(sessionId, { saved: false }), 3000);
   }
 
   const prevDay = addDaysISO(dateISO, -1);

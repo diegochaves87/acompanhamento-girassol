@@ -11,6 +11,7 @@ export type DiaSession = {
   absence_note: string | null;
   has_evolution: boolean | null;
   is_recurring: boolean | null;
+  reposition_session_id: string | null;
   patient_id: string;
   patients: { id: string; full_name: string; insurance_name: string | null } | null;
   clinics: { name: string } | null;
@@ -53,7 +54,7 @@ export default async function AgendaDiaPage({ params }: Props) {
   const { data: sessoes, error } = await supabase
     .from("sessions")
     .select(
-      "id, scheduled_at, status, duration_minutes, value_brl, absence_note, has_evolution, is_recurring, patient_id, patients(id, full_name, insurance_name), clinics(name)"
+      "id, scheduled_at, status, duration_minutes, value_brl, absence_note, has_evolution, is_recurring, reposition_session_id, patient_id, patients(id, full_name, insurance_name), clinics(name)"
     )
     .eq("tenant_id", tenantId)
     .gte("scheduled_at", iso + "T00:00:00")

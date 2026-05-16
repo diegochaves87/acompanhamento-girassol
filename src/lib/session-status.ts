@@ -5,6 +5,8 @@ export type SessionStatus =
   | "unjustified_absence"
   | "justified_absence"
   | "makeup"
+  | "makeup_completed"
+  | "reposta"
   | "holiday"
   | "canceled_therapist"
   | "cancelled_family";
@@ -16,9 +18,11 @@ export const SESSION_STATUS_OPTIONS: { value: SessionStatus; label: string }[] =
   { value: "unjustified_absence", label: "Falta injustificada" },
   { value: "justified_absence", label: "Falta justificada" },
   { value: "makeup", label: "Reposição" },
+  { value: "makeup_completed", label: "Reposição realizada" },
   { value: "holiday", label: "Feriado" },
   { value: "canceled_therapist", label: "Cancelada pela terapeuta" },
   { value: "cancelled_family", label: "Cancelada pela família" },
+  // "reposta" is set automatically — not selectable by the user
 ];
 
 export const STATUS_CONFIG: Record<
@@ -61,6 +65,18 @@ export const STATUS_CONFIG: Record<
     badge: "REPOSIÇÃO",
     cardClass: "bg-purple-50 border-l-2 border-purple-400 text-purple-900",
   },
+  makeup_completed: {
+    label: "Reposição realizada",
+    className: "bg-green-50 text-[#2E7D32] border border-green-200",
+    badge: "REPOSIÇÃO REALIZADA",
+    cardClass: "bg-green-50 border-l-2 border-[#2E7D32] text-[#1B5E20]",
+  },
+  reposta: {
+    label: "Reposta",
+    className: "bg-gray-100 text-[#4A5568] border border-gray-200",
+    badge: "REPOSTA",
+    cardClass: "bg-gray-100 border-l-2 border-[#4A5568] text-[#2D3748]",
+  },
   holiday: {
     label: "Feriado",
     className: "bg-gray-100 text-gray-500 border border-gray-200",
@@ -88,6 +104,14 @@ export const NEEDS_NOTES: SessionStatus[] = [
   "cancelled_family",
 ];
 
+export const LOST_STATUSES: SessionStatus[] = [
+  "unjustified_absence",
+  "justified_absence",
+  "canceled_therapist",
+  "cancelled_family",
+  "holiday",
+];
+
 export function statusLabel(status: string): string {
   return STATUS_CONFIG[status as SessionStatus]?.label ?? status;
 }
@@ -113,15 +137,17 @@ export function statusCardClass(status: string): string {
 type CardStyle = { backgroundColor: string; borderLeftColor: string };
 
 const CARD_STYLES: Record<SessionStatus, CardStyle> = {
-  scheduled: { backgroundColor: "#EFF6FF", borderLeftColor: "#2E7BC1" },
-  confirmed: { backgroundColor: "#F0FFF4", borderLeftColor: "#4CAF50" },
-  completed: { backgroundColor: "#F3F4F6", borderLeftColor: "#9CA3AF" },
+  scheduled:           { backgroundColor: "#EFF6FF", borderLeftColor: "#2E7BC1" },
+  confirmed:           { backgroundColor: "#F0FFF4", borderLeftColor: "#4CAF50" },
+  completed:           { backgroundColor: "#F3F4F6", borderLeftColor: "#9CA3AF" },
   unjustified_absence: { backgroundColor: "#FEF2F2", borderLeftColor: "#DC2626" },
-  justified_absence: { backgroundColor: "#FFF7ED", borderLeftColor: "#F59E0B" },
-  makeup: { backgroundColor: "#F5F3FF", borderLeftColor: "#8B5CF6" },
-  holiday: { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" },
-  canceled_therapist: { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
-  cancelled_family: { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
+  justified_absence:   { backgroundColor: "#FFF7ED", borderLeftColor: "#F59E0B" },
+  makeup:              { backgroundColor: "#F5F3FF", borderLeftColor: "#8B5CF6" },
+  makeup_completed:    { backgroundColor: "#F0FDF4", borderLeftColor: "#2E7D32" },
+  reposta:             { backgroundColor: "#F7FAFC", borderLeftColor: "#4A5568" },
+  holiday:             { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" },
+  canceled_therapist:  { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
+  cancelled_family:    { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" },
 };
 
 export function statusCardStyle(status: string): CardStyle {

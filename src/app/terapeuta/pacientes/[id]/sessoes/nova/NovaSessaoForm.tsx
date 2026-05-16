@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   SESSION_STATUS_OPTIONS,
   NEEDS_NOTES,
+  LOST_STATUSES,
+  statusBadge,
+  statusClassName,
   type SessionStatus,
 } from "@/lib/session-status";
 
 type Clinica = { id: string; name: string };
 type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica[] };
+type PerdidaSession = { id: string; scheduled_at: string; status: string; duration_minutes: number | null };
 
 type Slot = { id: string; dayOfWeek: number; hour: number; minute: number };
 
@@ -86,8 +90,43 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
     defaultValue != null ? String(defaultValue).replace(".", ",") : ""
   );
   const [absenceNotes, setAbsenceNotes] = useState("");
+  const [repositionSessionId, setRepositionSessionId] = useState<string | null>(null);
+  const [sessoesPerdidas, setSessoesPerdidas] = useState<PerdidaSession[]>([]);
+  const [loadingPerdidas, setLoadingPerdidas] = useState(false);
 
   const showNotes = NEEDS_NOTES.includes(status);
+
+  useEffect(() => {
+    if (status !== "makeup") { setSessoesPerdidas([]); setRepositionSessionId(null); return; }
+    let cancelled = false;
+    async function fetchPerdidas() {
+      setLoadingPerdidas(true);
+      const supabase = createClient();
+      const [lostRes, reposedRes] = await Promise.all([
+        supabase
+          .from("sessions")
+          .select("id, scheduled_at, status, duration_minutes")
+          .eq("patient_id", patientId)
+          .in("status", LOST_STATUSES as string[])
+          .order("scheduled_at", { ascending: false })
+          .limit(30),
+        supabase
+          .from("sessions")
+          .select("reposition_session_id")
+          .eq("patient_id", patientId)
+          .not("reposition_session_id", "is", null),
+      ]);
+      if (cancelled) return;
+      const reposedIds = new Set(
+        (reposedRes.data ?? []).map((r: { reposition_session_id: string }) => r.reposition_session_id)
+      );
+      const available = (lostRes.data ?? []).filter((s: PerdidaSession) => !reposedIds.has(s.id));
+      setSessoesPerdidas(available as PerdidaSession[]);
+      setLoadingPerdidas(false);
+    }
+    fetchPerdidas();
+    return () => { cancelled = true; };
+  }, [status, patientId]);
 
   function addSlot() {
     setSlots((prev) => [
@@ -120,6 +159,10 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro("");
+    if (status === "makeup" && !repositionSessionId) {
+      setErro("Selecione a sessão que está sendo reposta.");
+      return;
+    }
     if (specificDate && specificDate < todayISO()) {
       setShowRetroModal(true);
       return;
@@ -165,6 +208,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
       status,
       value_brl: parsedValue != null && !isNaN(parsedValue) ? parsedValue : null,
       absence_note: showNotes ? absenceNotes || null : null,
+      reposition_session_id: status === "makeup" ? repositionSessionId : null,
     };
 
     if (isRepetir) {
@@ -398,6 +442,54 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
                   onChange={(e) => setAbsenceNotes(e.target.value)}
                   className={`${inputClass} resize-none`}
                 />
+              </div>
+            )}
+            {status === "makeup" && (
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Referente a qual sessão perdida? *</label>
+                {loadingPerdidas ? (
+                  <p className="text-sm text-gray-400 py-2">Carregando sessões perdidas…</p>
+                ) : sessoesPerdidas.length === 0 ? (
+                  <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-100 px-4 py-3">
+                    <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="text-sm text-amber-700">Nenhuma sessão pendente de reposição para este paciente.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 mt-1">
+                    {sessoesPerdidas.map((s) => {
+                      const d = new Date(s.scheduled_at);
+                      const dateStr = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()} às ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+                      return (
+                        <label
+                          key={s.id}
+                          className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
+                            repositionSessionId === s.id
+                              ? "border-[#1a4a3a] bg-[#e8f0ec]"
+                              : "border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="reposition_session_id"
+                            value={s.id}
+                            checked={repositionSessionId === s.id}
+                            onChange={() => setRepositionSessionId(s.id)}
+                            className="accent-[#1a4a3a] flex-shrink-0"
+                          />
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${statusClassName(s.status)}`}>
+                            {statusBadge(s.status)}
+                          </span>
+                          <span className="text-sm text-gray-700">
+                            {dateStr}
+                            {s.duration_minutes ? ` · ${s.duration_minutes} min` : ""}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

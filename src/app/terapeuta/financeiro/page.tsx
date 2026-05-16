@@ -92,13 +92,14 @@ function formatSessionDate(iso: string) {
 
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
-const REVENUE       = ["completed", "makeup"];
+const REVENUE       = ["completed", "makeup", "makeup_completed"];
 const FALTAS        = ["missed", "unjustified_absence", "justified_absence"];
 const CANCELAMENTOS = ["cancelled", "canceled_therapist", "cancelled_family"];
+const REPOSTA_S     = ["reposta"];
 
 function calcMetrics(sessions: SessionRow[]) {
   const revenue       = sessions.filter((s) => REVENUE.includes(s.status));
-  const makeup        = sessions.filter((s) => s.status === "makeup");
+  const makeup        = sessions.filter((s) => s.status === "makeup" || s.status === "makeup_completed");
   const faltas        = sessions.filter((s) => FALTAS.includes(s.status));
   const cancelamentos = sessions.filter((s) => CANCELAMENTOS.includes(s.status));
 
@@ -590,6 +591,49 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             tooltip="Total de atendimentos concluídos: sessões completas mais reposições."
           />
         </div>
+
+        {/* Cards reposições */}
+        {(() => {
+          const perdidas = mesSessions.filter((s) =>
+            [...FALTAS, ...CANCELAMENTOS].includes(s.status) && !REPOSTA_S.includes(s.status)
+          );
+          const repostas = mesSessions.filter((s) => REPOSTA_S.includes(s.status));
+          const repRealizadas = mesSessions.filter((s) => s.status === "makeup_completed");
+          const valorPerdidas = perdidas.reduce((sum, s) => sum + sessionValue(s), 0);
+          const valorRepostas = repRealizadas.reduce((sum, s) => sum + sessionValue(s), 0);
+          const saldoQtd = repRealizadas.length - (perdidas.length + repostas.length);
+          const saldoValor = valorRepostas - valorPerdidas;
+          if (perdidas.length + repostas.length + repRealizadas.length === 0) return null;
+          return (
+            <section>
+              <h2 className="text-sm font-semibold text-gray-600 mb-3">Faltas &amp; Reposições</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-5">
+                  <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-1">Sessões perdidas</p>
+                  <p className="text-2xl font-bold text-red-600">{perdidas.length + repostas.length}</p>
+                  <p className="text-sm font-semibold text-red-500 mt-0.5">{formatBRL(valorPerdidas)}</p>
+                  <p className="text-xs text-gray-400 mt-1">{repostas.length > 0 ? `${repostas.length} já reposta${repostas.length !== 1 ? "s" : ""}` : "nenhuma reposta ainda"}</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-5">
+                  <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Reposições realizadas</p>
+                  <p className="text-2xl font-bold" style={{ color: "#2E7D32" }}>{repRealizadas.length}</p>
+                  <p className="text-sm font-semibold mt-0.5" style={{ color: "#2E7D32" }}>{formatBRL(valorRepostas)}</p>
+                  <p className="text-xs text-gray-400 mt-1">sessões de reposição concluídas</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-5">
+                  <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-1">Saldo</p>
+                  <p className={`text-2xl font-bold ${saldoQtd >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {saldoQtd >= 0 ? "+" : ""}{saldoQtd}
+                  </p>
+                  <p className={`text-sm font-semibold mt-0.5 ${saldoValor >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    {saldoValor >= 0 ? "+" : ""}{formatBRL(saldoValor)}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">reposições vs. perdas</p>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Gráfico últimos 6 meses */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
