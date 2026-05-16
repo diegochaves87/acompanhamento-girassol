@@ -50,7 +50,6 @@ export async function GET() {
             type: "cpf_missing",
             patient_id: patient.id,
             message: `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`,
-            action_url: `/terapeuta/pacientes/${patient.id}?aba=dados`,
           })
           .select();
         console.log("INSERT result:", insertedData, "INSERT error:", insertError);
