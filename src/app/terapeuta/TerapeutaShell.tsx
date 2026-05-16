@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import WelcomePopup from "@/components/WelcomePopup";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import NotificationBell from "@/components/NotificationBell";
 
 type NavItem = {
   label: string;
@@ -336,8 +337,10 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </span>
         </div>
 
-        {/* Right: Profile dropdown — empurrado para a direita */}
-        <div className="flex items-center justify-end ml-auto" ref={profileRef}>
+        {/* Right: Notification bell + Profile dropdown */}
+        <div className="flex items-center gap-2 ml-auto">
+          <NotificationBell />
+        <div className="flex items-center" ref={profileRef}>
           <button
             onClick={() => setProfileOpen(!profileOpen)}
             className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-50"
@@ -471,6 +474,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
             </div>
           )}
         </div>
+        </div>
       </header>
 
       {/* ── Mobile top header ── */}
@@ -496,15 +500,7 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           style={{ height: '36px', width: 'auto', objectFit: 'contain' }}
         />
 
-        <button
-          aria-label="Notificações"
-          className="p-1.5 rounded-lg transition-colors hover:bg-blue-50"
-          style={{ color: "#2E7BC1" }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </button>
+        <NotificationBell />
       </header>
 
       {/* ── Mobile backdrop ── */}
