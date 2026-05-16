@@ -104,11 +104,7 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [open]);
 
-  async function handleResolve(notif: Notif) {
-    const supabase = createClient();
-    await supabase.from("notifications").update({ lida: true }).eq("id", notif.id);
-    setNotifs((p) => p.filter((n) => n.id !== notif.id));
-    setCount((p) => Math.max(0, p - 1));
+  function handleClick(notif: Notif) {
     setOpen(false);
     if (notif.action_url) router.push(notif.action_url);
   }
@@ -158,7 +154,7 @@ export default function NotificationBell() {
               notifs.map((n) => (
                 <button
                   key={n.id}
-                  onClick={() => handleResolve(n)}
+                  onClick={() => handleClick(n)}
                   className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
                 >
                   <NotifIcon tipo={n.tipo} />

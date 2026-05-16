@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Notif = {
@@ -46,11 +47,12 @@ function formatDate(iso: string) {
 const ALL_TYPES = Object.keys(TYPE_LABELS);
 
 export default function NotificacoesPage() {
+  const router = useRouter();
   const [tab, setTab] = useState<"pendentes" | "resolvidas">("pendentes");
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("todos");
-  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
   const [resolvingAll, setResolvingAll] = useState(false);
 
   const fetchAll = useCallback(async () => {
@@ -79,12 +81,12 @@ export default function NotificacoesPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  async function handleResolve(id: string) {
-    setResolvingId(id);
+  async function handleDismiss(id: string) {
+    setDismissingId(id);
     const supabase = createClient();
     await supabase.from("notifications").update({ lida: true }).eq("id", id);
     setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, lida: true } : n));
-    setResolvingId(null);
+    setDismissingId(null);
   }
 
   async function handleResolveAll() {
@@ -192,14 +194,31 @@ export default function NotificacoesPage() {
                   <p className="text-xs text-gray-400">{formatDate(n.created_at)}</p>
                 </div>
                 {!n.lida && (
-                  <button
-                    onClick={() => handleResolve(n.id)}
-                    disabled={resolvingId === n.id}
-                    className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-opacity disabled:opacity-50 hover:opacity-90"
-                    style={{ backgroundColor: "#1a4a3a" }}
-                  >
-                    {resolvingId === n.id ? "…" : "Resolver"}
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {n.action_url && (
+                      <button
+                        onClick={() => router.push(n.action_url!)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: "#1a4a3a" }}
+                      >
+                        Resolver
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDismiss(n.id)}
+                      disabled={dismissingId === n.id}
+                      title="Dispensar notificação"
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                    >
+                      {dismissingId === n.id ? (
+                        <div className="w-3.5 h-3.5 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
               {n.action_url && (
