@@ -188,7 +188,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
             const time = formatTime(s.scheduled_at);
             const needsNote = NEEDS_NOTES.includes(state.status);
             const showWhatsApp =
-              (state.status === "scheduled" || state.status === "confirmed") &&
+              state.status === "scheduled" &&
               guardian?.guardian_phone;
 
             return (
