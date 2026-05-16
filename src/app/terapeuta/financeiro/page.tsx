@@ -93,8 +93,8 @@ function formatSessionDate(iso: string) {
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
 const REVENUE       = ["completed", "makeup", "makeup_completed"];
-const FALTAS        = ["missed", "unjustified_absence", "justified_absence"];
-const CANCELAMENTOS = ["cancelled", "canceled_therapist", "cancelled_family"];
+const FALTAS        = ["unjustified_absence", "justified_absence"];
+const CANCELAMENTOS = ["canceled_therapist", "cancelled_family"];
 const REPOSTA_S     = ["reposta"];
 
 function calcMetrics(sessions: SessionRow[]) {

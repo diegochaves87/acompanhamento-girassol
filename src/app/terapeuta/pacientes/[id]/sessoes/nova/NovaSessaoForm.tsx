@@ -4,14 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  SESSION_STATUS_OPTIONS,
+  CREATE_STATUS_OPTIONS,
   NEEDS_NOTES,
   LOST_STATUSES,
   statusBadge,
   statusClassName,
   type SessionStatus,
 } from "@/lib/session-status";
-// LOST_STATUSES is extended locally in fetchPerdidas to cover DB status variants
 
 type Clinica = { id: string; name: string };
 type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica[] };
@@ -103,29 +102,12 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
     async function fetchPerdidas() {
       setLoadingPerdidas(true);
       const supabase = createClient();
-      const allLostStatuses = [
-        ...LOST_STATUSES as string[],
-        "canceled_therapist",
-        "cancelled_therapist",
-        "cancelado",
-        "cancelamento",
-        "canceled",
-        "cancelled",
-        "cancelled_family",
-        "canceled_family",
-        "falta",
-        "falta_justificada",
-        "falta_injustificada",
-        "ausencia",
-        "absence",
-        "feriado",
-      ];
       const [lostRes, reposedRes] = await Promise.all([
         supabase
           .from("sessions")
           .select("id, scheduled_at, status, duration_minutes")
           .eq("patient_id", patientId)
-          .in("status", allLostStatuses)
+          .in("status", LOST_STATUSES as string[])
           .order("scheduled_at", { ascending: false })
           .limit(30),
         supabase
@@ -445,7 +427,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
                 onChange={(e) => setStatus(e.target.value as SessionStatus)}
                 className={inputClass}
               >
-                {SESSION_STATUS_OPTIONS.map((opt) => (
+                {CREATE_STATUS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
