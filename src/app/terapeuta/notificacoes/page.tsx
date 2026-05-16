@@ -52,8 +52,6 @@ export default function NotificacoesPage() {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("todos");
-  const [dismissingId, setDismissingId] = useState<string | null>(null);
-  const [resolvingAll, setResolvingAll] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -81,25 +79,6 @@ export default function NotificacoesPage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  async function handleDismiss(id: string) {
-    setDismissingId(id);
-    const supabase = createClient();
-    await supabase.from("notifications").update({ lida: true }).eq("id", id);
-    setNotifs((prev) => prev.map((n) => n.id === id ? { ...n, lida: true } : n));
-    setDismissingId(null);
-  }
-
-  async function handleResolveAll() {
-    setResolvingAll(true);
-    const supabase = createClient();
-    const pendingIds = displayed.filter((n) => !n.lida).map((n) => n.id);
-    if (pendingIds.length > 0) {
-      await supabase.from("notifications").update({ lida: true }).in("id", pendingIds);
-      setNotifs((prev) => prev.map((n) => pendingIds.includes(n.id) ? { ...n, lida: true } : n));
-    }
-    setResolvingAll(false);
-  }
-
   const filtered = notifs.filter((n) =>
     (tab === "pendentes" ? !n.lida : n.lida) &&
     (filterType === "todos" || n.tipo === filterType)
@@ -118,16 +97,6 @@ export default function NotificacoesPage() {
             <p className="text-sm text-gray-500 mt-0.5">{pendingCount} pendente{pendingCount !== 1 ? "s" : ""}</p>
           )}
         </div>
-        {tab === "pendentes" && displayed.length > 0 && (
-          <button
-            onClick={handleResolveAll}
-            disabled={resolvingAll}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-opacity disabled:opacity-50 hover:opacity-90"
-            style={{ backgroundColor: "#1a4a3a" }}
-          >
-            {resolvingAll ? "Resolvendo…" : "Resolver todas"}
-          </button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -193,30 +162,14 @@ export default function NotificacoesPage() {
                   <p className="text-sm text-gray-700 leading-snug">{n.mensagem}</p>
                   <p className="text-xs text-gray-400">{formatDate(n.created_at)}</p>
                 </div>
-                {!n.lida && (
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    {n.action_url && (
-                      <button
-                        onClick={() => router.push(n.action_url!)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: "#1a4a3a" }}
-                      >
-                        Resolver
-                      </button>
-                    )}
+                {!n.lida && n.action_url && (
+                  <div className="flex-shrink-0">
                     <button
-                      onClick={() => handleDismiss(n.id)}
-                      disabled={dismissingId === n.id}
-                      title="Dispensar notificação"
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-40"
+                      onClick={() => router.push(n.action_url!)}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90 transition-opacity"
+                      style={{ backgroundColor: "#1a4a3a" }}
                     >
-                      {dismissingId === n.id ? (
-                        <div className="w-3.5 h-3.5 border border-gray-300 border-t-gray-500 rounded-full animate-spin" />
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
+                      Resolver
                     </button>
                   </div>
                 )}

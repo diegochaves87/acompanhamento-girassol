@@ -17,6 +17,8 @@ export default function NovoPacienteForm({ clinicas }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [cpfWarning, setCpfWarning] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -47,8 +49,8 @@ export default function NovoPacienteForm({ clinicas }: Props) {
       .replace(/\.(\d{3})(\d)/, ".$1-$2");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSave() {
+    setShowModal(false);
     setLoading(true);
     setError("");
 
@@ -158,12 +160,65 @@ export default function NovoPacienteForm({ clinicas }: Props) {
     }
   }
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const missing: string[] = [];
+    if (!form.cpf.replace(/\D/g, "")) missing.push("CPF do paciente");
+    if (!form.email_responsavel.trim()) missing.push("e-mail do responsável");
+    if (missing.length > 0) {
+      setMissingFields(missing);
+      setShowModal(true);
+      return;
+    }
+    doSave();
+  }
+
   const inputClass =
     "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#1a4a3a] focus:ring-2 focus:ring-[#1a4a3a]/10";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
   const selectClass = `${inputClass} bg-white`;
 
   return (
+    <>
+    {showModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "#FFF8E1" }}>
+              <svg className="w-5 h-5" style={{ color: "#FFBA3D" }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-800">Atenção — compartilhamento familiar bloqueado</h2>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Este cadastro está sendo salvo sem{" "}
+            <span className="font-semibold">{missingFields.join(" e ")}</span>.
+            Sem essas informações, não será possível conectar a família ao portal do Acompanhamento Girassol.
+          </p>
+          <p className="text-sm text-gray-600">Tem certeza que deseja continuar?</p>
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              Voltar e completar
+            </button>
+            <button
+              type="button"
+              onClick={doSave}
+              className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: "#1a4a3a" }}
+            >
+              Sim, salvar mesmo assim
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <form onSubmit={handleSubmit} className="space-y-8">
 
       {/* Dados do paciente */}
@@ -431,5 +486,6 @@ export default function NovoPacienteForm({ clinicas }: Props) {
         </button>
       </div>
     </form>
+    </>
   );
 }
