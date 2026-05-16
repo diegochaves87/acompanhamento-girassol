@@ -23,11 +23,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  cpf_missing: { bg: "#FEF3C7", text: "#D97706", border: "#FDE68A" },
-  evolution_pending: { bg: "#FEE2E2", text: "#EA580C", border: "#FECACA" },
-  invite_accepted: { bg: "#DCFCE7", text: "#16A34A", border: "#BBF7D0" },
-  invite_pending: { bg: "#DBEAFE", text: "#2563EB", border: "#BFDBFE" },
-  collab_request: { bg: "#EDE9FE", text: "#7C3AED", border: "#DDD6FE" },
+  cpf_missing:       { bg: "#FFF8E1", text: "#FFBA3D", border: "#FFE082" },
+  evolution_pending: { bg: "#FFF3E0", text: "#FF8C42", border: "#FFCC80" },
+  invite_accepted:   { bg: "#E8F5E9", text: "#4CAF50", border: "#A5D6A7" },
+  invite_pending:    { bg: "#E3F2FD", text: "#2E7BC1", border: "#90CAF9" },
+  collab_request:    { bg: "#F3E5F5", text: "#8E6CCF", border: "#CE93D8" },
 };
 
 function TypeBadge({ type }: { type: string }) {
@@ -56,9 +56,21 @@ export default function NotificacoesPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("tenant_id")
+      .eq("id", user.id)
+      .single();
+    const tenantId = (userData as { tenant_id?: string } | null)?.tenant_id;
+    if (!tenantId) { setLoading(false); return; }
+
     const { data } = await supabase
       .from("notifications")
       .select("id, type, message, action_url, created_at, resolved, resolved_at, patient_id")
+      .eq("tenant_id", tenantId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (data) setNotifs(data);
