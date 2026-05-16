@@ -43,20 +43,23 @@ export async function GET() {
         .maybeSingle();
 
       if (!existing) {
-        const { error: insertErr } = await supabase.from("notifications").insert({
-          tenant_id: tenantId,
-          type: "cpf_missing",
-          patient_id: patient.id,
-          message: `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`,
-          action_url: `/terapeuta/pacientes/${patient.id}?aba=dados`,
-        });
-        if (!insertErr) inserted++;
-        else console.error("[notifications/check] erro ao inserir:", insertErr.message);
+        const { data: insertedData, error: insertError } = await supabase
+          .from("notifications")
+          .insert({
+            tenant_id: tenantId,
+            type: "cpf_missing",
+            patient_id: patient.id,
+            message: `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`,
+            action_url: `/terapeuta/pacientes/${patient.id}?aba=dados`,
+          })
+          .select();
+        console.log("INSERT result:", insertedData, "INSERT error:", insertError);
+        if (!insertError) inserted++;
       }
     }
 
     console.log("[notifications/check] notificações inseridas:", inserted);
-    return NextResponse.json({ inserted, total_without_cpf: withoutCpf.length });
+    return NextResponse.json({ inserted, total_without_cpf: withoutCpf.length, tenant_id: tenantId });
   } catch (err) {
     console.error("[notifications/check] erro:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
