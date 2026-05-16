@@ -337,25 +337,32 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           </span>
         </div>
 
-        {/* Right: Notification bell + Profile dropdown */}
-        <div className="flex items-center gap-2 ml-auto">
-          <NotificationBell />
-        <div className="flex items-center" ref={profileRef}>
+        {/* Right: [cargo/nome] [sino] [foto] [seta dropdown] */}
+        <div className="flex items-center gap-2 ml-auto" ref={profileRef}>
+          {/* Cargo/nome — clicável para abrir dropdown */}
           <button
             onClick={() => setProfileOpen(!profileOpen)}
-            className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-50"
+            className="text-right hidden sm:block py-1"
           >
-            <div className="text-right">
-              <p
-                className="text-[11px] font-bold leading-tight tracking-wide"
-                style={{ color: "#4CAF50", fontFamily: "var(--font-poppins, sans-serif)" }}
-              >
-                {profLabel}
-              </p>
-              <p className="text-xs font-medium leading-tight" style={{ color: "#1D3557" }}>
-                {profissional?.full_name ?? "—"}
-              </p>
-            </div>
+            <p
+              className="text-[11px] font-bold leading-tight tracking-wide"
+              style={{ color: "#4CAF50", fontFamily: "var(--font-poppins, sans-serif)" }}
+            >
+              {profLabel}
+            </p>
+            <p className="text-xs font-medium leading-tight" style={{ color: "#1D3557" }}>
+              {profissional?.full_name ?? "—"}
+            </p>
+          </button>
+
+          {/* Sino — imediatamente à esquerda da foto */}
+          <NotificationBell />
+
+          {/* Foto + seta — abre o dropdown */}
+          <button
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center gap-1.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-gray-50"
+          >
             {profissional?.foto_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profissional.foto_url} alt={initial} className="w-9 h-9 rounded-full object-cover flex-shrink-0 border-2 border-white shadow-sm" />
@@ -473,7 +480,6 @@ export default function TerapeutaShell({ children, profissional }: Props) {
               </div>
             </div>
           )}
-        </div>
         </div>
       </header>
 

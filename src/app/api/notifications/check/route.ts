@@ -14,17 +14,26 @@ export async function GET() {
       .single();
 
     const tenantId = (userData as { tenant_id?: string } | null)?.tenant_id;
+    console.log("[notifications/check] tenant_id encontrado:", tenantId);
     if (!tenantId) return NextResponse.json({ inserted: 0 });
 
+    // Busca todos os pacientes do tenant e filtra sem CPF no código
+    // (evita problemas com a sintaxe do .or() para string vazia)
     const { data: patients } = await supabase
       .from("patients")
-      .select("id, full_name, tenant_id")
-      .eq("tenant_id", tenantId)
-      .or("cpf.is.null,cpf.eq.");
+      .select("id, full_name, cpf")
+      .eq("tenant_id", tenantId);
+
+    const withoutCpf = (patients ?? []).filter((p: { cpf?: string | null }) => {
+      const cpf = p.cpf?.trim() ?? "";
+      return cpf === "" || cpf === '""';
+    });
+
+    console.log("[notifications/check] total pacientes:", patients?.length, "sem CPF:", withoutCpf.length);
 
     let inserted = 0;
 
-    for (const patient of (patients ?? []) as { id: string; full_name: string }[]) {
+    for (const patient of withoutCpf as { id: string; full_name: string }[]) {
       const { data: existing } = await supabase
         .from("notifications")
         .select("id")
@@ -34,20 +43,22 @@ export async function GET() {
         .maybeSingle();
 
       if (!existing) {
-        await supabase.from("notifications").insert({
+        const { error: insertErr } = await supabase.from("notifications").insert({
           tenant_id: tenantId,
           type: "cpf_missing",
           patient_id: patient.id,
           message: `Paciente ${patient.full_name} está sem CPF — compartilhamento familiar bloqueado.`,
           action_url: `/terapeuta/pacientes/${patient.id}?aba=dados`,
         });
-        inserted++;
+        if (!insertErr) inserted++;
+        else console.error("[notifications/check] erro ao inserir:", insertErr.message);
       }
     }
 
-    return NextResponse.json({ inserted });
+    console.log("[notifications/check] notificações inseridas:", inserted);
+    return NextResponse.json({ inserted, total_without_cpf: withoutCpf.length });
   } catch (err) {
-    console.error("[/api/notifications/check]", err);
+    console.error("[notifications/check] erro:", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

@@ -92,7 +92,8 @@ export default function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    window.fetch("/api/notifications/check").catch(() => null).finally(() => loadNotifications());
+    window.fetch("/api/notifications/check").catch(console.error);
+    loadNotifications();
     const id = setInterval(loadNotifications, 60000);
     return () => clearInterval(id);
   }, [loadNotifications]);
