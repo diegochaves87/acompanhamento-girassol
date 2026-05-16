@@ -444,7 +444,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const metrics = calcMetrics(mesSessions);
   const ticketMedio = metrics.totalAtend > 0 ? metrics.receita / metrics.totalAtend : 0;
   const receitaProjetada = mesSessions
-    .filter((s) => ["scheduled", "confirmed"].includes(s.status))
+    .filter((s) => s.status === "scheduled")
     .reduce((sum, s) => sum + sessionValue(s), 0);
   const clinicRanking = calcClinicRanking(mesSessions);
   const patientRanking = calcPatientRanking(mesSessions);
@@ -595,29 +595,36 @@ export default async function FinanceiroPage({ searchParams }: Props) {
         {/* Cards reposições */}
         {(() => {
           const perdidas = mesSessions.filter((s) =>
-            [...FALTAS, ...CANCELAMENTOS].includes(s.status) && !REPOSTA_S.includes(s.status)
+            [...FALTAS, ...CANCELAMENTOS, ...REPOSTA_S].includes(s.status)
           );
-          const repostas = mesSessions.filter((s) => REPOSTA_S.includes(s.status));
-          const repRealizadas = mesSessions.filter((s) => s.status === "makeup_completed");
           const valorPerdidas = perdidas.reduce((sum, s) => sum + sessionValue(s), 0);
-          const valorRepostas = repRealizadas.reduce((sum, s) => sum + sessionValue(s), 0);
-          const saldoQtd = repRealizadas.length - (perdidas.length + repostas.length);
-          const saldoValor = valorRepostas - valorPerdidas;
-          if (perdidas.length + repostas.length + repRealizadas.length === 0) return null;
+          const makeupAgendadas = mesSessions.filter((s) => s.status === "makeup");
+          const valorMakeupAgendadas = makeupAgendadas.reduce((sum, s) => sum + sessionValue(s), 0);
+          const repRealizadas = mesSessions.filter((s) => s.status === "makeup_completed");
+          const valorRepRealizadas = repRealizadas.reduce((sum, s) => sum + sessionValue(s), 0);
+          const saldoQtd = repRealizadas.length - perdidas.length;
+          const saldoValor = valorRepRealizadas - valorPerdidas;
+          if (perdidas.length + makeupAgendadas.length + repRealizadas.length === 0) return null;
           return (
             <section>
               <h2 className="text-sm font-semibold text-gray-600 mb-3">Faltas &amp; Reposições</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-5">
                   <p className="text-xs font-semibold text-red-400 uppercase tracking-wide mb-1">Sessões perdidas</p>
-                  <p className="text-2xl font-bold text-red-600">{perdidas.length + repostas.length}</p>
+                  <p className="text-2xl font-bold text-red-600">{perdidas.length}</p>
                   <p className="text-sm font-semibold text-red-500 mt-0.5">{formatBRL(valorPerdidas)}</p>
-                  <p className="text-xs text-gray-400 mt-1">{repostas.length > 0 ? `${repostas.length} já reposta${repostas.length !== 1 ? "s" : ""}` : "nenhuma reposta ainda"}</p>
+                  <p className="text-xs text-gray-400 mt-1">faltas, cancelamentos e repostas</p>
+                </div>
+                <div className="bg-white rounded-2xl border shadow-sm p-5" style={{ borderColor: "#DDD6FE" }}>
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: "#8E6CCF" }}>Reposições agendadas</p>
+                  <p className="text-2xl font-bold" style={{ color: "#8E6CCF" }}>{makeupAgendadas.length}</p>
+                  <p className="text-sm font-semibold mt-0.5" style={{ color: "#8E6CCF" }}>{formatBRL(valorMakeupAgendadas)}</p>
+                  <p className="text-xs text-gray-400 mt-1">aguardando realização</p>
                 </div>
                 <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-5">
                   <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">Reposições realizadas</p>
                   <p className="text-2xl font-bold" style={{ color: "#2E7D32" }}>{repRealizadas.length}</p>
-                  <p className="text-sm font-semibold mt-0.5" style={{ color: "#2E7D32" }}>{formatBRL(valorRepostas)}</p>
+                  <p className="text-sm font-semibold mt-0.5" style={{ color: "#2E7D32" }}>{formatBRL(valorRepRealizadas)}</p>
                   <p className="text-xs text-gray-400 mt-1">sessões de reposição concluídas</p>
                 </div>
                 <div className="bg-white rounded-2xl border border-amber-100 shadow-sm p-5">
@@ -626,9 +633,9 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                     {saldoQtd >= 0 ? "+" : ""}{saldoQtd}
                   </p>
                   <p className={`text-sm font-semibold mt-0.5 ${saldoValor >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {saldoValor >= 0 ? "+" : ""}{formatBRL(saldoValor)}
+                    {saldoValor >= 0 ? "+" : ""}{formatBRL(Math.abs(saldoValor))}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">reposições vs. perdas</p>
+                  <p className="text-xs text-gray-400 mt-1">reposições realizadas vs. perdas</p>
                 </div>
               </div>
             </section>

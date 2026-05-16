@@ -15,6 +15,9 @@ type SessaoDetalhe = {
   absence_note: string | null;
   is_recurring: boolean | null;
   recurrence_id: string | null;
+  reposition_session_id: string | null;
+  original_status: string | null;
+  reposition_scheduled_at: string | null;
   clinics: { name: string } | null;
   patients: { id: string; full_name: string } | null;
 };
@@ -51,7 +54,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
   const { data: raw, error } = await supabase
     .from("sessions")
     .select(
-      "id, scheduled_at, duration_minutes, status, absence_note, is_recurring, recurrence_id, clinics(name), patients(id, full_name)"
+      "id, scheduled_at, duration_minutes, status, absence_note, is_recurring, recurrence_id, reposition_session_id, original_status, reposition_scheduled_at, clinics(name), patients(id, full_name)"
     )
     .eq("id", params.sessaoId)
     .single();
@@ -74,13 +77,30 @@ export default async function SessaoPerfilPage({ params }: Props) {
           .gte("scheduled_at", sessao.scheduled_at)
       : Promise.resolve({ count: 0 as number | null });
 
-  const [futurasRes, evolutionRes] = await Promise.all([
+  const isReposta = sessao.status === "reposta" || !!sessao.original_status;
+  const hasMakeupLink = !!sessao.reposition_session_id;
+
+  const [futurasRes, evolutionRes, reposicaoRes, originalRes] = await Promise.all([
     futurasPromise,
     supabase
       .from("evolutions")
       .select("id")
       .eq("session_id", params.sessaoId)
       .maybeSingle(),
+    isReposta
+      ? supabase
+          .from("sessions")
+          .select("scheduled_at, status")
+          .eq("reposition_session_id", sessao.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    hasMakeupLink
+      ? supabase
+          .from("sessions")
+          .select("scheduled_at, status, original_status")
+          .eq("id", sessao.reposition_session_id!)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const futurasCount = futurasRes.count ?? 0;
@@ -89,6 +109,8 @@ export default async function SessaoPerfilPage({ params }: Props) {
     console.error("[SessaoDetalhe] evolution query error:", evolutionRes.error.message);
   }
   const evolution = (evolutionRes.data ?? null) as { id: string } | null;
+  const reposicao = (reposicaoRes.data ?? null) as { scheduled_at: string; status: string } | null;
+  const originalSessao = (originalRes.data ?? null) as { scheduled_at: string; status: string; original_status: string | null } | null;
 
   const dl: { label: string; value: string }[] = [
     { label: "Data", value: formatScheduledAt(sessao.scheduled_at) },
@@ -153,6 +175,34 @@ export default async function SessaoPerfilPage({ params }: Props) {
             <div className="mt-4 pt-4 border-t border-gray-50">
               <dt className="text-xs text-gray-400 mb-1">Observação</dt>
               <dd className="text-sm text-gray-600 italic">{sessao.absence_note}</dd>
+            </div>
+          )}
+
+          {/* Vínculo: esta sessão foi reposta */}
+          {isReposta && (
+            <div style={{ background: "#F5F3FF", borderRadius: 8, padding: "12px 16px", marginTop: 16 }}>
+              <p style={{ color: "#8E6CCF", fontWeight: 600, fontSize: 13, marginBottom: 4 }}>🔄 Sessão reposta</p>
+              <p style={{ color: "#4A5568", fontSize: 13, marginBottom: 2 }}>
+                Era: {statusLabel(sessao.original_status || sessao.status)}
+              </p>
+              {reposicao && (
+                <p style={{ color: "#4A5568", fontSize: 13 }}>
+                  Reposta em: {formatScheduledAt(reposicao.scheduled_at)} às {formatTime(reposicao.scheduled_at)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Vínculo: esta sessão é uma reposição */}
+          {hasMakeupLink && originalSessao && (
+            <div style={{ background: "#F5F3FF", borderRadius: 8, padding: "12px 16px", marginTop: 16 }}>
+              <p style={{ color: "#8E6CCF", fontWeight: 600, fontSize: 13, marginBottom: 4 }}>🔄 Esta é uma reposição</p>
+              <p style={{ color: "#4A5568", fontSize: 13, marginBottom: 2 }}>
+                Referente à sessão de: {formatScheduledAt(originalSessao.scheduled_at)} às {formatTime(originalSessao.scheduled_at)}
+              </p>
+              <p style={{ color: "#4A5568", fontSize: 13 }}>
+                Status original: {statusLabel(originalSessao.original_status || originalSessao.status)}
+              </p>
             </div>
           )}
         </section>
