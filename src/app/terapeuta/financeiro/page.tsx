@@ -24,6 +24,7 @@ type PatientInfo = {
   payment_type: string | null;
   value_per_session_brl: number | null;
   insurance_name: string | null;
+  diagnosis: string | null;
 };
 
 type ClinicInfo = { id: string; name: string };
@@ -35,6 +36,8 @@ type SessionRow = {
   duration_minutes: number | null;
   patient_id: string;
   clinic_id: string | null;
+  reposition_session_id: string | null;
+  original_status: string | null;
   patients: PatientInfo | null;
   clinics: ClinicInfo | null;
 };
@@ -88,6 +91,11 @@ function sessionValue(s: SessionRow) {
 function formatSessionDate(iso: string) {
   const d = new Date(iso);
   return `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}/${d.getUTCFullYear()} ${String(d.getUTCHours()).padStart(2,"0")}:${String(d.getUTCMinutes()).padStart(2,"0")}`;
+}
+
+function formatDateOnly(iso: string) {
+  const d = new Date(iso);
+  return `${String(d.getUTCDate()).padStart(2,"0")}/${String(d.getUTCMonth()+1).padStart(2,"0")}/${d.getUTCFullYear()}`;
 }
 
 // ─── Aggregation ─────────────────────────────────────────────────────────────
@@ -232,6 +240,77 @@ function calcAlerts(sessions: SessionRow[]) {
     .filter((e) => e.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+}
+
+function presencaStatus(pct: number): { label: string; color: string } {
+  if (pct >= 95) return { label: "Excelente", color: "#4CAF50" };
+  if (pct >= 85) return { label: "Ótima",     color: "#2E7BC1" };
+  if (pct >= 75) return { label: "Boa",        color: "#F59E0B" };
+  return                { label: "Atenção",    color: "#EF4444" };
+}
+
+type ClinicStats = {
+  name: string; pacientes: number; realizadas: number; reposicoes: number;
+  faltasInj: number; faltasJust: number; faltas: number;
+  presenca: number; receita: number; perdido: number;
+};
+
+function calcClinicStats(sessions: SessionRow[]): ClinicStats[] {
+  const map = new Map<string, {
+    name: string; pacientes: Set<string>;
+    realizadas: number; reposicoes: number; faltasInj: number; faltasJust: number;
+    receita: number; perdido: number;
+  }>();
+  for (const s of sessions) {
+    const id   = s.clinic_id ?? "__sem__";
+    const name = s.clinics?.name ?? "Sem clínica";
+    if (!map.has(id)) map.set(id, { name, pacientes: new Set(), realizadas: 0, reposicoes: 0, faltasInj: 0, faltasJust: 0, receita: 0, perdido: 0 });
+    const e = map.get(id)!;
+    e.pacientes.add(s.patient_id);
+    if (s.status === "completed")             { e.realizadas++;  e.receita  += sessionValue(s); }
+    if (s.status === "makeup_completed")      { e.reposicoes++;  e.receita  += sessionValue(s); }
+    if (s.status === "unjustified_absence")   { e.faltasInj++;   e.perdido  += sessionValue(s); }
+    if (s.status === "justified_absence")     { e.faltasJust++;  e.perdido  += sessionValue(s); }
+  }
+  return Array.from(map.values()).map((e) => {
+    const total   = e.realizadas + e.reposicoes + e.faltasInj + e.faltasJust;
+    const presenca = total > 0 ? Math.round(((e.realizadas + e.reposicoes) / total) * 100) : 100;
+    return { name: e.name, pacientes: e.pacientes.size, realizadas: e.realizadas, reposicoes: e.reposicoes, faltasInj: e.faltasInj, faltasJust: e.faltasJust, faltas: e.faltasInj + e.faltasJust, presenca, receita: e.receita, perdido: e.perdido };
+  }).sort((a, b) => b.receita - a.receita);
+}
+
+type PatientStats = {
+  name: string; clinicName: string; diagnosis: string | null; tipo: string;
+  realizadas: number; reposicoes: number; faltas: number;
+  presenca: number; receita: number; perdido: number;
+};
+
+function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
+  const map = new Map<string, {
+    name: string; clinicName: string; diagnosis: string | null; tipo: string;
+    realizadas: number; reposicoes: number; faltas: number; receita: number; perdido: number;
+  }>();
+  for (const s of sessions) {
+    const id = s.patient_id;
+    const p  = s.patients;
+    if (!map.has(id)) map.set(id, {
+      name: p?.full_name ?? "Paciente",
+      clinicName: s.clinics?.name ?? "—",
+      diagnosis: p?.diagnosis ?? null,
+      tipo: p?.payment_type ?? "particular",
+      realizadas: 0, reposicoes: 0, faltas: 0, receita: 0, perdido: 0,
+    });
+    const e = map.get(id)!;
+    if (s.status === "completed")           { e.realizadas++;  e.receita  += sessionValue(s); }
+    if (s.status === "makeup_completed")    { e.reposicoes++;  e.receita  += sessionValue(s); }
+    if (FALTAS.includes(s.status))          { e.faltas++;      e.perdido  += sessionValue(s); }
+    if (CANCELAMENTOS.includes(s.status))   { e.faltas++; }
+  }
+  return Array.from(map.values()).map((e) => {
+    const total   = e.realizadas + e.reposicoes + e.faltas;
+    const presenca = total > 0 ? Math.round(((e.realizadas + e.reposicoes) / total) * 100) : 100;
+    return { ...e, presenca };
+  });
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -425,7 +504,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
 
   const { data: rawSessions } = await supabase
     .from("sessions")
-    .select("id, scheduled_at, status, duration_minutes, patient_id, clinic_id, patients(full_name, payment_type, value_per_session_brl, insurance_name), clinics(id, name)")
+    .select("id, scheduled_at, status, duration_minutes, patient_id, clinic_id, reposition_session_id, original_status, patients(full_name, payment_type, value_per_session_brl, insurance_name, diagnosis), clinics(id, name)")
     .eq("tenant_id", tenantId)
     .gte("scheduled_at", chartStart)
     .lte("scheduled_at", chartEnd)
@@ -453,6 +532,25 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const topAbsent = calcTopAbsent(mesSessions);
   const monthlyData = calcMonthly(filtered, chartMonths);
   const alerts = calcAlerts(mesSessions);
+
+  // ── New rankings ──────────────────────────────────────────────────────────
+  const clinicStats = calcClinicStats(mesSessions);
+  const allPatientStats = calcPatientStats(mesSessions);
+  const patientStatsByReceita = [...allPatientStats].sort((a, b) => b.receita - a.receita).slice(0, 20);
+  const patientStatsByAssid   = [...allPatientStats].sort((a, b) => b.presenca - a.presenca || b.realizadas - a.realizadas);
+
+  // Batch-fetch original sessions for the reposição table
+  const makeupLinked = mesSessions.filter((s) => s.status === "makeup_completed" && s.reposition_session_id);
+  const origIds = makeupLinked.map((s) => s.reposition_session_id!);
+  type OrigRow = { id: string; scheduled_at: string; status: string; original_status: string | null };
+  let origSessMap: Record<string, OrigRow> = {};
+  if (origIds.length > 0) {
+    const { data: origData } = await supabase.from("sessions").select("id, scheduled_at, status, original_status").in("id", origIds);
+    if (origData) for (const o of origData as OrigRow[]) origSessMap[o.id] = o;
+  }
+  const reposicoesTable = makeupLinked
+    .map((s) => ({ session: s, original: origSessMap[s.reposition_session_id!] ?? null }))
+    .sort((a, b) => a.session.scheduled_at.localeCompare(b.session.scheduled_at));
 
   const printData: PrintData = {
     terapeutaNome,
@@ -491,14 +589,47 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     tipo:     p.tipo === "convenio" ? (p.convenio ?? "Convênio") : "Particular",
   }));
 
+  const todayLong = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+
   return (
+    <>
+    <style>{`
+      @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        .print-footer { display: block !important; position: fixed; bottom: 0; left: 0; right: 0; }
+        @page { margin: 2cm; }
+        body { background: white !important; }
+      }
+      .print-only { display: none; }
+      .print-footer { display: none; }
+    `}</style>
     <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
-      <Header aba={aba} />
+
+      {/* Print header — visible only when printing */}
+      <div className="print-only px-8 pt-6 pb-4 border-b-2" style={{ borderColor: "#FFBA3D" }}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Girassol" style={{ height: 56, width: "auto", objectFit: "contain" }} />
+            <div>
+              <p className="font-bold text-lg" style={{ color: "#1D3557" }}>{terapeutaNome}</p>
+              <p className="text-sm font-semibold" style={{ color: "#4CAF50" }}>Relatório Financeiro — {monthFullLabel(selectedYM)}</p>
+            </div>
+          </div>
+          <div className="text-right text-xs" style={{ color: "#9CA3AF" }}>
+            <p>Gerado em {todayLong}</p>
+            <p style={{ color: "#4CAF50", fontWeight: 600 }}>Acompanhamento Girassol</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="no-print"><Header aba={aba} /></div>
 
       <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
 
         {/* Filtros */}
-        <form method="GET" className="flex flex-wrap items-end gap-3">
+        <form method="GET" className="no-print flex flex-wrap items-end gap-3">
           <input type="hidden" name="aba" value="dashboard" />
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Mês</label>
@@ -524,7 +655,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             Aplicar
           </button>
           <div className="ml-auto flex gap-2">
-            <BotaoImprimir data={printData} />
+            <BotaoImprimir />
             <ExportarCSV filename={`financeiro-${selectedYM}`} headers={dashCsvHeaders} rows={dashCsvRows} />
           </div>
         </form>
@@ -641,6 +772,240 @@ export default async function FinanceiroPage({ searchParams }: Props) {
           <h2 className="text-sm font-semibold text-gray-700 mb-4">Receita — últimos 6 meses</h2>
           <BarChartMensal data={monthlyData} />
         </section>
+
+        {/* ── SEÇÃO 2: Clínicas — Rentabilidade ── */}
+        {clinicStats.length > 0 && (
+          <details open className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer select-none list-none">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold" style={{ color: "#1D3557" }}>Clínicas — Rentabilidade</h2>
+                <div className="mt-1 h-0.5 rounded-full" style={{ backgroundColor: "#FFBA3D" }} />
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
+                <thead>
+                  <tr style={{ backgroundColor: "#1D3557" }}>
+                    {["#", "Clínica", "Pacientes", "Realizadas", "Reposições", "Faltas", "Presença", "Receita", "Perdido"].map((h) => (
+                      <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {clinicStats.map((c, i) => {
+                    const st = presencaStatus(c.presenca);
+                    return (
+                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#F8FAFC" }}>
+                        <td className="py-2.5 px-3 text-xs text-gray-400 border-b border-[#E2E8F0]">{i + 1}</td>
+                        <td className="py-2.5 px-3 font-medium text-gray-800 border-b border-[#E2E8F0]">{c.name}</td>
+                        <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{c.pacientes}</td>
+                        <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{c.realizadas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{c.reposicoes}</td>
+                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{c.faltas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${st.color}18`, color: st.color }}>{c.presenca}%</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-semibold border-b border-[#E2E8F0]" style={{ color: "#1a4a3a" }}>{formatBRL(c.receita)}</td>
+                        <td className="py-2.5 px-3 text-right text-red-500 border-b border-[#E2E8F0]">{formatBRL(c.perdido)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
+        {/* ── SEÇÃO 3: Clínicas — Assiduidade ── */}
+        {clinicStats.length > 0 && (
+          <details open className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer select-none list-none">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold" style={{ color: "#1D3557" }}>Clínicas — Assiduidade</h2>
+                <div className="mt-1 h-0.5 rounded-full" style={{ backgroundColor: "#FFBA3D" }} />
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[560px]">
+                <thead>
+                  <tr style={{ backgroundColor: "#1D3557" }}>
+                    {["#", "Clínica", "Realizadas", "Reposições", "Faltas inj.", "Faltas just.", "Presença", "Status"].map((h) => (
+                      <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...clinicStats].sort((a, b) => b.presenca - a.presenca).map((c, i) => {
+                    const st = presencaStatus(c.presenca);
+                    return (
+                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#F8FAFC" }}>
+                        <td className="py-2.5 px-3 text-xs text-gray-400 border-b border-[#E2E8F0]">{i + 1}</td>
+                        <td className="py-2.5 px-3 font-medium text-gray-800 border-b border-[#E2E8F0]">{c.name}</td>
+                        <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{c.realizadas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{c.reposicoes}</td>
+                        <td className="py-2.5 px-3 text-center text-red-600 border-b border-[#E2E8F0]">{c.faltasInj}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#FF5C7A" }}>{c.faltasJust}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold" style={{ color: st.color }}>{c.presenca}%</span>
+                        </td>
+                        <td className="py-2.5 px-3 border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${st.color}18`, color: st.color }}>{st.label}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
+        {/* ── SEÇÃO 4: Pacientes — Receita gerada ── */}
+        {patientStatsByReceita.length > 0 && (
+          <details open className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer select-none list-none">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold" style={{ color: "#1D3557" }}>Pacientes — Receita gerada (top 20)</h2>
+                <div className="mt-1 h-0.5 rounded-full" style={{ backgroundColor: "#FFBA3D" }} />
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[720px]">
+                <thead>
+                  <tr style={{ backgroundColor: "#1D3557" }}>
+                    {["#", "Paciente", "Clínica", "Tipo pgto", "Realizadas", "Reposições", "Faltas", "Presença", "Receita", "Perdido"].map((h) => (
+                      <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {patientStatsByReceita.map((p, i) => {
+                    const st = presencaStatus(p.presenca);
+                    return (
+                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#F8FAFC" }}>
+                        <td className="py-2.5 px-3 text-xs text-gray-400 border-b border-[#E2E8F0]">{i + 1}</td>
+                        <td className="py-2.5 px-3 font-medium text-gray-800 border-b border-[#E2E8F0]">{p.name}</td>
+                        <td className="py-2.5 px-3 text-gray-500 border-b border-[#E2E8F0]">{p.clinicName}</td>
+                        <td className="py-2.5 px-3 border-b border-[#E2E8F0]">
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            {p.tipo === "convenio" ? "Conv." : "Part."}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{p.realizadas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{p.reposicoes}</td>
+                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{p.faltas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold" style={{ color: st.color }}>{p.presenca}%</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-semibold border-b border-[#E2E8F0]" style={{ color: "#1a4a3a" }}>{formatBRL(p.receita)}</td>
+                        <td className="py-2.5 px-3 text-right text-red-500 border-b border-[#E2E8F0]">{formatBRL(p.perdido)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
+        {/* ── SEÇÃO 5: Pacientes — Assiduidade ── */}
+        {patientStatsByAssid.length > 0 && (
+          <details open className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer select-none list-none">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold" style={{ color: "#1D3557" }}>Pacientes — Assiduidade</h2>
+                <div className="mt-1 h-0.5 rounded-full" style={{ backgroundColor: "#FFBA3D" }} />
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[680px]">
+                <thead>
+                  <tr style={{ backgroundColor: "#1D3557" }}>
+                    {["#", "Paciente", "Clínica", "Diagnóstico", "Realizadas", "Reposições", "Faltas", "Presença", "Status"].map((h) => (
+                      <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {patientStatsByAssid.map((p, i) => {
+                    const neverAbsent = p.presenca === 100 && p.realizadas + p.reposicoes > 0 && p.faltas === 0;
+                    const st = neverAbsent ? { label: "⭐ Nunca faltou", color: "#2E7D32" } : presencaStatus(p.presenca);
+                    return (
+                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#F8FAFC" }}>
+                        <td className="py-2.5 px-3 text-xs text-gray-400 border-b border-[#E2E8F0]">{i + 1}</td>
+                        <td className="py-2.5 px-3 font-medium text-gray-800 border-b border-[#E2E8F0]">{p.name}</td>
+                        <td className="py-2.5 px-3 text-gray-500 border-b border-[#E2E8F0]">{p.clinicName}</td>
+                        <td className="py-2.5 px-3 text-xs text-gray-400 border-b border-[#E2E8F0]">{p.diagnosis ?? "—"}</td>
+                        <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{p.realizadas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{p.reposicoes}</td>
+                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{p.faltas}</td>
+                        <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold" style={{ color: st.color }}>{p.presenca}%</span>
+                        </td>
+                        <td className="py-2.5 px-3 border-b border-[#E2E8F0]">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${st.color}18`, color: st.color }}>{st.label}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
+
+        {/* ── SEÇÃO 6: Reposições do período ── */}
+        {reposicoesTable.length > 0 && (
+          <details open className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <summary className="flex items-center gap-3 px-6 py-4 cursor-pointer select-none list-none">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold" style={{ color: "#1D3557" }}>Reposições do período</h2>
+                <div className="mt-1 h-0.5 rounded-full" style={{ backgroundColor: "#FFBA3D" }} />
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </summary>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead>
+                  <tr style={{ backgroundColor: "#1D3557" }}>
+                    {["Paciente", "Data da falta", "Data da reposição", "Status original", "Valor recuperado"].map((h) => (
+                      <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {reposicoesTable.map(({ session: s, original: orig }, i) => (
+                    <tr key={i} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#F8FAFC" }}>
+                      <td className="py-2.5 px-3 font-medium text-gray-800 border-b border-[#E2E8F0]">{s.patients?.full_name ?? "—"}</td>
+                      <td className="py-2.5 px-3 text-gray-500 border-b border-[#E2E8F0]">{orig ? formatDateOnly(orig.scheduled_at) : "—"}</td>
+                      <td className="py-2.5 px-3 text-gray-600 border-b border-[#E2E8F0]">{formatDateOnly(s.scheduled_at)}</td>
+                      <td className="py-2.5 px-3 border-b border-[#E2E8F0]">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                          {statusLabel(orig?.original_status || orig?.status || "—")}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-semibold border-b border-[#E2E8F0]" style={{ color: "#2E7D32" }}>{formatBRL(sessionValue(s))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        )}
 
         {/* Top 5 Pacientes — ranking geral com barras de progresso */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -861,7 +1226,15 @@ export default async function FinanceiroPage({ searchParams }: Props) {
         )}
 
       </main>
+
+      {/* Print footer */}
+      <div className="print-footer px-8 py-3 text-center border-t" style={{ borderColor: "#E5E7EB", backgroundColor: "#F9FAFB" }}>
+        <p className="text-xs" style={{ color: "#9CA3AF" }}>Informação confidencial — uso exclusivo do profissional</p>
+        <p className="text-xs" style={{ color: "#4CAF50", fontWeight: 600 }}>Acompanhamento Girassol — www.acompanhamentogirassol.com.br</p>
+      </div>
+
     </div>
+    </>
   );
 }
 
