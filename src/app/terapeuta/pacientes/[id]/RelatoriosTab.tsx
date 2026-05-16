@@ -208,14 +208,7 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
 
     const supabase = createClient();
 
-    const { data: familiarPortal } = await supabase
-      .from("family_access")
-      .select("nome, relacao")
-      .eq("patient_id", patientId)
-      .not("status", "eq", "pendente")
-      .maybeSingle();
-
-    const { data: guardian, error: guardianError } = await supabase
+    const { data: guardian } = await supabase
       .from("family_patient")
       .select("guardian_name, guardian_relationship")
       .eq("patient_id", patientId)
@@ -223,13 +216,16 @@ export default function RelatoriosTab({ patientId, tenantId, patientName }: Prop
       .limit(1)
       .maybeSingle();
 
-    console.log("patientId usado:", patientId);
-    console.log("guardian result:", guardian);
-    console.log("guardian error:", guardianError);
+    const { data: familiarPortal } = guardian ? { data: null } : await supabase
+      .from("family_access")
+      .select("nome, relacao")
+      .eq("patient_id", patientId)
+      .not("status", "eq", "pendente")
+      .maybeSingle();
 
-    const familiar_nome = (familiarPortal as { nome?: string } | null)?.nome || (guardian as { guardian_name?: string } | null)?.guardian_name || "família";
-    const familiar_parentesco = (familiarPortal as { relacao?: string } | null)?.relacao || (guardian as { guardian_relationship?: string } | null)?.guardian_relationship || "responsável";
-    console.log("familiar encontrado:", familiar_nome, familiar_parentesco);
+    const familiar_nome = (guardian as { guardian_name?: string } | null)?.guardian_name || (familiarPortal as { nome?: string } | null)?.nome || "família";
+    const familiar_parentesco = (guardian as { guardian_relationship?: string } | null)?.guardian_relationship || (familiarPortal as { relacao?: string } | null)?.relacao || "responsável";
+    console.log("familiar final:", familiar_nome, familiar_parentesco);
 
     const res = await fetch("/api/relatorio/humanizar", {
       method: "POST",

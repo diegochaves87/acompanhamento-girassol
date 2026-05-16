@@ -8,6 +8,7 @@ type Note = {
   technical_note: string;
   created_at: string;
   context_type?: string;
+  author_id?: string;
   profiles?: { full_name: string } | null;
 };
 
@@ -36,11 +37,12 @@ export default function NotasTab({ patientId, tenantId, initialNotes }: Props) {
 
   const fetchNotes = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error: fetchError } = await supabase
       .from("multidisciplinary_notes")
-      .select("id, technical_note, created_at, context_type, profiles!author_id(full_name)")
+      .select("id, technical_note, created_at, context_type, author_id")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false });
+    console.log("fetchNotes result:", data, fetchError);
     if (data) setNotes(data as unknown as Note[]);
   }, [patientId]);
 
