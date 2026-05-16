@@ -187,7 +187,7 @@ export default async function SessaoPerfilPage({ params }: Props) {
               </p>
               {reposicao && (
                 <p style={{ color: "#4A5568", fontSize: 13 }}>
-                  Reposta em: {formatScheduledAt(reposicao.scheduled_at)} às {formatTime(reposicao.scheduled_at)}
+                  Reposta para: {formatScheduledAt(reposicao.scheduled_at)} às {formatTime(reposicao.scheduled_at)}
                 </p>
               )}
             </div>

@@ -577,13 +577,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             danger
             tooltip="Valor perdido com cancelamentos: pelo paciente, terapeuta ou familiar."
           />
-          <MetricCard
-            label="Recuperado (repos.)"
-            value={formatBRL(metrics.recuperado)}
-            sub={`${metrics.totalReposicoes} reposição${metrics.totalReposicoes !== 1 ? "ões" : ""}`}
-            color="#F59E0B"
-            tooltip="Valor recuperado com sessões de reposição (makeup) realizadas no período."
-          />
+
           <MetricCard
             label="Sessões realizadas"
             value={String(metrics.totalAtend)}
