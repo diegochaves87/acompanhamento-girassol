@@ -11,6 +11,7 @@ import {
   statusClassName,
   type SessionStatus,
 } from "@/lib/session-status";
+// LOST_STATUSES is extended locally in fetchPerdidas to cover DB status variants
 
 type Clinica = { id: string; name: string };
 type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica[] };
@@ -98,16 +99,33 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
 
   useEffect(() => {
     if (status !== "makeup") { setSessoesPerdidas([]); setRepositionSessionId(null); return; }
-    let cancelled = false;
+    let canceled = false;
     async function fetchPerdidas() {
       setLoadingPerdidas(true);
       const supabase = createClient();
+      const allLostStatuses = [
+        ...LOST_STATUSES as string[],
+        "canceled_therapist",
+        "cancelled_therapist",
+        "cancelado",
+        "cancelamento",
+        "canceled",
+        "cancelled",
+        "cancelled_family",
+        "canceled_family",
+        "falta",
+        "falta_justificada",
+        "falta_injustificada",
+        "ausencia",
+        "absence",
+        "feriado",
+      ];
       const [lostRes, reposedRes] = await Promise.all([
         supabase
           .from("sessions")
           .select("id, scheduled_at, status, duration_minutes")
           .eq("patient_id", patientId)
-          .in("status", LOST_STATUSES as string[])
+          .in("status", allLostStatuses)
           .order("scheduled_at", { ascending: false })
           .limit(30),
         supabase
@@ -116,7 +134,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
           .eq("patient_id", patientId)
           .not("reposition_session_id", "is", null),
       ]);
-      if (cancelled) return;
+      if (canceled) return;
       const reposedIds = new Set(
         (reposedRes.data ?? []).map((r: { reposition_session_id: string }) => r.reposition_session_id)
       );
@@ -125,7 +143,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
       setLoadingPerdidas(false);
     }
     fetchPerdidas();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [status, patientId]);
 
   function addSlot() {

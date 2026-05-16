@@ -112,25 +112,57 @@ export const LOST_STATUSES: SessionStatus[] = [
   "holiday",
 ];
 
+function inferLabel(status: string): string {
+  const s = status.toLowerCase();
+  if (s.includes("cancel")) return "Cancelada";
+  if (s.includes("falta") || s.includes("absence") || s.includes("ausencia")) return "Falta";
+  if (s.includes("feriado") || s.includes("holiday")) return "Feriado";
+  if (s.includes("repos")) return "Reposição";
+  if (s.includes("realiz") || s.includes("complet")) return "Realizada";
+  return status;
+}
+
+function inferBadge(status: string): string {
+  const s = status.toLowerCase();
+  if (s.includes("cancel")) return "CANCELADO";
+  if (s.includes("falta") || s.includes("absence") || s.includes("ausencia")) return "FALTA";
+  if (s.includes("feriado") || s.includes("holiday")) return "FERIADO";
+  if (s.includes("repos")) return "REPOSIÇÃO";
+  if (s.includes("realiz") || s.includes("complet")) return "REALIZADO";
+  return status.toUpperCase();
+}
+
+function inferCardStyle(status: string): CardStyle {
+  const s = status.toLowerCase();
+  if (s.includes("cancel")) return { backgroundColor: "#FFF0F3", borderLeftColor: "#FF5C7A" };
+  if (s.includes("falta") || s.includes("absence") || s.includes("ausencia")) return { backgroundColor: "#FEF2F2", borderLeftColor: "#DC2626" };
+  if (s.includes("feriado") || s.includes("holiday")) return { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" };
+  if (s.includes("repos")) return { backgroundColor: "#F5F3FF", borderLeftColor: "#8B5CF6" };
+  return { backgroundColor: "#FFF7ED", borderLeftColor: "#F97316" };
+}
+
 export function statusLabel(status: string): string {
-  return STATUS_CONFIG[status as SessionStatus]?.label ?? status;
+  return STATUS_CONFIG[status as SessionStatus]?.label ?? inferLabel(status);
 }
 
 export function statusClassName(status: string): string {
-  return (
-    STATUS_CONFIG[status as SessionStatus]?.className ??
-    "bg-gray-100 text-gray-500 border border-gray-200"
-  );
+  if (STATUS_CONFIG[status as SessionStatus]) {
+    return STATUS_CONFIG[status as SessionStatus].className;
+  }
+  const s = status.toLowerCase();
+  if (s.includes("cancel")) return "bg-orange-50 text-orange-700 border border-orange-100";
+  if (s.includes("falta") || s.includes("absence")) return "bg-red-50 text-red-700 border border-red-100";
+  return "bg-gray-100 text-gray-500 border border-gray-200";
 }
 
 export function statusBadge(status: string): string {
-  return STATUS_CONFIG[status as SessionStatus]?.badge ?? status.toUpperCase();
+  return STATUS_CONFIG[status as SessionStatus]?.badge ?? inferBadge(status);
 }
 
 export function statusCardClass(status: string): string {
   return (
     STATUS_CONFIG[status as SessionStatus]?.cardClass ??
-    "bg-gray-50 border-l-2 border-gray-200 text-gray-600"
+    "bg-orange-50 border-l-2 border-orange-300 text-gray-700"
   );
 }
 
@@ -151,5 +183,5 @@ const CARD_STYLES: Record<SessionStatus, CardStyle> = {
 };
 
 export function statusCardStyle(status: string): CardStyle {
-  return CARD_STYLES[status as SessionStatus] ?? { backgroundColor: "#F9FAFB", borderLeftColor: "#D1D5DB" };
+  return CARD_STYLES[status as SessionStatus] ?? inferCardStyle(status);
 }
