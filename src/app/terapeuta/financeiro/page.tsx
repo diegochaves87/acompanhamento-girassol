@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 import BarChartMensal, { MonthBar } from "./BarChartMensal";
 import ExportarCSV, { CsvRow } from "./ExportarCSV";
-import BotaoImprimir, { PrintData } from "./BotaoImprimir";
+import BotaoImprimir from "./BotaoImprimir";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
