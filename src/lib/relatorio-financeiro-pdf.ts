@@ -64,14 +64,14 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  // Carrega SVG via canvas — retorna base64 e largura proporcional para h=18mm
+  // Carrega SVG via canvas — retorna base64 e largura proporcional para h=24mm
   async function loadLogo(): Promise<{ base64: string; w: number }> {
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
         const ratio  = (img.naturalWidth || 300) / (img.naturalHeight || 100);
-        const h      = 18;
+        const h      = 24;
         const w      = h * ratio;
         const canvas = document.createElement("canvas");
         canvas.width  = img.naturalWidth  || 300;
@@ -81,7 +81,7 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
         ctx.drawImage(img, 0, 0);
         resolve({ base64: canvas.toDataURL("image/png"), w });
       };
-      img.onerror = () => resolve({ base64: "", w: 44 });
+      img.onerror = () => resolve({ base64: "", w: 58 });
       img.src = "/identidade-visual/logo-vetorizada.svg";
     });
   }
@@ -89,18 +89,19 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
   const { base64: logoBase64, w: logoW } = await loadLogo();
 
   function addHeader() {
-    // Fundo creme #FFF7E6
+    // Fundo creme #FFF7E6, header 30mm
     doc.setFillColor(255, 247, 230);
-    doc.rect(0, 0, PAGE_W, 28, "F");
+    doc.rect(0, 0, PAGE_W, 30, "F");
 
     // Linha separadora amarela na base
     doc.setDrawColor(AMARELO[0], AMARELO[1], AMARELO[2]);
     doc.setLineWidth(0.8);
-    doc.line(0, 28, PAGE_W, 28);
+    doc.line(0, 30, PAGE_W, 30);
 
+    // Logo centralizada verticalmente: y = (30 - 24) / 2 = 3
     if (logoBase64) {
       try {
-        doc.addImage(logoBase64, "PNG", 15, 5, logoW, 18);
+        doc.addImage(logoBase64, "PNG", 15, 3, logoW, 24);
       } catch {}
     }
 
@@ -110,21 +111,21 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
     doc.setTextColor(29, 53, 87);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(data.profissional.nome, rx, 11, { align: "right" });
+    doc.text(data.profissional.nome, rx, 12, { align: "right" });
 
     if (data.profissional.especialidade) {
       // Especialidade: cinza #4A5568
       doc.setTextColor(74, 85, 104);
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text(data.profissional.especialidade, rx, 16, { align: "right" });
+      doc.text(data.profissional.especialidade, rx, 18, { align: "right" });
     }
 
     // Período: amarelo #FFBA3D
     doc.setTextColor(AMARELO[0], AMARELO[1], AMARELO[2]);
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(`Relatório Financeiro — ${data.periodo}`, rx, 23, { align: "right" });
+    doc.text(`Relatório Financeiro — ${data.periodo}`, rx, 25, { align: "right" });
   }
 
   function addFooter(pageNumber: number, totalPages: number) {
