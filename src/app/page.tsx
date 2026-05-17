@@ -133,12 +133,12 @@ function HeroSection() {
             <Link href="/cadastro"
               className="px-8 py-4 rounded-xl text-base font-bold text-white text-center transition-all hover:opacity-90 hover:scale-[1.02]"
               style={{ backgroundColor: "#1D3557" }}>
-              Começar grátis
+              Crie sua conta
             </Link>
-            <Link href="#como-funciona"
+            <Link href="/login"
               className="px-8 py-4 rounded-xl text-base font-semibold text-center border-2 transition-all hover:bg-white"
               style={{ borderColor: "#1D3557", color: "#1D3557" }}>
-              Ver demonstração
+              Já tenho conta
             </Link>
           </div>
 
@@ -564,7 +564,7 @@ function ReferralSection() {
   }
 
   const waMsg = encodeURIComponent(
-    "Oi! Acabei de conhecer o Acompanhamento Girassol e lembrei de você. É uma plataforma incrível para terapeutas organizarem seus pacientes e conectarem as famílias. Vale muito a pena conhecer: www.acompanhamentogirassol.com.br"
+    "Oi! Seu terapeuta usa o Acompanhamento Girassol para compartilhar evoluções e o desenvolvimento do seu familiar com você. Acesse www.acompanhamentogirassol.com.br e clique em CRIE SUA CONTA para começar a acompanhar gratuitamente."
   );
 
   return (

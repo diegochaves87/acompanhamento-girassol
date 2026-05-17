@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -15,26 +16,14 @@ function GoogleIcon() {
   );
 }
 
-function Divider() {
-  return (
-    <div className="flex items-center gap-3 my-1">
-      <div className="flex-1 h-px bg-gray-200" />
-      <span className="text-xs text-gray-400 font-medium">ou</span>
-      <div className="flex-1 h-px bg-gray-200" />
-    </div>
-  );
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState("");
-
-  const [newEmail, setNewEmail] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -43,17 +32,16 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoginLoading(true);
-    setLoginError("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    });
-    if (error) {
-      setLoginError("E-mail ou senha incorretos. Tente novamente.");
-      setLoginLoading(false);
+    setLoading(true);
+    setError("");
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      setError("E-mail ou senha incorretos. Tente novamente.");
+      setLoading(false);
       return;
     }
+
     const { data: { user: loggedUser } } = await supabase.auth.getUser();
 
     const { data: userData } = await supabase
@@ -79,14 +67,8 @@ export default function LoginPage() {
       return;
     }
 
-    setLoginError("Acesso não autorizado. Entre em contato com seu terapeuta.");
-    setLoginLoading(false);
-  }
-
-  function handleContinue(e: React.FormEvent) {
-    e.preventDefault();
-    const q = newEmail ? `?email=${encodeURIComponent(newEmail)}` : "";
-    router.push(`/cadastro${q}`);
+    setError("Acesso não autorizado. Entre em contato com seu terapeuta.");
+    setLoading(false);
   }
 
   async function handleGoogle() {
@@ -100,165 +82,173 @@ export default function LoginPage() {
     e.preventDefault();
     setForgotLoading(true);
     setForgotStatus("idle");
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
     setForgotLoading(false);
-    setForgotStatus(error ? "error" : "sent");
+    setForgotStatus(err ? "error" : "sent");
   }
 
-  const inputCls =
-    "w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#4CAF50] focus:ring-2 focus:ring-[#4CAF50]/10 bg-white";
-
-  const googleBtnCls =
-    "w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2.5 border border-gray-200 bg-white hover:bg-gray-50 transition-colors";
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "12px 16px", borderRadius: 12,
+    border: "1.5px solid #E5E7EB", fontSize: 14, outline: "none",
+    boxSizing: "border-box", backgroundColor: "#fff", color: "#111827",
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ backgroundColor: "#F9FAFB" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#FFF7E6", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
       {/* Logo */}
-      <div className="mb-8 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-completa.png" alt="Acompanhamento Girassol" style={{ height: 72, margin: "0 auto 12px" }} />
-        <p className="text-xs font-medium tracking-widest uppercase" style={{ color: "#9CA3AF" }}>
-          Jornada de Evolução Terapêutica
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/identidade-visual/Logo-Nome-Slogan.png"
+        alt="Acompanhamento Girassol"
+        style={{ height: 80, marginBottom: 28, objectFit: "contain" }}
+      />
+
+      {/* Card */}
+      <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.10)", padding: "36px 32px", width: "100%", maxWidth: 420 }}>
+        <h2 style={{ color: "#1D3557", fontWeight: 700, fontSize: 22, margin: "0 0 24px", textAlign: "center" }}>
+          Acessar minha conta
+        </h2>
+
+        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="E-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            placeholder="Senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={inputStyle}
+          />
+
+          {error && (
+            <p style={{ fontSize: 13, color: "#DC2626", backgroundColor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 10, padding: "10px 14px", margin: 0 }}>
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: "13px 0", borderRadius: 12, border: "none", cursor: loading ? "not-allowed" : "pointer",
+              backgroundColor: "#1D3557", color: "#fff", fontWeight: 700, fontSize: 15,
+              opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
+            }}
+          >
+            {loading ? "Entrando…" : "Entrar"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setForgotEmail(email); setShowForgot(true); setForgotStatus("idle"); }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#6B7280", textAlign: "center", padding: 0 }}
+          >
+            Esqueci minha senha
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
+          <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>ou</span>
+          <div style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
+        </div>
+
+        <button
+          onClick={handleGoogle}
+          type="button"
+          style={{
+            width: "100%", padding: "12px 0", borderRadius: 12, border: "1.5px solid #E5E7EB",
+            cursor: "pointer", backgroundColor: "#fff", display: "flex", alignItems: "center",
+            justifyContent: "center", gap: 10, fontSize: 14, fontWeight: 600, color: "#1D3557",
+          }}
+        >
+          <GoogleIcon />
+          Continuar com Google
+        </button>
+
+        <p style={{ textAlign: "center", fontSize: 13, color: "#6B7280", marginTop: 24, marginBottom: 0 }}>
+          Ainda não tem conta?{" "}
+          <Link href="/cadastro" style={{ color: "#1D3557", fontWeight: 700, textDecoration: "none" }}>
+            Crie aqui
+          </Link>
         </p>
       </div>
 
-      {/* Cards */}
-      <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {/* Left — criar conta */}
-        <div className="rounded-2xl border p-7 flex flex-col gap-4" style={{ backgroundColor: "#F0FFF4", borderColor: "#BBF7D0" }}>
-          <div>
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
-              style={{ backgroundColor: "#4CAF50", color: "#ffffff" }}>
-              Novo por aqui?
-            </span>
-            <h2 className="text-xl font-bold leading-snug" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>
-              Quero criar<br />uma conta
-            </h2>
-            <p className="text-sm mt-2" style={{ color: "#4CAF50" }}>Acesse gratuitamente por 30 dias.</p>
-          </div>
-
-          <form onSubmit={handleContinue} className="flex flex-col gap-3">
-            <input type="email" placeholder="Seu e-mail" value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)} className={inputCls} />
-            <button type="submit"
-              className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-              style={{ backgroundColor: "#4CAF50" }}>
-              Continuar
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </form>
-
-          <Divider />
-
-          <button onClick={handleGoogle} type="button" className={googleBtnCls} style={{ color: "#1D3557" }}>
-            <GoogleIcon />
-            Continuar com Google
-          </button>
-
-          <p className="text-xs text-center" style={{ color: "#6B7280" }}>
-            Ao continuar você concorda com nossos termos de uso.
-          </p>
-        </div>
-
-        {/* Right — login */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-7 flex flex-col gap-4">
-          <div>
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-2.5 py-1 rounded-full mb-3"
-              style={{ backgroundColor: "#EFF6FF", color: "#2E7BC1" }}>
-              Já sou cliente
-            </span>
-            <h2 className="text-xl font-bold leading-snug" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>
-              Acessar<br />minha conta
-            </h2>
-          </div>
-
-          <form onSubmit={handleLogin} className="flex flex-col gap-3">
-            <input type="email" required autoComplete="email" placeholder="E-mail"
-              value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className={inputCls} />
-            <input type="password" required autoComplete="current-password" placeholder="Senha"
-              value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className={inputCls} />
-
-            {loginError && (
-              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">{loginError}</p>
-            )}
-
-            <button type="submit" disabled={loginLoading}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-60 hover:opacity-90"
-              style={{ backgroundColor: "#1D3557" }}>
-              {loginLoading ? "Entrando…" : "Entrar"}
-            </button>
-
-            <button type="button"
-              onClick={() => { setForgotEmail(loginEmail); setShowForgot(true); setForgotStatus("idle"); }}
-              className="text-xs text-center transition-colors hover:underline" style={{ color: "#9CA3AF" }}>
-              Esqueci minha senha
-            </button>
-          </form>
-
-          <Divider />
-
-          <button onClick={handleGoogle} type="button" className={googleBtnCls} style={{ color: "#1D3557" }}>
-            <GoogleIcon />
-            Continuar com Google
-          </button>
-        </div>
-      </div>
-
-      <p className="text-center text-xs mt-8" style={{ color: "#9CA3AF" }}>
-        Acompanhamento Girassol © {new Date().getFullYear()}
+      <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 28 }}>
+        Acompanhamento Girassol &copy; {new Date().getFullYear()}
       </p>
 
       {/* Modal — esqueci minha senha */}
       {showForgot && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false); }}>
-          <div className="bg-white rounded-2xl shadow-2xl p-7 w-full max-w-sm">
-            <h3 className="text-lg font-bold mb-1" style={{ color: "#1D3557", fontFamily: "var(--font-poppins, sans-serif)" }}>
+        <div
+          style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px", backgroundColor: "rgba(0,0,0,0.45)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false); }}
+        >
+          <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.18)", padding: "32px 28px", width: "100%", maxWidth: 380 }}>
+            <h3 style={{ color: "#1D3557", fontWeight: 700, fontSize: 18, margin: "0 0 6px" }}>
               Recuperar senha
             </h3>
-            <p className="text-sm text-gray-500 mb-5">
+            <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.5 }}>
               Informe seu e-mail e enviaremos um link para criar uma nova senha.
             </p>
 
             {forgotStatus === "sent" ? (
-              <div className="text-center py-4">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: "#F0FFF4" }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#4CAF50" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              <div style={{ textAlign: "center", padding: "8px 0" }}>
+                <div style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: "#F0FFF4", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <p className="text-sm font-semibold text-gray-700">E-mail enviado!</p>
-                <p className="text-xs text-gray-400 mt-1">Verifique sua caixa de entrada e spam.</p>
-                <button onClick={() => setShowForgot(false)}
-                  className="mt-4 text-xs font-semibold px-4 py-2 rounded-xl transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#4CAF50", color: "#fff" }}>
+                <p style={{ fontWeight: 600, color: "#374151", margin: "0 0 4px" }}>E-mail enviado!</p>
+                <p style={{ fontSize: 12, color: "#9CA3AF", margin: "0 0 20px" }}>Verifique sua caixa de entrada e spam.</p>
+                <button
+                  onClick={() => setShowForgot(false)}
+                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", cursor: "pointer", backgroundColor: "#4CAF50", color: "#fff", fontWeight: 700, fontSize: 13 }}
+                >
                   Fechar
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleForgot} className="space-y-4">
-                <input type="email" required placeholder="seu@email.com" value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)} className={inputCls} />
+              <form onSubmit={handleForgot} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <input
+                  type="email"
+                  required
+                  placeholder="seu@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  style={inputStyle}
+                />
                 {forgotStatus === "error" && (
-                  <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">
+                  <p style={{ fontSize: 13, color: "#DC2626", backgroundColor: "#FEF2F2", borderRadius: 10, padding: "10px 14px", margin: 0 }}>
                     Erro ao enviar. Verifique o e-mail e tente novamente.
                   </p>
                 )}
-                <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowForgot(false)}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgot(false)}
+                    style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1.5px solid #E5E7EB", cursor: "pointer", background: "#fff", color: "#6B7280", fontWeight: 600, fontSize: 13 }}
+                  >
                     Cancelar
                   </button>
-                  <button type="submit" disabled={forgotLoading}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity disabled:opacity-60"
-                    style={{ backgroundColor: "#4CAF50" }}>
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", cursor: forgotLoading ? "not-allowed" : "pointer", backgroundColor: "#4CAF50", color: "#fff", fontWeight: 700, fontSize: 13, opacity: forgotLoading ? 0.7 : 1 }}
+                  >
                     {forgotLoading ? "Enviando…" : "Enviar link"}
                   </button>
                 </div>
