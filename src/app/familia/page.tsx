@@ -46,7 +46,7 @@ export default function FamiliaLanding() {
             </span>
           </div>
           <a
-            href="/familia/login"
+            href="/login"
             className="px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-colors hover:bg-gray-50"
             style={{ borderColor: "#1D3557", color: "#1D3557" }}
           >
@@ -76,7 +76,7 @@ export default function FamiliaLanding() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <a
-              href="/familia/login"
+              href="/login"
               className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-base font-bold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: "#1D3557" }}
             >
@@ -240,7 +240,7 @@ export default function FamiliaLanding() {
           Acesse seu convite e crie sua conta gratuitamente para começar a acompanhar.
         </p>
         <a
-          href="/familia/login"
+          href="/login"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold transition-opacity hover:opacity-90"
           style={{ backgroundColor: "#4CAF50", color: "#fff" }}
         >

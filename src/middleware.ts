@@ -31,6 +31,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // /familia/login foi substituído pelo login unificado
+  if (pathname === "/familia/login") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   // Dev bypass: acesso livre a todas as rotas /familia/*
   if (user?.email === "dcchaves25@gmail.com" && pathname.startsWith("/familia/")) {
     return supabaseResponse;
@@ -42,22 +47,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rotas públicas (sem autenticação)
-  const publicRoutes = ["/", "/login", "/cadastro", "/familia", "/familia/login", "/familia/recuperar-senha"];
+  const publicRoutes = ["/", "/login", "/cadastro", "/familia", "/familia/recuperar-senha"];
   const isPublic =
     publicRoutes.includes(pathname) ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/convite/");
 
   if (!user && !isPublic) {
-    const dest = pathname.startsWith("/familia/")
-      ? "/familia/login"
-      : "/login";
-    return NextResponse.redirect(new URL(dest, request.url));
-  }
-
-  // Usuário autenticado em /familia/login → dashboard família
-  if (user && pathname === "/familia/login") {
-    return NextResponse.redirect(new URL("/familia/dashboard", request.url));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return supabaseResponse;

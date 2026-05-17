@@ -54,7 +54,33 @@ export default function LoginPage() {
       setLoginLoading(false);
       return;
     }
-    window.location.href = "/";
+    const { data: { user: loggedUser } } = await supabase.auth.getUser();
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", loggedUser!.id)
+      .maybeSingle();
+
+    if (userData?.role === "therapist") {
+      router.push("/terapeuta/inicio");
+      return;
+    }
+
+    const { data: familiarData } = await supabase
+      .from("family_access")
+      .select("id")
+      .eq("email", loggedUser!.email!)
+      .eq("status", "ativo")
+      .maybeSingle();
+
+    if (familiarData) {
+      router.push("/familia/dashboard");
+      return;
+    }
+
+    setLoginError("Acesso não autorizado. Entre em contato com seu terapeuta.");
+    setLoginLoading(false);
   }
 
   function handleContinue(e: React.FormEvent) {
