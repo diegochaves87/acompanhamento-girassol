@@ -7,6 +7,8 @@ export type AgendaSession = {
   status: string;
   duration_minutes: number | null;
   patient_id: string;
+  reposition_session_id: string | null;
+  reposition_scheduled_at: string | null;
   patients: { id: string; full_name: string } | null;
   clinics: { name: string } | null;
 };
@@ -46,7 +48,7 @@ export default async function AgendaPage({ searchParams }: Props) {
 
   const { data: sessoes } = await supabase
     .from("sessions")
-    .select("id, scheduled_at, status, duration_minutes, patient_id, patients(id, full_name), clinics(name)")
+    .select("id, scheduled_at, status, duration_minutes, patient_id, reposition_session_id, reposition_scheduled_at, patients(id, full_name), clinics(name)")
     .eq("tenant_id", tenantId)
     .gte("scheduled_at", monday + "T00:00:00")
     .lt("scheduled_at", nextMonday + "T00:00:00")
@@ -54,11 +56,27 @@ export default async function AgendaPage({ searchParams }: Props) {
 
   const sessions = (sessoes ?? []) as unknown as AgendaSession[];
 
+  // Batch-fetch the scheduled_at of original sessions linked to makeup sessions
+  const makeupLinkedIds = sessions
+    .filter((s) => s.reposition_session_id)
+    .map((s) => s.reposition_session_id as string);
+  let linkedSessionDates: Record<string, string> = {};
+  if (makeupLinkedIds.length > 0) {
+    const { data: linked } = await supabase
+      .from("sessions")
+      .select("id, scheduled_at")
+      .in("id", makeupLinkedIds);
+    if (linked) {
+      for (const l of linked) linkedSessionDates[l.id] = l.scheduled_at;
+    }
+  }
+
   return (
     <AgendaSemana
       tenantId={tenantId}
       initialSessions={sessions}
       initialMonday={monday}
+      initialLinkedSessionDates={linkedSessionDates}
     />
   );
 }

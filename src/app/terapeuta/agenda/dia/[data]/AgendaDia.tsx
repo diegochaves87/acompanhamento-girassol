@@ -17,6 +17,7 @@ type Props = {
   dateLabel: string;
   sessions: DiaSession[];
   guardians: GuardianInfo[];
+  linkedSessionDates: Record<string, string>;
 };
 
 function addDaysISO(iso: string, days: number): string {
@@ -56,7 +57,15 @@ const FUTURE_FORBIDDEN: SessionStatus[] = [
   "cancelled_family",
 ];
 
-export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: Props) {
+function formatDatePT(iso: string): string {
+  const d = new Date(iso);
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export default function AgendaDia({ dateISO, dateLabel, sessions, guardians, linkedSessionDates }: Props) {
   const guardianMap = new Map<string, GuardianInfo>(
     guardians.map((g) => [g.patient_id, g])
   );
@@ -116,7 +125,11 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
         .single();
       await supabase
         .from("sessions")
-        .update({ status: "reposta", original_status: orig?.status ?? null })
+        .update({
+          status: "reposta",
+          original_status: orig?.status ?? null,
+          reposition_scheduled_at: session.scheduled_at,
+        })
         .eq("id", session.reposition_session_id);
     }
 
@@ -191,6 +204,15 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
               state.status === "scheduled" &&
               guardian?.guardian_phone;
 
+            // Linked session date display
+            const linkedOriginalDate = s.reposition_session_id
+              ? linkedSessionDates[s.reposition_session_id]
+              : null;
+            const linkedDateLabel = linkedOriginalDate ? formatDatePT(linkedOriginalDate) : null;
+            const repositaDateLabel = s.reposition_scheduled_at
+              ? formatDatePT(s.reposition_scheduled_at)
+              : null;
+
             return (
               <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
                 {/* Top row */}
@@ -224,6 +246,27 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians }: P
                     {statusBadge(state.status)}
                   </span>
                 </div>
+
+                {/* Vínculo de reposição */}
+                {(linkedDateLabel || repositaDateLabel) && (
+                  <div className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl border"
+                    style={{
+                      backgroundColor: s.status === "makeup" || s.status === "makeup_completed" ? "#F5F3FF" : "#F7FAFC",
+                      borderColor: s.status === "makeup" || s.status === "makeup_completed" ? "#DDD6FE" : "#E2E8F0",
+                      color: s.status === "makeup" || s.status === "makeup_completed" ? "#6D28D9" : "#4A5568",
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    {linkedDateLabel && (
+                      <span>Esta sessão é reposição de <strong>{linkedDateLabel}</strong></span>
+                    )}
+                    {repositaDateLabel && (
+                      <span>Reposta em <strong>{repositaDateLabel}</strong></span>
+                    )}
+                  </div>
+                )}
 
                 {/* Status selector */}
                 <div className="space-y-2">

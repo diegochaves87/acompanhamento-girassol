@@ -12,6 +12,7 @@ export type DiaSession = {
   has_evolution: boolean | null;
   is_recurring: boolean | null;
   reposition_session_id: string | null;
+  reposition_scheduled_at: string | null;
   patient_id: string;
   patients: { id: string; full_name: string; insurance_name: string | null } | null;
   clinics: { name: string } | null;
@@ -54,7 +55,7 @@ export default async function AgendaDiaPage({ params }: Props) {
   const { data: sessoes, error } = await supabase
     .from("sessions")
     .select(
-      "id, scheduled_at, status, duration_minutes, value_brl, absence_note, has_evolution, is_recurring, reposition_session_id, patient_id, patients(id, full_name, insurance_name), clinics(name)"
+      "id, scheduled_at, status, duration_minutes, value_brl, absence_note, has_evolution, is_recurring, reposition_session_id, reposition_scheduled_at, patient_id, patients(id, full_name, insurance_name), clinics(name)"
     )
     .eq("tenant_id", tenantId)
     .gte("scheduled_at", iso + "T00:00:00")
@@ -64,6 +65,21 @@ export default async function AgendaDiaPage({ params }: Props) {
   if (error) console.error("[AgendaDia]", error.message);
 
   const sessions = (sessoes ?? []) as unknown as DiaSession[];
+
+  // Batch-fetch the scheduled_at of the original (lost) session for each makeup session
+  const makeupLinkedIds = sessions
+    .filter((s) => s.reposition_session_id)
+    .map((s) => s.reposition_session_id as string);
+  let linkedSessionDates: Record<string, string> = {};
+  if (makeupLinkedIds.length > 0) {
+    const { data: linked } = await supabase
+      .from("sessions")
+      .select("id, scheduled_at")
+      .in("id", makeupLinkedIds);
+    if (linked) {
+      for (const l of linked) linkedSessionDates[l.id] = l.scheduled_at;
+    }
+  }
 
   const patientIdsSet = new Set(sessions.map((s) => s.patient_id));
   const patientIds = Array.from(patientIdsSet);
@@ -82,6 +98,7 @@ export default async function AgendaDiaPage({ params }: Props) {
       dateLabel={formatDateLong(iso)}
       sessions={sessions}
       guardians={guardians}
+      linkedSessionDates={linkedSessionDates}
     />
   );
 }

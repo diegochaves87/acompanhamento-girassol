@@ -73,6 +73,7 @@ type Props = {
   tenantId: string;
   initialSessions: AgendaSession[];
   initialMonday: string;
+  initialLinkedSessionDates: Record<string, string>;
 };
 
 const DAY_NAMES = ["Seg", "Ter", "Qua", "Qui", "Sex"];
@@ -134,10 +135,19 @@ function formatEndTime(scheduledAt: string, durationMinutes: number | null): str
   return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
-export default function AgendaSemana({ tenantId, initialSessions, initialMonday }: Props) {
+function formatDateShort(iso: string): string {
+  const d = new Date(iso);
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+export default function AgendaSemana({ tenantId, initialSessions, initialMonday, initialLinkedSessionDates }: Props) {
   const router = useRouter();
   const [monday, setMonday] = useState(initialMonday);
   const [sessions, setSessions] = useState<AgendaSession[]>(initialSessions);
+  const [linkedSessionDates, setLinkedSessionDates] = useState<Record<string, string>>(initialLinkedSessionDates);
   const [loading, setLoading] = useState(false);
   const [selectedDayIdx, setSelectedDayIdx] = useState(0);
 
@@ -172,12 +182,29 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
     const supabase = createClient();
     const { data } = await supabase
       .from("sessions")
-      .select("id, scheduled_at, status, duration_minutes, patient_id, patients(id, full_name), clinics(name)")
+      .select("id, scheduled_at, status, duration_minutes, patient_id, reposition_session_id, reposition_scheduled_at, patients(id, full_name), clinics(name)")
       .eq("tenant_id", tenantId)
       .gte("scheduled_at", newMonday + "T00:00:00")
       .lt("scheduled_at", nextMonday + "T00:00:00")
       .order("scheduled_at");
-    setSessions((data ?? []) as unknown as AgendaSession[]);
+    const newSessions = (data ?? []) as unknown as AgendaSession[];
+    setSessions(newSessions);
+
+    const makeupLinkedIds = newSessions
+      .filter((s) => s.reposition_session_id)
+      .map((s) => s.reposition_session_id as string);
+    if (makeupLinkedIds.length > 0) {
+      const { data: linked } = await supabase
+        .from("sessions")
+        .select("id, scheduled_at")
+        .in("id", makeupLinkedIds);
+      const map: Record<string, string> = {};
+      if (linked) for (const l of linked) map[l.id] = l.scheduled_at;
+      setLinkedSessionDates(map);
+    } else {
+      setLinkedSessionDates({});
+    }
+
     router.replace(`/terapeuta/agenda?semana=${newMonday}`, { scroll: false });
     setLoading(false);
   }
@@ -373,22 +400,37 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
             </div>
           ) : (
             <>
-              {mobileDaySessions.map((s) => (
-                <Link
-                  key={s.id}
-                  href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
-                  className="block rounded-xl px-4 py-3 border-l-4"
-                  style={statusCardStyle(s.status)}
-                >
-                  <p className="text-sm font-bold leading-tight" style={{ color: "#1D3557" }}>
-                    {s.patients?.full_name ?? "—"}
-                  </p>
-                  <p className="text-xs mt-0.5 font-medium" style={{ color: "#374151", opacity: 0.75 }}>
-                    {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)}
-                    {" · "}{statusBadge(s.status)}
-                  </p>
-                </Link>
-              ))}
+              {mobileDaySessions.map((s) => {
+                const linkedDate = s.reposition_session_id
+                  ? linkedSessionDates[s.reposition_session_id]
+                  : null;
+                return (
+                  <Link
+                    key={s.id}
+                    href={`/terapeuta/pacientes/${s.patient_id}?aba=agenda`}
+                    className="block rounded-xl px-4 py-3 border-l-4"
+                    style={statusCardStyle(s.status)}
+                  >
+                    <p className="text-sm font-bold leading-tight" style={{ color: "#1D3557" }}>
+                      {s.patients?.full_name ?? "—"}
+                    </p>
+                    <p className="text-xs mt-0.5 font-medium" style={{ color: "#374151", opacity: 0.75 }}>
+                      {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)}
+                      {" · "}{statusBadge(s.status)}
+                    </p>
+                    {linkedDate && (
+                      <p className="text-xs mt-0.5" style={{ color: "#6D28D9", opacity: 0.85 }}>
+                        Ref.: {formatDateShort(linkedDate)}
+                      </p>
+                    )}
+                    {s.reposition_scheduled_at && (
+                      <p className="text-xs mt-0.5" style={{ color: "#4A5568", opacity: 0.85 }}>
+                        Reposta em {formatDateShort(s.reposition_scheduled_at)}
+                      </p>
+                    )}
+                  </Link>
+                );
+              })}
               <Link
                 href={`/terapeuta/agenda/dia/${mobileDayISO}`}
                 className="block text-center text-xs font-semibold pt-1"
@@ -450,6 +492,9 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                         .filter((s) => !skippedIds.has(s.id))
                         .map((s) => {
                           const group = sessionGroups.get(s.id);
+                          const linkedDate = s.reposition_session_id
+                            ? linkedSessionDates[s.reposition_session_id]
+                            : null;
                           return (
                             <div
                               key={s.id}
@@ -478,6 +523,16 @@ export default function AgendaSemana({ tenantId, initialSessions, initialMonday 
                                 >
                                   {formatTime(s.scheduled_at)} – {formatEndTime(s.scheduled_at, s.duration_minutes)} · {statusBadge(s.status)}
                                 </Link>
+                              )}
+                              {linkedDate && (
+                                <span className="block text-[10px]" style={{ color: "#6D28D9", opacity: 0.85 }}>
+                                  Ref.: {formatDateShort(linkedDate)}
+                                </span>
+                              )}
+                              {s.reposition_scheduled_at && (
+                                <span className="block text-[10px]" style={{ color: "#4A5568", opacity: 0.85 }}>
+                                  Rep. {formatDateShort(s.reposition_scheduled_at)}
+                                </span>
                               )}
                             </div>
                           );
