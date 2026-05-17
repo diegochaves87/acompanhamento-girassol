@@ -267,11 +267,11 @@ function calcClinicStats(sessions: SessionRow[]): ClinicStats[] {
     if (!map.has(id)) map.set(id, { name, pacientes: new Set(), realizadas: 0, reposicoes: 0, faltasInj: 0, faltasJust: 0, receita: 0, perdido: 0 });
     const e = map.get(id)!;
     e.pacientes.add(s.patient_id);
-    if (s.status === "completed")                                  { e.realizadas++;  e.receita  += sessionValue(s); }
-    if (s.status === "makeup_completed")                           { e.reposicoes++;  e.receita  += sessionValue(s); }
-    if (s.status === "unjustified_absence")                        { e.faltasInj++;   e.perdido  += sessionValue(s); }
-    if (s.status === "justified_absence")                          { e.faltasJust++;  e.perdido  += sessionValue(s); }
-    if (CANCELAMENTOS.includes(s.status))                          {                  e.perdido  += sessionValue(s); }
+    if (s.status === "completed")                                         { e.realizadas++;  e.receita  += sessionValue(s); }
+    if (s.status === "makeup_completed")                                  { e.reposicoes++;  e.receita  += sessionValue(s); }
+    if (s.status === "unjustified_absence")                               { e.faltasInj++;   e.perdido  += sessionValue(s); }
+    if (s.status === "justified_absence")                                 { e.faltasJust++;  e.perdido  += sessionValue(s); }
+    if (s.status === "canceled_therapist" || s.status === "cancelled_family") {               e.perdido  += sessionValue(s); }
   }
   return Array.from(map.values()).map((e) => {
     const total   = e.realizadas + e.reposicoes + e.faltasInj + e.faltasJust;
@@ -282,14 +282,15 @@ function calcClinicStats(sessions: SessionRow[]): ClinicStats[] {
 
 type PatientStats = {
   name: string; clinicName: string; diagnosis: string | null; tipo: string;
-  realizadas: number; reposicoes: number; faltas: number;
+  realizadas: number; reposicoes: number; faltas: number; cancelamentos: number;
   presenca: number; receita: number; perdido: number;
 };
 
 function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
   const map = new Map<string, {
     name: string; clinicName: string; diagnosis: string | null; tipo: string;
-    realizadas: number; reposicoes: number; faltas: number; receita: number; perdido: number;
+    realizadas: number; reposicoes: number; faltas: number; cancelamentos: number;
+    receita: number; perdido: number;
   }>();
   for (const s of sessions) {
     const id = s.patient_id;
@@ -299,16 +300,16 @@ function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
       clinicName: s.clinics?.name ?? "—",
       diagnosis: p?.diagnosis ?? null,
       tipo: p?.payment_type ?? "particular",
-      realizadas: 0, reposicoes: 0, faltas: 0, receita: 0, perdido: 0,
+      realizadas: 0, reposicoes: 0, faltas: 0, cancelamentos: 0, receita: 0, perdido: 0,
     });
     const e = map.get(id)!;
-    if (s.status === "completed")           { e.realizadas++;  e.receita  += sessionValue(s); }
-    if (s.status === "makeup_completed")    { e.reposicoes++;  e.receita  += sessionValue(s); }
-    if (FALTAS.includes(s.status))          { e.faltas++;      e.perdido  += sessionValue(s); }
-    if (CANCELAMENTOS.includes(s.status))   {                  e.perdido  += sessionValue(s); }
+    if (s.status === "completed")           { e.realizadas++;     e.receita += sessionValue(s); }
+    if (s.status === "makeup_completed")    { e.reposicoes++;     e.receita += sessionValue(s); }
+    if (s.status === "justified_absence" || s.status === "unjustified_absence")       { e.faltas++;         e.perdido += sessionValue(s); }
+    if (s.status === "canceled_therapist" || s.status === "cancelled_family")         { e.cancelamentos++;  e.perdido += sessionValue(s); }
   }
   return Array.from(map.values()).map((e) => {
-    const total   = e.realizadas + e.reposicoes + e.faltas;
+    const total    = e.realizadas + e.reposicoes + e.faltas;
     const presenca = total > 0 ? Math.round(((e.realizadas + e.reposicoes) / total) * 100) : 100;
     return { ...e, presenca };
   });
