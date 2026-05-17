@@ -267,10 +267,11 @@ function calcClinicStats(sessions: SessionRow[]): ClinicStats[] {
     if (!map.has(id)) map.set(id, { name, pacientes: new Set(), realizadas: 0, reposicoes: 0, faltasInj: 0, faltasJust: 0, receita: 0, perdido: 0 });
     const e = map.get(id)!;
     e.pacientes.add(s.patient_id);
-    if (s.status === "completed")             { e.realizadas++;  e.receita  += sessionValue(s); }
-    if (s.status === "makeup_completed")      { e.reposicoes++;  e.receita  += sessionValue(s); }
-    if (s.status === "unjustified_absence")   { e.faltasInj++;   e.perdido  += sessionValue(s); }
-    if (s.status === "justified_absence")     { e.faltasJust++;  e.perdido  += sessionValue(s); }
+    if (s.status === "completed")                                  { e.realizadas++;  e.receita  += sessionValue(s); }
+    if (s.status === "makeup_completed")                           { e.reposicoes++;  e.receita  += sessionValue(s); }
+    if (s.status === "unjustified_absence")                        { e.faltasInj++;   e.perdido  += sessionValue(s); }
+    if (s.status === "justified_absence")                          { e.faltasJust++;  e.perdido  += sessionValue(s); }
+    if (CANCELAMENTOS.includes(s.status))                          {                  e.perdido  += sessionValue(s); }
   }
   return Array.from(map.values()).map((e) => {
     const total   = e.realizadas + e.reposicoes + e.faltasInj + e.faltasJust;
@@ -304,7 +305,7 @@ function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
     if (s.status === "completed")           { e.realizadas++;  e.receita  += sessionValue(s); }
     if (s.status === "makeup_completed")    { e.reposicoes++;  e.receita  += sessionValue(s); }
     if (FALTAS.includes(s.status))          { e.faltas++;      e.perdido  += sessionValue(s); }
-    if (CANCELAMENTOS.includes(s.status))   { e.faltas++; }
+    if (CANCELAMENTOS.includes(s.status))   {                  e.perdido  += sessionValue(s); }
   }
   return Array.from(map.values()).map((e) => {
     const total   = e.realizadas + e.reposicoes + e.faltas;
