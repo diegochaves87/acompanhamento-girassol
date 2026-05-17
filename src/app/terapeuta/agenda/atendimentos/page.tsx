@@ -167,10 +167,11 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {lista.map((s) => {
+                    const isDone = s.status === "completed" || s.status === "makeup";
                     const hasEvo = evolvedSessionIds.has(s.id);
                     const evoId = evoBySession.get(s.id);
                     const rowBg =
-                      s.status === "completed"
+                      isDone
                         ? hasEvo
                           ? "#E8F5E9"
                           : "#FFF3E0"
@@ -197,7 +198,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-center">
-                          {s.status === "completed" ? (
+                          {isDone ? (
                             hasEvo && evoId ? (
                               <Link
                                 href={`/terapeuta/evolucoes/${evoId}`}
@@ -234,9 +235,10 @@ export default async function AtendimentosPage({ searchParams }: Props) {
             {/* Mobile list */}
             <ul className="sm:hidden divide-y divide-gray-100">
               {lista.map((s) => {
+                const isDone = s.status === "completed" || s.status === "makeup";
                 const hasEvo = evolvedSessionIds.has(s.id);
                 const evoId = evoBySession.get(s.id);
-                const rowBg = s.status === "completed" ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
+                const rowBg = isDone ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
                 return (
                   <li key={s.id} style={rowBg ? { backgroundColor: rowBg } : undefined}>
                     <Link
@@ -253,7 +255,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusClassName(s.status)}`}>
                             {statusBadge(s.status)}
                           </span>
-                          {s.status === "completed" && !hasEvo && (
+                          {isDone && !hasEvo && (
                             <Link
                               href={`/terapeuta/evolucoes/nova?sessao=${s.id}`}
                               className="text-[10px] font-semibold text-white bg-green-600 px-1.5 py-0.5 rounded-full"
@@ -261,7 +263,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                               + Evolução
                             </Link>
                           )}
-                          {s.status === "completed" && hasEvo && evoId && (
+                          {isDone && hasEvo && evoId && (
                             <Link
                               href={`/terapeuta/evolucoes/${evoId}`}
                               className="text-[10px] font-semibold text-white px-1.5 py-0.5 rounded-full hover:opacity-80 transition-opacity"
