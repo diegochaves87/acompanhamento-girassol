@@ -124,7 +124,7 @@ export default function PacientePortal({ patientNome, evolucoes, relatorios }: P
                 <p style={{ color: "#9CA3AF", fontSize: 14 }}>Nenhuma evolução compartilhada ainda.</p>
               </div>
             ) : (
-              evolucoes.map((ev, i) => {
+              evolucoes.map((ev) => {
                 const cor = CORES_TERAPEUTA[ev.colorIndex % CORES_TERAPEUTA.length];
                 return (
                   <div
