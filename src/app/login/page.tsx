@@ -46,7 +46,7 @@ export default function LoginPage() {
       .maybeSingle();
 
     if (userData?.role === "therapist") {
-      router.push("/terapeuta/inicio");
+      router.push("/terapeuta");
       return;
     }
 

@@ -112,6 +112,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians, lin
       })
       .eq("id", sessionId);
     if (error) {
+      console.error("saveStatus error:", error);
       updateCard(sessionId, { saving: false, erro: error.message });
       return;
     }
