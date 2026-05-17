@@ -25,11 +25,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotStatus, setForgotStatus] = useState<"idle" | "sent" | "error">("idle");
-
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -78,17 +73,6 @@ export default function LoginPage() {
     });
   }
 
-  async function handleForgot(e: React.FormEvent) {
-    e.preventDefault();
-    setForgotLoading(true);
-    setForgotStatus("idle");
-    const { error: err } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
-    });
-    setForgotLoading(false);
-    setForgotStatus(err ? "error" : "sent");
-  }
-
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "12px 16px", borderRadius: 12,
     border: "1.5px solid #E5E7EB", fontSize: 14, outline: "none",
@@ -98,7 +82,6 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "#FFF7E6", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
 
-      {/* Logo */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/identidade-visual/Logo-Nome-Slogan.png"
@@ -106,7 +89,6 @@ export default function LoginPage() {
         style={{ height: 80, marginBottom: 28, objectFit: "contain" }}
       />
 
-      {/* Card */}
       <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.10)", padding: "36px 32px", width: "100%", maxWidth: 420 }}>
         <h2 style={{ color: "#1D3557", fontWeight: 700, fontSize: 22, margin: "0 0 24px", textAlign: "center" }}>
           Acessar minha conta
@@ -141,25 +123,19 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              padding: "13px 0", borderRadius: 12, border: "none", cursor: loading ? "not-allowed" : "pointer",
-              backgroundColor: "#1D3557", color: "#fff", fontWeight: 700, fontSize: 15,
-              opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
-            }}
+            style={{ padding: "13px 0", borderRadius: 12, border: "none", cursor: loading ? "not-allowed" : "pointer", backgroundColor: "#1D3557", color: "#fff", fontWeight: 700, fontSize: 15, opacity: loading ? 0.7 : 1, transition: "opacity 0.2s" }}
           >
             {loading ? "Entrando…" : "Entrar"}
           </button>
 
-          <button
-            type="button"
-            onClick={() => { setForgotEmail(email); setShowForgot(true); setForgotStatus("idle"); }}
-            style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#6B7280", textAlign: "center", padding: 0 }}
+          <Link
+            href="/recuperar-senha"
+            style={{ fontSize: 13, color: "#6B7280", textAlign: "center", textDecoration: "none" }}
           >
             Esqueci minha senha
-          </button>
+          </Link>
         </form>
 
-        {/* Divider */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
           <div style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
           <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500 }}>ou</span>
@@ -169,11 +145,7 @@ export default function LoginPage() {
         <button
           onClick={handleGoogle}
           type="button"
-          style={{
-            width: "100%", padding: "12px 0", borderRadius: 12, border: "1.5px solid #E5E7EB",
-            cursor: "pointer", backgroundColor: "#fff", display: "flex", alignItems: "center",
-            justifyContent: "center", gap: 10, fontSize: 14, fontWeight: 600, color: "#1D3557",
-          }}
+          style={{ width: "100%", padding: "12px 0", borderRadius: 12, border: "1.5px solid #E5E7EB", cursor: "pointer", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, fontSize: 14, fontWeight: 600, color: "#1D3557" }}
         >
           <GoogleIcon />
           Continuar com Google
@@ -190,73 +162,6 @@ export default function LoginPage() {
       <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 28 }}>
         Acompanhamento Girassol &copy; {new Date().getFullYear()}
       </p>
-
-      {/* Modal — esqueci minha senha */}
-      {showForgot && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 16px", backgroundColor: "rgba(0,0,0,0.45)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setShowForgot(false); }}
-        >
-          <div style={{ background: "#fff", borderRadius: 20, boxShadow: "0 8px 40px rgba(0,0,0,0.18)", padding: "32px 28px", width: "100%", maxWidth: 380 }}>
-            <h3 style={{ color: "#1D3557", fontWeight: 700, fontSize: 18, margin: "0 0 6px" }}>
-              Recuperar senha
-            </h3>
-            <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 20px", lineHeight: 1.5 }}>
-              Informe seu e-mail e enviaremos um link para criar uma nova senha.
-            </p>
-
-            {forgotStatus === "sent" ? (
-              <div style={{ textAlign: "center", padding: "8px 0" }}>
-                <div style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: "#F0FFF4", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path d="M5 13l4 4L19 7" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <p style={{ fontWeight: 600, color: "#374151", margin: "0 0 4px" }}>E-mail enviado!</p>
-                <p style={{ fontSize: 12, color: "#9CA3AF", margin: "0 0 20px" }}>Verifique sua caixa de entrada e spam.</p>
-                <button
-                  onClick={() => setShowForgot(false)}
-                  style={{ padding: "10px 24px", borderRadius: 10, border: "none", cursor: "pointer", backgroundColor: "#4CAF50", color: "#fff", fontWeight: 700, fontSize: 13 }}
-                >
-                  Fechar
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleForgot} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <input
-                  type="email"
-                  required
-                  placeholder="seu@email.com"
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  style={inputStyle}
-                />
-                {forgotStatus === "error" && (
-                  <p style={{ fontSize: 13, color: "#DC2626", backgroundColor: "#FEF2F2", borderRadius: 10, padding: "10px 14px", margin: 0 }}>
-                    Erro ao enviar. Verifique o e-mail e tente novamente.
-                  </p>
-                )}
-                <div style={{ display: "flex", gap: 10 }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowForgot(false)}
-                    style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "1.5px solid #E5E7EB", cursor: "pointer", background: "#fff", color: "#6B7280", fontWeight: 600, fontSize: 13 }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={forgotLoading}
-                    style={{ flex: 1, padding: "11px 0", borderRadius: 10, border: "none", cursor: forgotLoading ? "not-allowed" : "pointer", backgroundColor: "#4CAF50", color: "#fff", fontWeight: 700, fontSize: 13, opacity: forgotLoading ? 0.7 : 1 }}
-                  >
-                    {forgotLoading ? "Enviando…" : "Enviar link"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
