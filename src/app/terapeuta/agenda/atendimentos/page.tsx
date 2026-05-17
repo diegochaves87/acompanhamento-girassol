@@ -167,7 +167,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {lista.map((s) => {
-                    const isDone = s.status === "completed" || s.status === "makeup";
+                    const isDone = s.status === "completed" || s.status === "makeup_completed";
                     const hasEvo = evolvedSessionIds.has(s.id);
                     const evoId = evoBySession.get(s.id);
                     const rowBg =
@@ -235,7 +235,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
             {/* Mobile list */}
             <ul className="sm:hidden divide-y divide-gray-100">
               {lista.map((s) => {
-                const isDone = s.status === "completed" || s.status === "makeup";
+                const isDone = s.status === "completed" || s.status === "makeup_completed";
                 const hasEvo = evolvedSessionIds.has(s.id);
                 const evoId = evoBySession.get(s.id);
                 const rowBg = isDone ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
