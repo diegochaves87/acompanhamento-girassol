@@ -70,7 +70,7 @@ export default async function AgendaDiaPage({ params }: Props) {
   const makeupLinkedIds = sessions
     .filter((s) => s.reposition_session_id)
     .map((s) => s.reposition_session_id as string);
-  let linkedSessionDates: Record<string, string> = {};
+  const linkedSessionDates: Record<string, string> = {};
   if (makeupLinkedIds.length > 0) {
     const { data: linked } = await supabase
       .from("sessions")
