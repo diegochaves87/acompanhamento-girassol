@@ -13,7 +13,7 @@ import {
 } from "@/lib/session-status";
 
 type Clinica = { id: string; name: string };
-type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica[] };
+type Props = { patientId: string; defaultValue: number | null; clinicas: Clinica[]; patientClinicId: string | null };
 type PerdidaSession = { id: string; scheduled_at: string; status: string; duration_minutes: number | null };
 
 type Slot = { id: string; dayOfWeek: number; hour: number; minute: number };
@@ -68,7 +68,7 @@ function addMonths(iso: string, n: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Props) {
+export default function NovaSessaoForm({ patientId, defaultValue, clinicas, patientClinicId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
@@ -83,7 +83,7 @@ export default function NovaSessaoForm({ patientId, defaultValue, clinicas }: Pr
   const [isRepetir, setIsRepetir] = useState(false);
   const [showRetroModal, setShowRetroModal] = useState(false);
 
-  const [clinicId, setClinicId] = useState(clinicas[0]?.id ?? "");
+  const [clinicId, setClinicId] = useState(patientClinicId ?? clinicas[0]?.id ?? "");
   const [duration, setDuration] = useState("30");
   const [status, setStatus] = useState<SessionStatus>("scheduled");
   const [valueBrl, setValueBrl] = useState(

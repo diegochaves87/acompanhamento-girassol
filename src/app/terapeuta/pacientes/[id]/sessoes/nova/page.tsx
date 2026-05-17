@@ -22,7 +22,7 @@ export default async function NovaSessaoPage({ params }: Props) {
   const [{ data: patient }, { data: clinicas }] = await Promise.all([
     supabase
       .from("patients")
-      .select("id, full_name, value_per_session_brl")
+      .select("id, full_name, value_per_session_brl, clinic_id")
       .eq("id", params.id)
       .single(),
     supabase
@@ -71,6 +71,7 @@ export default async function NovaSessaoPage({ params }: Props) {
           patientId={params.id}
           defaultValue={patient.value_per_session_brl ?? null}
           clinicas={clinicas ?? []}
+          patientClinicId={(patient as { clinic_id?: string | null }).clinic_id ?? null}
         />
       </main>
     </div>
