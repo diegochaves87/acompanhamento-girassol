@@ -64,17 +64,26 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
 
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-  // Fetch logo as base64
-  let logoBase64: string | null = null;
-  try {
-    const blob = await fetch("/identidade-visual/Logo-Nome-Slogan.png").then((r) => r.blob());
-    logoBase64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
+  // Carrega SVG vetorizado via canvas — sem fundo branco
+  async function loadLogoAsBase64(): Promise<string> {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width  = img.naturalWidth  || 300;
+        canvas.height = img.naturalHeight || 100;
+        const ctx = canvas.getContext("2d")!;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve("");
+      img.src = "/identidade-visual/logo-vetorizada.svg";
     });
-  } catch {}
+  }
+
+  const logoBase64 = await loadLogoAsBase64();
 
   function addHeader() {
     doc.setFillColor(VERDE[0], VERDE[1], VERDE[2]);
@@ -82,11 +91,7 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
 
     if (logoBase64) {
       try {
-        // Cobrir área da logo com a mesma cor do header para evitar fundo branco
-        doc.setFillColor(VERDE[0], VERDE[1], VERDE[2]);
-        doc.rect(14, 4, 52, 20, "F");
-        // Proporção 3:1 (48×16)
-        doc.addImage(logoBase64, "PNG", 15, 6, 48, 16);
+        doc.addImage(logoBase64, "PNG", 15, 5, 44, 18);
       } catch {}
     }
 
