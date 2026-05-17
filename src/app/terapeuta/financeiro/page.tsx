@@ -287,6 +287,11 @@ type PatientStats = {
 };
 
 function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
+  // DEBUG — log all unique statuses and total sessions reaching this function
+  const statusCounts: Record<string, number> = {};
+  for (const s of sessions) statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1;
+  console.log("[DEBUG calcPatientStats] sessions:", sessions.length, "| status counts:", JSON.stringify(statusCounts));
+
   const map = new Map<string, {
     name: string; clinicName: string; diagnosis: string | null; tipo: string;
     realizadas: number; reposicoes: number; faltas: number; cancelamentos: number;
@@ -308,11 +313,18 @@ function calcPatientStats(sessions: SessionRow[]): PatientStats[] {
     if (s.status === "justified_absence" || s.status === "unjustified_absence")       { e.faltas++;         e.perdido += sessionValue(s); }
     if (s.status === "canceled_therapist" || s.status === "cancelled_family")         { e.cancelamentos++;  e.perdido += sessionValue(s); }
   }
-  return Array.from(map.values()).map((e) => {
+  const results = Array.from(map.values()).map((e) => {
     const total    = e.realizadas + e.reposicoes + e.faltas;
     const presenca = total > 0 ? Math.round(((e.realizadas + e.reposicoes) / total) * 100) : 100;
     return { ...e, presenca };
   });
+
+  // DEBUG — log per-patient summary for the first 10 patients
+  results.slice(0, 10).forEach((p) => {
+    console.log(`[DEBUG patient] ${p.name}: realizadas=${p.realizadas} faltas=${p.faltas} cancelamentos=${p.cancelamentos} presenca=${p.presenca}% receita=${p.receita} perdido=${p.perdido}`);
+  });
+
+  return results;
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
