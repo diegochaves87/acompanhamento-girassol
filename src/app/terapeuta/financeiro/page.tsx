@@ -614,7 +614,6 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     tipo:     p.tipo === "convenio" ? (p.convenio ?? "Convênio") : "Particular",
   }));
 
-  const todayLong = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
