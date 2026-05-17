@@ -543,7 +543,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const makeupLinked = mesSessions.filter((s) => s.status === "makeup_completed" && s.reposition_session_id);
   const origIds = makeupLinked.map((s) => s.reposition_session_id!);
   type OrigRow = { id: string; scheduled_at: string; status: string; original_status: string | null };
-  let origSessMap: Record<string, OrigRow> = {};
+  const origSessMap: Record<string, OrigRow> = {};
   if (origIds.length > 0) {
     const { data: origData } = await supabase.from("sessions").select("id, scheduled_at, status, original_status").in("id", origIds);
     if (origData) for (const o of origData as OrigRow[]) origSessMap[o.id] = o;
@@ -551,25 +551,6 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const reposicoesTable = makeupLinked
     .map((s) => ({ session: s, original: origSessMap[s.reposition_session_id!] ?? null }))
     .sort((a, b) => a.session.scheduled_at.localeCompare(b.session.scheduled_at));
-
-  const printData: PrintData = {
-    terapeutaNome,
-    periodo: monthFullLabel(selectedYM),
-    metrics: {
-      receita:    metrics.receita,
-      perdido:    metrics.perdidoFaltas,
-      recuperado: metrics.recuperado,
-      presenca:   metrics.presenca,
-      totalAtend: metrics.totalAtend,
-      totalFalta: metrics.totalFalta,
-    },
-    ticketMedio,
-    receitaProjetada,
-    patientRanking,
-    clinicRanking,
-    clinicPatients,
-    monthlyData,
-  };
 
   const mesOptions = getLast6Months(currentYearMonth()).reverse();
   const maxPatientReceita = patientRanking[0]?.receita || 1;
