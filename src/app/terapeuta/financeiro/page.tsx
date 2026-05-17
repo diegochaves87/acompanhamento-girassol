@@ -251,32 +251,32 @@ function presencaStatus(pct: number): { label: string; color: string } {
 
 type ClinicStats = {
   name: string; pacientes: number; realizadas: number; reposicoes: number;
-  faltasInj: number; faltasJust: number; faltas: number;
+  faltasInj: number; faltasJust: number; faltas: number; cancelamentos: number;
   presenca: number; receita: number; perdido: number;
 };
 
 function calcClinicStats(sessions: SessionRow[]): ClinicStats[] {
   const map = new Map<string, {
     name: string; pacientes: Set<string>;
-    realizadas: number; reposicoes: number; faltasInj: number; faltasJust: number;
+    realizadas: number; reposicoes: number; faltasInj: number; faltasJust: number; cancelamentos: number;
     receita: number; perdido: number;
   }>();
   for (const s of sessions) {
     const id   = s.clinic_id ?? "__sem__";
     const name = s.clinics?.name ?? "Sem clínica";
-    if (!map.has(id)) map.set(id, { name, pacientes: new Set(), realizadas: 0, reposicoes: 0, faltasInj: 0, faltasJust: 0, receita: 0, perdido: 0 });
+    if (!map.has(id)) map.set(id, { name, pacientes: new Set(), realizadas: 0, reposicoes: 0, faltasInj: 0, faltasJust: 0, cancelamentos: 0, receita: 0, perdido: 0 });
     const e = map.get(id)!;
     e.pacientes.add(s.patient_id);
-    if (s.status === "completed")                                         { e.realizadas++;  e.receita  += sessionValue(s); }
-    if (s.status === "makeup_completed")                                  { e.reposicoes++;  e.receita  += sessionValue(s); }
-    if (s.status === "unjustified_absence")                               { e.faltasInj++;   e.perdido  += sessionValue(s); }
-    if (s.status === "justified_absence")                                 { e.faltasJust++;  e.perdido  += sessionValue(s); }
-    if (s.status === "canceled_therapist" || s.status === "cancelled_family") {               e.perdido  += sessionValue(s); }
+    if (s.status === "completed")                                             { e.realizadas++;    e.receita += sessionValue(s); }
+    if (s.status === "makeup_completed")                                      { e.reposicoes++;    e.receita += sessionValue(s); }
+    if (s.status === "unjustified_absence")                                   { e.faltasInj++;     e.perdido += sessionValue(s); }
+    if (s.status === "justified_absence")                                     { e.faltasJust++;    e.perdido += sessionValue(s); }
+    if (s.status === "canceled_therapist" || s.status === "cancelled_family") { e.cancelamentos++; e.perdido += sessionValue(s); }
   }
   return Array.from(map.values()).map((e) => {
-    const total   = e.realizadas + e.reposicoes + e.faltasInj + e.faltasJust;
+    const total    = e.realizadas + e.reposicoes + e.faltasInj + e.faltasJust;
     const presenca = total > 0 ? Math.round(((e.realizadas + e.reposicoes) / total) * 100) : 100;
-    return { name: e.name, pacientes: e.pacientes.size, realizadas: e.realizadas, reposicoes: e.reposicoes, faltasInj: e.faltasInj, faltasJust: e.faltasJust, faltas: e.faltasInj + e.faltasJust, presenca, receita: e.receita, perdido: e.perdido };
+    return { name: e.name, pacientes: e.pacientes.size, realizadas: e.realizadas, reposicoes: e.reposicoes, faltasInj: e.faltasInj, faltasJust: e.faltasJust, faltas: e.faltasInj + e.faltasJust, cancelamentos: e.cancelamentos, presenca, receita: e.receita, perdido: e.perdido };
   }).sort((a, b) => b.receita - a.receita);
 }
 
@@ -778,7 +778,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
               <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr style={{ backgroundColor: "#1D3557" }}>
-                    {["#", "Clínica", "Pacientes", "Realizadas", "Reposições", "Faltas", "Presença", "Receita", "Perdido"].map((h) => (
+                    {["#", "Clínica", "Pacientes", "Realizadas", "Reposições", "Faltas/Cancel", "Presença", "Receita", "Perdido"].map((h) => (
                       <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -793,7 +793,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                         <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{c.pacientes}</td>
                         <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{c.realizadas}</td>
                         <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{c.reposicoes}</td>
-                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{c.faltas}</td>
+                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{c.faltas + c.cancelamentos}</td>
                         <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
                           <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: `${st.color}18`, color: st.color }}>{c.presenca}%</span>
                         </td>
@@ -871,7 +871,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
               <table className="w-full text-sm min-w-[720px]">
                 <thead>
                   <tr style={{ backgroundColor: "#1D3557" }}>
-                    {["#", "Paciente", "Clínica", "Tipo pgto", "Realizadas", "Reposições", "Faltas", "Presença", "Receita", "Perdido"].map((h) => (
+                    {["#", "Paciente", "Clínica", "Tipo pgto", "Realizadas", "Reposições", "Faltas/Cancel", "Presença", "Receita", "Perdido"].map((h) => (
                       <th key={h} className="py-2.5 px-3 text-left text-[11px] font-semibold text-white uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
@@ -891,7 +891,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                         </td>
                         <td className="py-2.5 px-3 text-center text-gray-600 border-b border-[#E2E8F0]">{p.realizadas}</td>
                         <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]" style={{ color: "#8E6CCF" }}>{p.reposicoes}</td>
-                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{p.faltas}</td>
+                        <td className="py-2.5 px-3 text-center text-red-500 border-b border-[#E2E8F0]">{p.faltas + p.cancelamentos}</td>
                         <td className="py-2.5 px-3 text-center border-b border-[#E2E8F0]">
                           <span className="text-xs font-semibold" style={{ color: st.color }}>{p.presenca}%</span>
                         </td>
