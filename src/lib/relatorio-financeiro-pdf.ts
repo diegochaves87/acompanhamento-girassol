@@ -81,7 +81,13 @@ export async function generateRelatorioFinanceiroPDF(data: PDFRelatorioData): Pr
     doc.rect(0, 0, PAGE_W, 28, "F");
 
     if (logoBase64) {
-      try { doc.addImage(logoBase64, "PNG", 15, 5, 50, 18); } catch {}
+      try {
+        // Cobrir área da logo com a mesma cor do header para evitar fundo branco
+        doc.setFillColor(VERDE[0], VERDE[1], VERDE[2]);
+        doc.rect(14, 4, 52, 20, "F");
+        // Proporção 3:1 (48×16)
+        doc.addImage(logoBase64, "PNG", 15, 6, 48, 16);
+      } catch {}
     }
 
     const rx = PAGE_W - MARGIN;

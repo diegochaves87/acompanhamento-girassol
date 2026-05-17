@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { statusLabel, statusClassName } from "@/lib/session-status";
 import BarChartMensal, { MonthBar } from "./BarChartMensal";
 import ExportarCSV, { CsvRow } from "./ExportarCSV";
-import BotaoImprimir from "./BotaoImprimir";
 import BotaoExportarPDF from "./BotaoExportarPDF";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -437,7 +436,6 @@ export default async function FinanceiroPage({ searchParams }: Props) {
                 {sessions.length} sessão{sessions.length !== 1 ? "ões" : ""} no período
               </h2>
               <div className="flex gap-2">
-                <BotaoImprimir />
                 <ExportarCSV filename="controle-pagamento" headers={csvHeaders} rows={csvRows} />
               </div>
             </div>
@@ -619,44 +617,14 @@ export default async function FinanceiroPage({ searchParams }: Props) {
   const todayLong = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 
   return (
-    <>
-    <style>{`
-      @media print {
-        .no-print { display: none !important; }
-        .print-only { display: block !important; }
-        .print-footer { display: block !important; position: fixed; bottom: 0; left: 0; right: 0; }
-        @page { margin: 2cm; }
-        body { background: white !important; }
-      }
-      .print-only { display: none; }
-      .print-footer { display: none; }
-    `}</style>
     <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
 
-      {/* Print header — visible only when printing */}
-      <div className="print-only px-8 pt-6 pb-4 border-b-2" style={{ borderColor: "#FFBA3D" }}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/identidade-visual/Logo-Nome-Slogan.png" alt="Girassol" style={{ height: 56, width: "auto", objectFit: "contain" }} />
-            <div>
-              <p className="font-bold text-lg" style={{ color: "#1D3557" }}>{terapeutaNome}</p>
-              <p className="text-sm font-semibold" style={{ color: "#4CAF50" }}>Relatório Financeiro — {monthFullLabel(selectedYM)}</p>
-            </div>
-          </div>
-          <div className="text-right text-xs" style={{ color: "#9CA3AF" }}>
-            <p>Gerado em {todayLong}</p>
-            <p style={{ color: "#4CAF50", fontWeight: 600 }}>Acompanhamento Girassol</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="no-print"><Header aba={aba} /></div>
+      <Header aba={aba} />
 
       <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
 
         {/* Filtros */}
-        <form method="GET" className="no-print flex flex-wrap items-end gap-3">
+        <form method="GET" className="flex flex-wrap items-end gap-3">
           <input type="hidden" name="aba" value="dashboard" />
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1.5">Mês</label>
@@ -682,7 +650,6 @@ export default async function FinanceiroPage({ searchParams }: Props) {
             Aplicar
           </button>
           <div className="ml-auto flex gap-2">
-            <BotaoImprimir />
             <BotaoExportarPDF data={pdfData} />
             <ExportarCSV filename={`financeiro-${selectedYM}`} headers={dashCsvHeaders} rows={dashCsvRows} />
           </div>
@@ -1242,14 +1209,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
 
       </main>
 
-      {/* Print footer */}
-      <div className="print-footer px-8 py-3 text-center border-t" style={{ borderColor: "#E5E7EB", backgroundColor: "#F9FAFB" }}>
-        <p className="text-xs" style={{ color: "#9CA3AF" }}>Informação confidencial — uso exclusivo do profissional</p>
-        <p className="text-xs" style={{ color: "#4CAF50", fontWeight: 600 }}>Acompanhamento Girassol — www.acompanhamentogirassol.com.br</p>
-      </div>
-
     </div>
-    </>
   );
 }
 
