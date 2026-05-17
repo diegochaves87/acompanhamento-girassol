@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Rotas públicas (sem autenticação)
-  const publicRoutes = ["/", "/login", "/cadastro", "/familia", "/familia/login"];
+  const publicRoutes = ["/", "/login", "/cadastro", "/familia", "/familia/login", "/familia/recuperar-senha"];
   const isPublic =
     publicRoutes.includes(pathname) ||
     pathname.startsWith("/auth/") ||
