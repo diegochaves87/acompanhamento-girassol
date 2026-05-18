@@ -113,18 +113,6 @@ const NAV_BOTTOM: NavItem[] = [
       </svg>
     ),
   },
-  {
-    label: "Configurações",
-    href: "/terapeuta/configuracoes",
-    color: "#6B7280",
-    bgColor: "#F3F4F6",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
 ];
 
 const NAV_MOBILE_BOTTOM = NAV_TOP.slice(0, 4);
@@ -294,22 +282,6 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           <SidebarLinks items={NAV_BOTTOM} />
         </div>
 
-        {/* Logout */}
-        <div className="px-0 py-2 border-t overflow-x-hidden" style={{ borderColor: "#E5E7EB" }}>
-          <button
-            onClick={handleLogout}
-            title={!sidebarOpen ? "Sair" : undefined}
-            className={`flex items-center mr-2 ml-0 px-3 py-2.5 w-full text-sm font-medium transition-colors hover:bg-gray-50 ${!sidebarOpen ? "justify-center mx-2" : "gap-3"}`}
-            style={{ color: "#9CA3AF", borderLeft: "3px solid transparent", borderRadius: "0 12px 12px 0" }}
-          >
-            <span className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F3F4F6", color: "#6B7280" }}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </span>
-            {sidebarOpen && <span>Sair</span>}
-          </button>
-        </div>
       </aside>
 
       {/* ── Desktop top header bar ── */}
@@ -551,18 +523,6 @@ export default function TerapeutaShell({ children, profissional }: Props) {
           <SidebarLinks items={NAV_BOTTOM} onNavigate={() => setMobileDrawerOpen(false)} />
         </div>
 
-        <div className="px-3 pb-3 pt-1 border-t" style={{ borderColor: "#E5E7EB" }}>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-gray-50"
-            style={{ color: "#6B7280" }}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Sair
-          </button>
-        </div>
       </div>
 
       {/* ── Mobile bottom nav ── */}
