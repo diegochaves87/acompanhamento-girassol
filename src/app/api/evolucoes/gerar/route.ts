@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const guardianDesc =
-    guardianRelationship || guardianName
-      ? [guardianRelationship, guardianName].filter(Boolean).join(" ")
-      : "responsável";
+  const guardianFirstName = guardianName?.trim().split(" ")[0] ?? "";
+  const guardianDesc = guardianRelationship || guardianFirstName
+    ? [guardianRelationship, guardianFirstName].filter(Boolean).join(" ")
+    : "responsável";
 
   const addressTitle = guardianRelationship ?? "Responsável";
 

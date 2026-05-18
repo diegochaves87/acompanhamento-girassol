@@ -2,7 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest } from "next/server";
 
-const SYSTEM_PROMPT = `Você é um assistente clínico especializado em relatórios terapêuticos profissionais no Brasil. Gere um relatório clínico COMPLETO em texto corrido.
+function buildSystemPrompt(assinatura: string) {
+  return `Você é um assistente clínico especializado em relatórios terapêuticos profissionais no Brasil. Gere um relatório clínico COMPLETO em texto corrido.
 
 REGRAS ABSOLUTAS:
 - Proibido usar markdown (sem ##, **, ---, *, >, |, backticks)
@@ -39,8 +40,8 @@ Período: [data início] a [data fim]
 [cidade]-CE, [data por extenso]
 
 ________________________________________
-Terapeuta Responsável
-[Especialidade / Número do Conselho]`;
+${assinatura}`;
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -61,6 +62,16 @@ export async function POST(req: NextRequest) {
   if (!patient_id || !tipo || !periodo_inicio || !periodo_fim) {
     return Response.json({ error: "Parâmetros incompletos." }, { status: 400 });
   }
+
+  const profileRes = await supabase
+    .from("profiles")
+    .select("full_name, conselho_nome, conselho_numero, profissao")
+    .eq("id", user.id)
+    .maybeSingle();
+  const profile = profileRes.data;
+  const assinatura = profile
+    ? `${profile.full_name} — ${profile.profissao ?? ""} — ${profile.conselho_nome ?? ""} ${profile.conselho_numero ?? ""}`.trim()
+    : "Terapeuta Responsável";
 
   const patientRes = await supabase
     .from("patients")
@@ -144,7 +155,7 @@ ${notasTexto || "  Nenhuma anotação registrada no período."}
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(assinatura),
       messages: [
         {
           role: "user",

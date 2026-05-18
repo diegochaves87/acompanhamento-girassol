@@ -21,6 +21,9 @@ type ProfileData = {
   formacoes?: Array<{ name: string; file_url?: string }>;
   especialidades?: Array<{ name: string; file_url?: string }>;
   courses?: Array<{ name: string; file_url?: string }>;
+  conselho_nome?: string;
+  conselho_numero?: string;
+  profissao?: string;
   // legacy fields kept for backward-compat initialization only
   education?: string;
   specialties?: string;
@@ -171,7 +174,9 @@ export default function PerfilForm({
   profileData,
 }: Props) {
   const [nome, setNome] = useState(initialName);
-  const [profissao, setProfissao] = useState(initialProfession);
+  const [profissao, setProfissao] = useState(profileData.profissao ?? initialProfession);
+  const [conselhoNome, setConselhoNome] = useState(profileData.conselho_nome ?? "");
+  const [conselhoNumero, setConselhoNumero] = useState(profileData.conselho_numero ?? "");
 
   const [cpf, setCpf] = useState(maskCpf(profileData.cpf ?? ""));
   const [phone, setPhone] = useState(maskPhone(profileData.phone ?? ""));
@@ -243,9 +248,13 @@ export default function PerfilForm({
   }
 
   async function handleSave() {
-    setSaving(true);
     setErro("");
     setSuccess(false);
+    if (!conselhoNome.trim() || !conselhoNumero.trim() || formacoes.filter(f => f.name).length === 0) {
+      setErro("Preencha os campos obrigatórios: Formação, Nome do Conselho e Número do Conselho.");
+      return;
+    }
+    setSaving(true);
     const supabase = createClient();
 
     const [formacoesResult, especialidadesResult, coursesResult] = await Promise.all([
@@ -277,6 +286,9 @@ export default function PerfilForm({
         formacoes: formacoesResult,
         especialidades: especialidadesResult,
         courses: coursesResult,
+        conselho_nome: conselhoNome,
+        conselho_numero: conselhoNumero,
+        profissao: profissao.trim(),
         updated_at: new Date().toISOString(),
       },
       { onConflict: "id" }
@@ -303,6 +315,14 @@ export default function PerfilForm({
             </Field>
             <Field label="Profissão">
               <input className={inputCls} value={profissao} onChange={(e) => setProfissao(e.target.value)} placeholder="Ex: Terapeuta Ocupacional" />
+            </Field>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Nome do Conselho *">
+              <input className={inputCls} value={conselhoNome} onChange={(e) => setConselhoNome(e.target.value)} placeholder="Ex: CRP, CREFITO, CRM" />
+            </Field>
+            <Field label="Número do Conselho *">
+              <input className={inputCls} value={conselhoNumero} onChange={(e) => setConselhoNumero(e.target.value)} placeholder="Ex: 12345/SP" />
             </Field>
           </div>
         </div>

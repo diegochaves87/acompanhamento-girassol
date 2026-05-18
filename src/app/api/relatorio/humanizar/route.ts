@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Conteúdo não fornecido." }, { status: 400 });
   }
 
-  const nome = familiar_nome?.trim() || "família";
+  const nome = familiar_nome?.trim().split(" ")[0] || "família";
   const parentesco = familiar_parentesco?.trim() || "responsável";
 
   const systemPrompt = `Você é um comunicador empático especializado em traduzir relatórios clínicos para famílias.
