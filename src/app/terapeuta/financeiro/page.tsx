@@ -388,7 +388,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
       <div className="min-h-screen" style={{ backgroundColor: "#F9FAFB" }}>
         <Header aba={aba} />
 
-        <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
+        <main className="max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-6 space-y-5">
           {/* Filtros */}
           <form method="GET" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <input type="hidden" name="aba" value="controle" />
@@ -431,7 +431,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
 
           {/* Tabela */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
+            <div className="flex items-center justify-between px-3 py-3 sm:px-6 sm:py-4 border-b border-gray-50">
               <h2 className="text-sm font-semibold text-gray-700">
                 {sessions.length} sessão{sessions.length !== 1 ? "ões" : ""} no período
               </h2>
@@ -620,7 +620,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
 
       <Header aba={aba} />
 
-      <main className="max-w-5xl mx-auto px-6 py-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-3 py-4 sm:px-6 sm:py-6 space-y-6">
 
         {/* Filtros */}
         <form method="GET" className="flex flex-wrap items-end gap-3">

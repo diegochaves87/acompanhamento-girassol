@@ -82,7 +82,7 @@ export default async function PacientesPage({ searchParams }: Props) {
         }
       />
 
-      <main className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-3 py-4 sm:px-6 sm:py-8">
         <PacientesControles ativos={ativos} inativos={inativos} showAviso={showAviso} />
       </main>
     </div>

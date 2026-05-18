@@ -142,9 +142,9 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians, lin
   const nextDay = addDaysISO(dateISO, 1);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0f4f1" }}>
+    <div className="min-h-screen w-full overflow-x-hidden" style={{ backgroundColor: "#f0f4f1" }}>
       {/* Header */}
-      <header style={{ backgroundColor: "#1a4a3a" }} className="px-6 py-4">
+      <header style={{ backgroundColor: "#1a4a3a" }} className="px-3 py-3 sm:px-6 sm:py-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-3">
             <Link href="/terapeuta/agenda" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm transition-colors">
@@ -189,7 +189,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians, lin
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-6 space-y-4">
+      <main className="max-w-3xl mx-auto px-3 py-4 sm:px-6 sm:py-6 space-y-4">
         {sessions.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-14 text-center">
             <p className="font-semibold text-gray-600 mb-1">Nenhuma sessão neste dia</p>
@@ -215,7 +215,7 @@ export default function AgendaDia({ dateISO, dateLabel, sessions, guardians, lin
               : null;
 
             return (
-              <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 space-y-4">
                 {/* Top row */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
