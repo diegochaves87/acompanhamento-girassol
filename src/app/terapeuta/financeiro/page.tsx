@@ -100,7 +100,7 @@ function formatDateOnly(iso: string) {
 
 // ─── Aggregation ─────────────────────────────────────────────────────────────
 
-const REVENUE       = ["completed", "makeup", "makeup_completed"];
+const REVENUE       = ["completed", "makeup_completed"];
 const FALTAS        = ["unjustified_absence", "justified_absence"];
 const CANCELAMENTOS = ["canceled_therapist", "cancelled_family"];
 const REPOSTA_S     = ["reposta"];
