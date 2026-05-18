@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { togglePublicarNota } from "./actions";
 
 type Props = {
@@ -9,10 +9,13 @@ type Props = {
   patientId: string;
 };
 
-export default function PublicarNotaToggle({ noteId, publicado, patientId }: Props) {
+export default function PublicarNotaToggle({ noteId, publicado: initialPublicado, patientId }: Props) {
+  const [publicado, setPublicado] = useState(initialPublicado);
   const [isPending, startTransition] = useTransition();
 
   function handleToggle() {
+    const novoValor = !publicado;
+    setPublicado(novoValor);
     startTransition(() => {
       togglePublicarNota(noteId, publicado, patientId);
     });
