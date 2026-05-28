@@ -27,7 +27,7 @@ const inter = "var(--font-inter, sans-serif)";
 
 const NAV_LINKS = [
   { label: "Início", href: "#inicio" },
-  { label: "Sobre nós", href: "#sobre" },
+  { label: "Nossa História", href: "#nossa-historia" },
   { label: "Funcionalidades", href: "#funcionalidades" },
   { label: "Como funciona", href: "#como-funciona" },
   { label: "Para Famílias", href: "#familias" },
@@ -633,6 +633,98 @@ function ReferralSection() {
   );
 }
 
+// ─── Nossa História ───────────────────────────────────────────────────────────
+
+function NossaHistoriaSection() {
+  return (
+    <section id="nossa-historia" style={{ backgroundColor: "#FFF7E6", paddingTop: 96, paddingBottom: 96 }}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10">
+
+        <div className="text-center mb-16 max-w-2xl mx-auto">
+          <span
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6"
+            style={{ backgroundColor: "#FFFBEB", color: "#E07B29" }}
+          >
+            Nossa história
+          </span>
+          <h2 style={{ fontFamily: poppins, fontSize: "clamp(28px,3vw,40px)", fontWeight: 700, color: "#1D3557", lineHeight: 1.2 }}>
+            Como uma fisioterapeuta do interior do Ceará transformou uma inquietação em plataforma
+          </h2>
+        </div>
+
+        <div className="max-w-3xl mx-auto flex flex-col gap-12">
+
+          {/* O que é */}
+          <div>
+            <h3 style={{ fontFamily: poppins, fontWeight: 700, fontSize: 22, color: "#1D3557", marginBottom: 14 }}>
+              O que é
+            </h3>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter }}>
+              O Acompanhamento Girassol é uma plataforma criada para fortalecer o vínculo entre terapeuta, paciente e família. Aqui, cada sessão, cada evolução e cada conquista são registradas com cuidado, formando um histórico vivo do percurso terapêutico.
+            </p>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter, marginTop: 14 }}>
+              A proposta é simples: tornar o processo terapêutico mais transparente, humano e conectado, para que ninguém precise caminhar sozinho nessa jornada.
+            </p>
+          </div>
+
+          {/* Como surgiu */}
+          <div>
+            <h3 style={{ fontFamily: poppins, fontWeight: 700, fontSize: 22, color: "#1D3557", marginBottom: 14 }}>
+              Como surgiu
+            </h3>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter }}>
+              Entre um atendimento e outro, no ritmo acelerado da rotina clínica, a Fisioterapeuta Thaís Freitas percebia algo que a movia: havia muito mais a oferecer do que o tempo permitia. Terapeutas com o coração cheio de coisas importantes para compartilhar, famílias igualmente ansiosas por participar mais ativamente, e uma equipe multidisciplinar que, apesar do comprometimento, encontrava poucos momentos para trocar informações que poderiam transformar um tratamento.
+            </p>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter, marginTop: 14 }}>
+              Cada detalhe que não chegava à família, cada observação que não alcançava o colega de equipe, representava uma oportunidade de impulsionar ainda mais o desenvolvimento do paciente. E para a Dra. Thaís Freitas, enxergar uma oportunidade de melhorar a vida de alguém e não agir simplesmente não era uma opção.
+            </p>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter, marginTop: 14 }}>
+              Ela foi além. Buscou um desenvolvedor que acreditasse no mesmo sonho, e juntos construíram o Acompanhamento Girassol, uma plataforma pensada de dentro para fora, nascida da vivência real de quem está presente em cada sessão, todos os dias.
+            </p>
+          </div>
+
+          {/* Quem é Thaís */}
+          <div>
+            <h3 style={{ fontFamily: poppins, fontWeight: 700, fontSize: 22, color: "#1D3557", marginBottom: 18 }}>
+              Quem é Thaís Freitas
+            </h3>
+
+            <div className="flex flex-col sm:flex-row gap-6 mb-6">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/identidade-visual/thais-freitas.jpg"
+                alt="Thaís Freitas"
+                className="w-32 h-32 rounded-2xl object-cover flex-shrink-0 self-start"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+              <div style={{ fontFamily: inter }}>
+                <p style={{ fontWeight: 700, fontSize: 16, color: "#1D3557" }}>Thaís Emanuelle Martins de Freitas</p>
+                <p style={{ fontSize: 14, color: "#6B7280", marginTop: 4 }}>Fisioterapeuta · Especialista em Psicomotricidade · Idealizadora do Acompanhamento Girassol</p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter }}>
+              Nascida em Mossoró, no Rio Grande do Norte, Thaís cresceu em Aracati, no interior do Ceará, cidade que escolheu para chamar de lar até hoje. Fisioterapeuta especializada em psicomotricidade, carregou desde cedo uma certeza: cuidar do outro é mais do que uma profissão, é um propósito.
+            </p>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter, marginTop: 14 }}>
+              Foi na psicomotricidade que encontrou o que tanto buscava. Uma prática que enxerga a criança por inteiro: seu movimento, suas emoções, sua história. Uma abordagem onde cada detalhe é valorizado, e cada pequena conquista é celebrada como o grande avanço que realmente é.
+            </p>
+            <p style={{ fontSize: 16, lineHeight: 1.85, color: "#4B5563", fontFamily: inter, marginTop: 14 }}>
+              Mãe, esposa e profissional apaixonada pelo que faz, a Dra. Thaís une na vida aquilo que vive na clínica: presença, atenção e cuidado genuíno. O Acompanhamento Girassol nasceu de tudo isso, de suas experiências, de sua sensibilidade e da crença inabalável de que a tecnologia pode, sim, servir ao cuidado humano.
+            </p>
+            <blockquote
+              style={{ borderLeft: "4px solid #FFBA3D", paddingLeft: 20, marginTop: 28, fontStyle: "italic", fontSize: 16, lineHeight: 1.8, color: "#6B7280", fontFamily: inter }}
+            >
+              &ldquo;Não fui desenvolvedora, não fui programadora. Fui apenas uma terapeuta que acreditou que era possível fazer diferente e ajudar meus colegas de profissão e, principalmente, o desenvolvimento dos meus pacientes.&rdquo;
+            </blockquote>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Depoimentos ──────────────────────────────────────────────────────────────
 
 const TESTIMONIALS = [
@@ -1102,6 +1194,7 @@ export default function HomePage() {
         <FamilySection />
         <CarouselSection />
         <ReferralSection />
+        <NossaHistoriaSection />
         <TestimonialsSection />
         <KpisSection />
         <FAQSection />
