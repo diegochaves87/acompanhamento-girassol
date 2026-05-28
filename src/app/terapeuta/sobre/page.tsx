@@ -88,7 +88,7 @@ export default function SobrePage() {
           <div className="flex flex-col sm:flex-row gap-5 mb-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/identidade-visual/thais-freitas.jpg"
+              src="/Foto-Thais.jpeg"
               alt="Thaís Freitas"
               className="w-28 h-28 rounded-2xl object-cover flex-shrink-0 self-start"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

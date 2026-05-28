@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import TerapeutaShell from "./TerapeutaShell";
 import { createClient } from "@/lib/supabase/server";
 
