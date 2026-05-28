@@ -112,7 +112,7 @@ export default function SobrePage() {
             className="mt-5 text-sm italic text-gray-500"
             style={{ borderLeft: "4px solid #FFBA3D", paddingLeft: 16 }}
           >
-            "Não fui desenvolvedora, não fui programadora. Fui apenas uma terapeuta que acreditou que era possível fazer diferente e ajudar meus colegas de profissão e, principalmente, o desenvolvimento dos meus pacientes."
+            &ldquo;Não fui desenvolvedora, não fui programadora. Fui apenas uma terapeuta que acreditou que era possível fazer diferente e ajudar meus colegas de profissão e, principalmente, o desenvolvimento dos meus pacientes.&rdquo;
           </blockquote>
         </div>
 
