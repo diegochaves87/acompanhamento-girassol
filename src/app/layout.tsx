@@ -36,9 +36,12 @@ export const metadata: Metadata = {
   title: "Acompanhamento Girassol",
   description: "Cuidar, acompanhar, evoluir juntos.",
   icons: {
-    icon: "/identidade-visual/Logo-Girassol.png",
-    shortcut: "/identidade-visual/Logo-Girassol.png",
-    apple: "/identidade-visual/Logo-Girassol.png",
+    icon: [
+      { url: "/identidade-visual/icone-logo-vetorizado.svg", type: "image/svg+xml" },
+      { url: "/logo-icone.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/logo-icone.png",
+    shortcut: "/logo-icone.png",
   },
 };
 
