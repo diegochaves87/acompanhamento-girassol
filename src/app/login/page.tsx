@@ -84,7 +84,7 @@ export default function LoginPage() {
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/identidade-visual/Logo-Nome-Slogan.png"
+        src="/identidade-visual/logo-vetorizada.svg"
         alt="Acompanhamento Girassol"
         style={{ height: 80, marginBottom: 28, objectFit: "contain" }}
       />

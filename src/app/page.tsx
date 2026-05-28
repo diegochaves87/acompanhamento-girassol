@@ -2,6 +2,21 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
+      <path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332Z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
+    </svg>
+  );
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -19,7 +34,7 @@ const NAV_LINKS = [
   { label: "Contato", href: "#contato" },
 ];
 
-function NavBar() {
+function NavBar({ openLogin }: { openLogin: () => void }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -57,11 +72,12 @@ function NavBar() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          <Link href="/login"
+          <button
+            onClick={openLogin}
             className="px-5 py-2.5 rounded-xl text-sm font-semibold border transition-colors hover:bg-gray-50"
-            style={{ borderColor: "#1D3557", color: "#1D3557" }}>
+            style={{ borderColor: "#1D3557", color: "#1D3557", backgroundColor: "transparent", cursor: "pointer" }}>
             Entrar
-          </Link>
+          </button>
           <Link href="/cadastro"
             className="px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-opacity hover:opacity-90"
             style={{ backgroundColor: "#1D3557" }}>
@@ -86,11 +102,11 @@ function NavBar() {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-3">
-            <Link href="/login" onClick={() => setOpen(false)}
+            <button onClick={() => { setOpen(false); openLogin(); }}
               className="py-3 rounded-xl text-sm font-semibold text-center border"
-              style={{ borderColor: "#1D3557", color: "#1D3557" }}>
+              style={{ borderColor: "#1D3557", color: "#1D3557", backgroundColor: "transparent", cursor: "pointer", width: "100%" }}>
               Entrar
-            </Link>
+            </button>
             <Link href="/cadastro" onClick={() => setOpen(false)}
               className="py-3 rounded-xl text-sm font-bold text-white text-center"
               style={{ backgroundColor: "#1D3557" }}>
@@ -105,7 +121,7 @@ function NavBar() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
-function HeroSection() {
+function HeroSection({ openLogin }: { openLogin: () => void }) {
   return (
     <section id="inicio" style={{ backgroundColor: "#FFF7E6", paddingTop: 144, minHeight: "90vh", fontFamily: inter }}>
       <div className="max-w-7xl mx-auto px-6 md:px-10 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center min-h-[calc(90vh-144px)]">
@@ -135,11 +151,12 @@ function HeroSection() {
               style={{ backgroundColor: "#1D3557" }}>
               Crie sua conta
             </Link>
-            <Link href="/login"
+            <button
+              onClick={openLogin}
               className="px-8 py-4 rounded-xl text-base font-semibold text-center border-2 transition-all hover:bg-white"
-              style={{ borderColor: "#1D3557", color: "#1D3557" }}>
+              style={{ borderColor: "#1D3557", color: "#1D3557", backgroundColor: "transparent", cursor: "pointer" }}>
               Já tenho conta
-            </Link>
+            </button>
           </div>
 
           {/* Social proof */}
@@ -767,7 +784,7 @@ function FAQSection() {
 
 // ─── CTA Final ────────────────────────────────────────────────────────────────
 
-function CTASection() {
+function CTASection({ openLogin }: { openLogin: () => void }) {
   return (
     <section style={{ backgroundColor: "#FFF7E6", paddingTop: 96, paddingBottom: 96 }}>
       <div className="max-w-2xl mx-auto px-6 md:px-10 text-center flex flex-col items-center gap-7">
@@ -782,11 +799,12 @@ function CTASection() {
           style={{ backgroundColor: "#4CAF50" }}>
           Criar minha conta agora
         </Link>
-        <Link href="/login"
+        <button
+          onClick={openLogin}
           className="text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-60"
-          style={{ color: "#6B7280", fontFamily: inter }}>
+          style={{ color: "#6B7280", fontFamily: inter, backgroundColor: "transparent", border: "none", cursor: "pointer" }}>
           Já tenho conta. Quero entrar.
-        </Link>
+        </button>
       </div>
     </section>
   );
@@ -895,14 +913,190 @@ function Footer() {
   );
 }
 
+// ─── Login Dropdown ───────────────────────────────────────────────────────────
+
+function LoginDropdown({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const supabase = createClient();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    function handleMouseDown(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [onClose]);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      setError("E-mail ou senha incorretos. Tente novamente.");
+      setLoading(false);
+      return;
+    }
+
+    const { data: { user: loggedUser } } = await supabase.auth.getUser();
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", loggedUser!.id)
+      .maybeSingle();
+
+    if (userData?.role === "therapist") {
+      router.push("/terapeuta");
+      return;
+    }
+
+    const { data: familiarData } = await supabase
+      .from("family_access")
+      .select("id")
+      .eq("email", loggedUser!.email!)
+      .eq("status", "ativo")
+      .maybeSingle();
+
+    if (familiarData) {
+      router.push("/familia/dashboard");
+      return;
+    }
+
+    setError("Acesso não autorizado. Entre em contato com seu terapeuta.");
+    setLoading(false);
+  }
+
+  async function handleGoogle() {
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 14px", borderRadius: 10,
+    border: "1.5px solid #E5E7EB", fontSize: 14, outline: "none",
+    boxSizing: "border-box", backgroundColor: "#fff", color: "#111827",
+  };
+
+  return (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "fixed",
+        top: 160,
+        right: 24,
+        width: 320,
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
+        padding: "24px 24px 20px",
+        zIndex: 9999,
+        fontFamily: inter,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
+        <span style={{ fontWeight: 700, fontSize: 16, color: "#1D3557" }}>Entrar na sua conta</span>
+        <button
+          onClick={onClose}
+          style={{ background: "none", border: "none", cursor: "pointer", padding: 4, color: "#9CA3AF", fontSize: 18, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}
+          aria-label="Fechar"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M12 4L4 12M4 4l8 8" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="E-mail"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={inputStyle}
+        />
+        <input
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={inputStyle}
+        />
+
+        {error && (
+          <p style={{ fontSize: 12, color: "#DC2626", backgroundColor: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "8px 12px", margin: 0 }}>
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ padding: "11px 0", borderRadius: 10, border: "none", cursor: loading ? "not-allowed" : "pointer", backgroundColor: "#1D3557", color: "#fff", fontWeight: 700, fontSize: 14, opacity: loading ? 0.7 : 1 }}
+        >
+          {loading ? "Entrando…" : "Entrar"}
+        </button>
+
+        <Link
+          href="/recuperar-senha"
+          style={{ fontSize: 12, color: "#6B7280", textAlign: "center", textDecoration: "none" }}
+        >
+          Esqueci minha senha
+        </Link>
+      </form>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0" }}>
+        <div style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
+        <span style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 500 }}>ou</span>
+        <div style={{ flex: 1, height: 1, backgroundColor: "#E5E7EB" }} />
+      </div>
+
+      <button
+        onClick={handleGoogle}
+        type="button"
+        style={{ width: "100%", padding: "10px 0", borderRadius: 10, border: "1.5px solid #E5E7EB", cursor: "pointer", backgroundColor: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13, fontWeight: 600, color: "#1D3557" }}
+      >
+        <GoogleIcon />
+        Continuar com Google
+      </button>
+
+      <p style={{ textAlign: "center", fontSize: 12, color: "#6B7280", marginTop: 16, marginBottom: 0 }}>
+        Ainda não tem conta?{" "}
+        <Link href="/cadastro" style={{ color: "#1D3557", fontWeight: 700, textDecoration: "none" }}>
+          Crie aqui
+        </Link>
+      </p>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
+  const [loginOpen, setLoginOpen] = useState(false);
+  const openLogin = () => setLoginOpen(true);
+
   return (
     <>
-      <NavBar />
+      {loginOpen && <LoginDropdown onClose={() => setLoginOpen(false)} />}
+      <NavBar openLogin={openLogin} />
       <main>
-        <HeroSection />
+        <HeroSection openLogin={openLogin} />
         <SpecialtiesBanner />
         <FeaturesSection />
         <FamilySection />
@@ -911,7 +1105,7 @@ export default function HomePage() {
         <TestimonialsSection />
         <KpisSection />
         <FAQSection />
-        <CTASection />
+        <CTASection openLogin={openLogin} />
       </main>
       <Footer />
     </>
