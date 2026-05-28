@@ -37,11 +37,13 @@ export const metadata: Metadata = {
   description: "Cuidar, acompanhar, evoluir juntos.",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/identidade-visual/icone-logo-vetorizado.svg", type: "image/svg+xml" },
-      { url: "/logo-icone.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/logo-icone.png",
-    shortcut: "/logo-icone.png",
+    apple: "/icon-192.png",
+    shortcut: "/favicon.ico",
   },
 };
 
