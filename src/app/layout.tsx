@@ -33,18 +33,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.acompanhamentogirassol.com.br"),
   title: "Acompanhamento Girassol",
   description: "Cuidar, acompanhar, evoluir juntos.",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/identidade-visual/icone-logo-vetorizado.svg", type: "image/svg+xml" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: "/icon-192.png",
-    shortcut: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({
