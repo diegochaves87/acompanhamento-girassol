@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import PageHeader from "@/components/PageHeader";
 
 export default function SobrePage() {
