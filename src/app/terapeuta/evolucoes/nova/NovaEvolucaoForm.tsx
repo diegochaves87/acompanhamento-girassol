@@ -130,14 +130,17 @@ export default function NovaEvolucaoForm({
     }
   }
 
-  async function handleSave(status: "draft" | "published") {
+  async function handleSave(mode: "draft" | "saved" | "published") {
     setSaveState({ saving: true, message: "", type: "idle" });
     setPendingCount(null);
     const supabase = createClient();
+    const status = mode === "draft" ? "draft" : "published";
+    const published_to_family = mode === "published";
     const payload = {
       technical_text: technicalText || null,
       family_text: familyText || null,
       status,
+      published_to_family,
       updated_at: new Date().toISOString(),
     };
 
@@ -164,10 +167,10 @@ export default function NovaEvolucaoForm({
       if (savedId && savedId !== evolucaoId) setEvolucaoId(savedId);
       setSaveState({
         saving: false,
-        message: status === "draft" ? "Rascunho salvo." : "Evolução publicada para a família.",
+        message: mode === "draft" ? "Rascunho salvo." : mode === "saved" ? "Evolução salva." : "Evolução publicada para a família.",
         type: "success",
       });
-      if (status === "published") {
+      if (mode === "published") {
         const [completedRes, evolvedRes] = await Promise.all([
           supabase.from("sessions").select("id").eq("tenant_id", tenantId).eq("status", "completed"),
           supabase.from("evolutions").select("session_id").eq("tenant_id", tenantId),
@@ -357,6 +360,25 @@ export default function NovaEvolucaoForm({
         <div className="flex items-center gap-3 flex-wrap">
           <button
             type="button"
+            onClick={() => handleSave("draft")}
+            disabled={saveState.saving}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            Salvar rascunho
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleSave("saved")}
+            disabled={saveState.saving}
+            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-50 transition-colors"
+            style={{ backgroundColor: "#1a4a3a" }}
+          >
+            Salvar
+          </button>
+
+          <button
+            type="button"
             onClick={() => handleSave("published")}
             disabled={saveState.saving || !familyText.trim()}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
@@ -376,15 +398,6 @@ export default function NovaEvolucaoForm({
               />
             </svg>
             Publicar para a família
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleSave("draft")}
-            disabled={saveState.saving}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
-            Salvar rascunho
           </button>
         </div>
 

@@ -4,7 +4,7 @@ import DespublicarButton from "./DespublicarButton";
 import PageHeader from "@/components/PageHeader";
 
 type Props = {
-  searchParams: { aba?: string };
+  searchParams: { aba?: string; sub?: string };
 };
 
 const ABAS = ["pendentes", "rascunhos", "publicadas"] as const;
@@ -25,6 +25,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
   const aba: Aba = (ABAS as readonly string[]).includes(searchParams.aba ?? "")
     ? (searchParams.aba as Aba)
     : "pendentes";
+  const sub = aba === "publicadas" ? (searchParams.sub ?? "familia") : "familia";
 
   const supabase = await createClient();
   const {
@@ -50,6 +51,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
     patientName: string;
     scheduledAt: string;
     status: string;
+    publishedToFamily: boolean;
   };
 
   let pendingItems: PendingItem[] = [];
@@ -61,7 +63,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
         .from("sessions")
         .select("id, scheduled_at, patient_id")
         .eq("tenant_id", tenantId)
-        .eq("status", "completed")
+        .in("status", ["completed", "makeup_completed"])
         .order("scheduled_at", { ascending: true }),
       supabase.from("evolutions").select("session_id").eq("tenant_id", tenantId),
     ]);
@@ -84,7 +86,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
     const statusFilter = aba === "rascunhos" ? "draft" : "published";
     const { data: evos } = await supabase
       .from("evolutions")
-      .select("id, session_id, patient_id, status, created_at")
+      .select("id, session_id, patient_id, status, created_at, published_to_family")
       .eq("tenant_id", tenantId)
       .eq("status", statusFilter)
       .order("created_at", { ascending: true });
@@ -116,6 +118,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
         patientName: patientMap.get(e.patient_id) ?? "—",
         scheduledAt: sessionMap.get(e.session_id) ?? "",
         status: e.status,
+        publishedToFamily: e.published_to_family ?? false,
       }))
       .sort((a, b) => {
         const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
@@ -123,6 +126,10 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
         return ta - tb; // ascendente: mais antigas primeiro
       });
   }
+
+  const familiaItems = aba === "publicadas" ? evoItems.filter((e) => e.publishedToFamily) : [];
+  const semItems = aba === "publicadas" ? evoItems.filter((e) => !e.publishedToFamily) : [];
+  const displayedEvoItems = aba === "publicadas" ? (sub === "sem" ? semItems : familiaItems) : evoItems;
 
   const totalCount =
     aba === "pendentes" ? pendingItems.length : evoItems.length;
@@ -166,12 +173,43 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
           <EmptyCard message="Nenhuma sessão realizada aguarda evolução." />
         )}
 
-        {aba !== "pendentes" && evoItems.length === 0 && (
+        {aba === "publicadas" && (
+          <div className="flex gap-2">
+            <Link
+              href="/terapeuta/evolucoes?aba=publicadas&sub=familia"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors border"
+              style={{
+                backgroundColor: sub === "familia" ? "#1D3557" : "#fff",
+                color: sub === "familia" ? "#fff" : "#6B7280",
+                borderColor: sub === "familia" ? "#1D3557" : "#E5E7EB",
+              }}
+            >
+              Para a família ({familiaItems.length})
+            </Link>
+            <Link
+              href="/terapeuta/evolucoes?aba=publicadas&sub=sem"
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors border"
+              style={{
+                backgroundColor: sub === "sem" ? "#1D3557" : "#fff",
+                color: sub === "sem" ? "#fff" : "#6B7280",
+                borderColor: sub === "sem" ? "#1D3557" : "#E5E7EB",
+              }}
+            >
+              Sem publicação ({semItems.length})
+            </Link>
+          </div>
+        )}
+
+        {aba === "rascunhos" && evoItems.length === 0 && (
+          <EmptyCard message="Nenhum rascunho salvo." />
+        )}
+
+        {aba === "publicadas" && displayedEvoItems.length === 0 && (
           <EmptyCard
             message={
-              aba === "rascunhos"
-                ? "Nenhum rascunho salvo."
-                : "Nenhuma evolução publicada."
+              sub === "sem"
+                ? "Nenhuma evolução salva sem publicação para a família."
+                : "Nenhuma evolução publicada para a família."
             }
           />
         )}
@@ -210,7 +248,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
           ))}
 
         {aba !== "pendentes" &&
-          evoItems.map((item) => (
+          displayedEvoItems.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4"
