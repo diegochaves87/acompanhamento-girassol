@@ -199,9 +199,9 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                         </td>
                         <td className="px-4 py-3 text-center">
                           {isDone ? (
-                            hasEvo && evoId ? (
+                            hasEvo ? (
                               <Link
-                                href={`/terapeuta/evolucoes/${evoId}`}
+                                href={evoId ? `/terapeuta/evolucoes/${evoId}` : `/terapeuta/evolucoes/nova?sessao=${s.id}`}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white whitespace-nowrap hover:opacity-80 transition-opacity"
                                 style={{ backgroundColor: "#1a4a3a" }}
                               >
@@ -260,9 +260,9 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                               Evolução
                             </Link>
                           )}
-                          {isDone && hasEvo && evoId && (
+                          {isDone && hasEvo && (
                             <Link
-                              href={`/terapeuta/evolucoes/${evoId}`}
+                              href={evoId ? `/terapeuta/evolucoes/${evoId}` : `/terapeuta/evolucoes/nova?sessao=${s.id}`}
                               className="text-[10px] font-semibold text-white px-1.5 py-0.5 rounded-full hover:opacity-80 transition-opacity"
                               style={{ backgroundColor: "#1a4a3a" }}
                             >
