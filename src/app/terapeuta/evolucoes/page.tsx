@@ -78,7 +78,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       .select("id, session_id, patient_id, status, created_at, published_to_family")
       .eq("tenant_id", tenantId)
       .eq("status", statusFilter)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
 
     const evoList = evos ?? [];
     const sessionIds = Array.from(new Set(evoList.map((e) => e.session_id)));
@@ -108,7 +108,7 @@ export default async function EvolucoesPendentesPage({ searchParams }: Props) {
       .sort((a, b) => {
         const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
         const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
-        return ta - tb;
+        return tb - ta;
       });
   }
 

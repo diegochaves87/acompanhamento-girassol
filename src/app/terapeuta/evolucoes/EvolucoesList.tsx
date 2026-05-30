@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import DespublicarButton from "./DespublicarButton";
 import { deleteDraftEvolutions } from "./actions";
+
+const PAGE_SIZE = 50;
 
 type PendingItem = { sessionId: string; scheduledAt: string; patientName: string };
 type EvoItem = {
@@ -47,6 +49,14 @@ function applyFilters<T extends { patientName: string; scheduledAt: string }>(
   });
 }
 
+function sortDesc<T extends { scheduledAt: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+    const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+    return tb - ta;
+  });
+}
+
 function EmptyCard({ message }: { message: string }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-14 text-center">
@@ -67,20 +77,38 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [mes, setMes] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
 
+  // Reset to page 1 whenever filters or tab/sub change
+  useEffect(() => { setPage(1); }, [aba, sub, nome, data, dataInicio, dataFim, mes]);
+
   const hasFilters = !!(nome || data || dataInicio || dataFim || mes);
 
+  // Filter
   const filteredPending = applyFilters(pendingItems, nome, data, dataInicio, dataFim, mes);
   const filteredEvo = applyFilters(evoItems, nome, data, dataInicio, dataFim, mes);
 
+  // Sub-filter publicadas
   const familiaItems = aba === "publicadas" ? filteredEvo.filter((e) => e.publishedToFamily) : [];
   const semItems = aba === "publicadas" ? filteredEvo.filter((e) => !e.publishedToFamily) : [];
   const displayedItems =
     aba === "publicadas" ? (sub === "sem" ? semItems : familiaItems) : filteredEvo;
 
-  const allDraftIds = aba === "rascunhos" ? displayedItems.map((e) => e.id) : [];
+  // Sort descending
+  const sortedPending = sortDesc(filteredPending);
+  const sortedDisplayed = sortDesc(displayedItems);
+
+  // Pagination
+  const totalItems = aba === "pendentes" ? sortedPending.length : sortedDisplayed.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pagedPending = sortedPending.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pagedDisplayed = sortedDisplayed.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  // Rascunhos: "select all" applies only to current page
+  const allDraftIds = aba === "rascunhos" ? pagedDisplayed.map((e) => e.id) : [];
   const allSelected = allDraftIds.length > 0 && allDraftIds.every((id) => selectedIds.has(id));
 
   function toggleAll() {
@@ -106,7 +134,7 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
   return (
     <div className="space-y-3">
 
-      {/* ── Filtros ─────────────────────────────────────────────────────────── */}
+      {/* ── Filtros ──────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
         <div className="flex flex-wrap gap-2">
           <input
@@ -159,7 +187,7 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
         </div>
       </div>
 
-      {/* ── Sub-filtro publicadas ────────────────────────────────────────────── */}
+      {/* ── Sub-filtro publicadas ─────────────────────────────────────────────── */}
       {aba === "publicadas" && (
         <div className="flex gap-2">
           <a
@@ -187,8 +215,8 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
         </div>
       )}
 
-      {/* ── Toolbar rascunhos ────────────────────────────────────────────────── */}
-      {aba === "rascunhos" && displayedItems.length > 0 && (
+      {/* ── Toolbar rascunhos ─────────────────────────────────────────────────── */}
+      {aba === "rascunhos" && pagedDisplayed.length > 0 && (
         <div className="flex items-center gap-3 px-1">
           <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
             <input
@@ -214,14 +242,14 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
         </div>
       )}
 
-      {/* ── Empty states ─────────────────────────────────────────────────────── */}
-      {aba === "pendentes" && filteredPending.length === 0 && (
+      {/* ── Empty states ──────────────────────────────────────────────────────── */}
+      {aba === "pendentes" && sortedPending.length === 0 && (
         <EmptyCard message={hasFilters ? "Nenhum resultado para o filtro aplicado." : "Nenhuma sessão realizada aguarda evolução."} />
       )}
-      {aba === "rascunhos" && displayedItems.length === 0 && (
+      {aba === "rascunhos" && sortedDisplayed.length === 0 && (
         <EmptyCard message={hasFilters ? "Nenhum resultado para o filtro aplicado." : "Nenhum rascunho salvo."} />
       )}
-      {aba === "publicadas" && displayedItems.length === 0 && (
+      {aba === "publicadas" && sortedDisplayed.length === 0 && (
         <EmptyCard message={
           hasFilters ? "Nenhum resultado para o filtro aplicado." :
           sub === "sem" ? "Nenhuma evolução salva sem publicação para a família." :
@@ -229,8 +257,8 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
         } />
       )}
 
-      {/* ── Lista pendentes ──────────────────────────────────────────────────── */}
-      {aba === "pendentes" && filteredPending.map((item) => (
+      {/* ── Lista pendentes ───────────────────────────────────────────────────── */}
+      {aba === "pendentes" && pagedPending.map((item) => (
         <div key={item.sessionId} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="font-semibold text-gray-900 truncate">{item.patientName}</p>
@@ -245,8 +273,8 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
         </div>
       ))}
 
-      {/* ── Lista rascunhos / publicadas ─────────────────────────────────────── */}
-      {aba !== "pendentes" && displayedItems.map((item) => (
+      {/* ── Lista rascunhos / publicadas ──────────────────────────────────────── */}
+      {aba !== "pendentes" && pagedDisplayed.map((item) => (
         <div key={item.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
           {aba === "rascunhos" && (
             <input
@@ -286,6 +314,29 @@ export default function EvolucoesList({ aba, sub, pendingItems, evoItems }: Prop
           </div>
         </div>
       ))}
+
+      {/* ── Paginação ─────────────────────────────────────────────────────────── */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 pt-2 pb-1">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Anterior
+          </button>
+          <span className="text-xs text-gray-500 text-center">
+            Página {safePage} de {totalPages} · {totalItems} registros
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 }
