@@ -11,6 +11,7 @@ type Props = {
     convenio?: string;
     evolucao?: string;
     status?: string;
+    page?: string;
   };
 };
 
@@ -23,6 +24,21 @@ type Atendimento = {
   patients: { id: string; full_name: string; insurance_name: string | null } | null;
   clinics: { name: string } | null;
 };
+
+function buildPageUrl(
+  sp: { de?: string; ate?: string; paciente?: string; convenio?: string; evolucao?: string; status?: string },
+  page: number
+): string {
+  const params = new URLSearchParams();
+  if (sp.de) params.set("de", sp.de);
+  if (sp.ate) params.set("ate", sp.ate);
+  if (sp.paciente) params.set("paciente", sp.paciente);
+  if (sp.convenio) params.set("convenio", sp.convenio);
+  if (sp.evolucao) params.set("evolucao", sp.evolucao);
+  if (sp.status) params.set("status", sp.status);
+  params.set("page", String(page));
+  return `/terapeuta/agenda/atendimentos?${params.toString()}`;
+}
 
 function formatDateTime(scheduledAt: string) {
   const d = new Date(scheduledAt);
@@ -48,10 +64,16 @@ export default async function AtendimentosPage({ searchParams }: Props) {
 
   const tenantId = userData?.tenant_id ?? "";
 
+  const PAGE_SIZE = 50;
+  const currentPage = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const from = (currentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
   let query = supabase
     .from("sessions")
     .select(
-      "id, scheduled_at, status, has_evolution, patient_id, patients(id, full_name, insurance_name), clinics(name)"
+      "id, scheduled_at, status, has_evolution, patient_id, patients(id, full_name, insurance_name), clinics(name)",
+      { count: "exact" }
     )
     .eq("tenant_id", tenantId)
     .order("scheduled_at", { ascending: true });
@@ -60,8 +82,11 @@ export default async function AtendimentosPage({ searchParams }: Props) {
   if (searchParams.ate) query = query.lte("scheduled_at", searchParams.ate + "T23:59:59");
   if (searchParams.paciente) query = query.eq("patient_id", searchParams.paciente);
   if (searchParams.status) query = query.eq("status", searchParams.status);
+  if (searchParams.evolucao === "sim") query = query.eq("has_evolution", true);
+  else if (searchParams.evolucao === "nao") query = query.eq("has_evolution", false);
+  query = query.range(from, to);
 
-  const { data: sessoes, error } = await query;
+  const { data: sessoes, error, count } = await query;
   if (error) console.error("[Atendimentos]", error.message);
 
   let lista = (sessoes ?? []) as unknown as Atendimento[];
@@ -73,11 +98,8 @@ export default async function AtendimentosPage({ searchParams }: Props) {
   const evoBySession = new Map((evoData ?? []).map((e) => [e.session_id, e.id]));
   const evolvedSessionIds = new Set(evoBySession.keys());
 
-  if (searchParams.evolucao === "sim") {
-    lista = lista.filter((s) => evolvedSessionIds.has(s.id));
-  } else if (searchParams.evolucao === "nao") {
-    lista = lista.filter((s) => !evolvedSessionIds.has(s.id));
-  }
+  const totalCount = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   if (searchParams.convenio) {
     lista = lista.filter((s) => s.patients?.insurance_name === searchParams.convenio);
@@ -133,7 +155,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-white font-semibold text-lg">Atendimentos</h1>
-              <p className="text-white/60 text-xs mt-0.5">{lista.length} registro{lista.length !== 1 ? "s" : ""}</p>
+              <p className="text-white/60 text-xs mt-0.5">{totalCount} registro{totalCount !== 1 ? "s" : ""}</p>
             </div>
           </div>
         </div>
@@ -276,6 +298,38 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 );
               })}
             </ul>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3">
+            {currentPage > 1 ? (
+              <Link
+                href={buildPageUrl(searchParams, currentPage - 1)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Anterior
+              </Link>
+            ) : (
+              <span className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed">
+                Anterior
+              </span>
+            )}
+            <span className="text-xs text-gray-500 text-center whitespace-nowrap">
+              Página {currentPage} de {totalPages} · {totalCount} registros
+            </span>
+            {currentPage < totalPages ? (
+              <Link
+                href={buildPageUrl(searchParams, currentPage + 1)}
+                className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Próxima
+              </Link>
+            ) : (
+              <span className="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed">
+                Próxima
+              </span>
+            )}
           </div>
         )}
       </main>
