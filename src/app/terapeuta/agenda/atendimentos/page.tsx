@@ -68,7 +68,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
 
   const sessionIds = lista.map((s) => s.id);
   const { data: evoData } = sessionIds.length
-    ? await supabase.from("evolutions").select("id, session_id").in("session_id", sessionIds)
+    ? await supabase.from("evolutions").select("id, session_id").in("session_id", sessionIds).limit(10000)
     : { data: [] as { id: string; session_id: string }[] };
   const evoBySession = new Map((evoData ?? []).map((e) => [e.session_id, e.id]));
   const evolvedSessionIds = new Set(evoBySession.keys());
@@ -168,7 +168,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
                 <tbody className="divide-y divide-gray-50">
                   {lista.map((s) => {
                     const isDone = s.status === "completed" || s.status === "makeup_completed";
-                    const hasEvo = evolvedSessionIds.has(s.id);
+                    const hasEvo = s.has_evolution === true || evolvedSessionIds.has(s.id);
                     const evoId = evoBySession.get(s.id);
                     const rowBg =
                       isDone
@@ -233,7 +233,7 @@ export default async function AtendimentosPage({ searchParams }: Props) {
             <ul className="sm:hidden divide-y divide-gray-100">
               {lista.map((s) => {
                 const isDone = s.status === "completed" || s.status === "makeup_completed";
-                const hasEvo = evolvedSessionIds.has(s.id);
+                const hasEvo = s.has_evolution === true || evolvedSessionIds.has(s.id);
                 const evoId = evoBySession.get(s.id);
                 const rowBg = isDone ? (hasEvo ? "#E8F5E9" : "#FFF3E0") : undefined;
                 return (
